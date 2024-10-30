@@ -1,17 +1,18 @@
-import { useSelector, useDispatch } from 'react-redux';
-import { increment, decrement } from './redux/slices/counterSlice';
+import React from 'react';
+import { useDispatch } from 'react-redux';
+import { toggleTheme } from './redux/slices/themeSlice';
 
 export default function App() {
-    const count = useSelector((state) => state.counter.value);
     const dispatch = useDispatch();
 
     return (
         <div>
-            <div className='flex gap-x-5'>
-                <button onClick={() => dispatch(increment())}>Increment</button>
-                <span>{count}</span>
-                <button onClick={() => dispatch(decrement())}>Decrement</button>
-            </div>
+            <button
+                className='p-10 border rounded-lg m-10 text-2xl hover:bg-white hover:text-black transition-colors duration-200 font-medium'
+                onClick={() => dispatch(toggleTheme())}
+            >
+                Toggle
+            </button>
         </div>
     );
 }
