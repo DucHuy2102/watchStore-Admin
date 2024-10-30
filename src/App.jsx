@@ -1,18 +1,34 @@
-import React from 'react';
-import { useDispatch } from 'react-redux';
-import { toggleTheme } from './redux/slices/themeSlice';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Dashboard, Login } from './pages/exportPage';
+import { PrivateRoute } from './components/exportComponent';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function App() {
-    const dispatch = useDispatch();
-
     return (
-        <div>
-            <button
-                className='p-10 border rounded-lg m-10 text-2xl hover:bg-white hover:text-black transition-colors duration-200 font-medium'
-                onClick={() => dispatch(toggleTheme())}
-            >
-                Toggle
-            </button>
-        </div>
+        <>
+            <Router>
+                <Routes>
+                    <Route path='/login' element={<Login />} />
+                    <Route element={<PrivateRoute />}>
+                        <Route path='/' element={<Dashboard />} />
+                    </Route>
+                </Routes>
+            </Router>
+
+            <ToastContainer
+                className={'w-fit'}
+                position='bottom-right'
+                autoClose={2500}
+                hideProgressBar={false}
+                newestOnTop={false}
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme='light'
+            />
+        </>
     );
 }
