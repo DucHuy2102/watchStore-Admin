@@ -112,7 +112,11 @@ export default function Login() {
                     <h1 className='text-4xl font-bold text-center leading-tight'>
                         Chào mừng bạn trở lại
                     </h1>
-                    <h3 className='text-xl text-blue-100 dark:text-gray-500 text-center'>
+                    <h3
+                        className={`text-xl text-center ${
+                            theme === 'light' ? 'text-gray-700' : 'text-gray-500'
+                        }`}
+                    >
                         Đăng nhập để quản lý cửa hàng của bạn
                     </h3>
                     <img

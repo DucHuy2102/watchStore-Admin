@@ -264,16 +264,16 @@ export default function Sidebar_Component() {
                 <Modal.Header />
                 <Modal.Body>
                     <div className='text-center'>
-                        <HiOutlineExclamationCircle className='mx-auto mb-4 h-14 w-14 text-yellow-400' />
-                        <h3 className='mb-5 text-lg font-normal text-gray-500'>
+                        <HiOutlineExclamationCircle className='text-yellow-300 text-5xl mx-auto' />
+                        <span className='text-lg font-medium text-black'>
                             Bạn có chắc chắn muốn đăng xuất?
-                        </h3>
-                        <div className='flex justify-center items-center gap-x-10'>
-                            <Button color='failure' onClick={handleSignOutAccount}>
-                                Đăng xuất
-                            </Button>
+                        </span>
+                        <div className='flex justify-between items-center mt-5'>
                             <Button color='gray' onClick={() => setShowModal(false)}>
                                 Hủy
+                            </Button>
+                            <Button color='warning' onClick={handleSignOutAccount}>
+                                Xác nhận
                             </Button>
                         </div>
                     </div>
