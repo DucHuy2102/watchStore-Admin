@@ -1,7 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import { Sidebar_Component } from '../components/exportComponent';
-import { Dashboard, PageNotFound, Profile_Page } from './exportPage';
 import { useDispatch, useSelector } from 'react-redux';
 import { toggleTheme } from '../redux/slices/themeSlice';
 import { FaMoon } from 'react-icons/fa';
@@ -10,19 +8,6 @@ import { IoIosSunny } from 'react-icons/io';
 export default function DefaultLayout() {
     const { theme } = useSelector((state) => state.theme);
     const dispatch = useDispatch();
-    const location = useLocation();
-    const [tab, setTab] = useState('');
-
-    useEffect(() => {
-        const urlParams = new URLSearchParams(location.search);
-        const tabURL = urlParams.get('tab');
-        setTab(tabURL);
-    }, [location.search]);
-
-    const validTabs = ['dashboard', 'profile', 'order', 'products', 'users', 'orders', 'vouchers'];
-    if (tab && !validTabs.includes(tab)) {
-        return <Navigate to='/dashboard?tab=dashboard' replace />;
-    }
 
     return (
         <div className='min-h-screen flex flex-col md:flex-row'>
@@ -45,13 +30,7 @@ export default function DefaultLayout() {
                     )}
                 </div>
                 <main className='flex-1 p-4'>
-                    {tab === 'dashboard' && <Dashboard />}
-                    {tab === 'profile' && <Profile_Page />}
-                    {/* {tab === 'order' && <Order_Page />}
-                    {tab === 'products' && <ManageProducts_Page />}
-                    {tab === 'users' && <ManageUsers_Page />}
-                    {tab === 'orders' && <ManageOrders_Page />}
-                    {tab === 'vouchers' && <ManageVouchers_Page />} */}
+                    <Outlet />
                 </main>
             </div>
         </div>

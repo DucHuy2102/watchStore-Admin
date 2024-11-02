@@ -1,5 +1,12 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { DefaultLayout_Page, Login, PageNotFound } from './pages/exportPage';
+import {
+    Dashboard,
+    DefaultLayout_Page,
+    ListProduct,
+    Login,
+    PageNotFound,
+    Profile_Page,
+} from './pages/exportPage';
 import { PrivateRoute } from './components/exportComponent';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -11,8 +18,14 @@ export default function App() {
                 <Routes>
                     <Route path='/login' element={<Login />} />
                     <Route element={<PrivateRoute />}>
-                        <Route path='/*' element={<DefaultLayout_Page />} />
+                        <Route element={<DefaultLayout_Page />}>
+                            <Route path='/' element={<Dashboard />} />
+                            <Route path='/dashboard' element={<Dashboard />} />
+                            <Route path='/profile' element={<Profile_Page />} />
+                            <Route path='/products' element={<ListProduct />} />
+                        </Route>
                     </Route>
+                    <Route path='*' element={<PageNotFound />} />
                 </Routes>
             </Router>
 

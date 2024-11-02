@@ -78,7 +78,7 @@ export default function Sidebar_Component() {
                     <div className='flex items-center justify-center w-full'>
                         {showSidebar && (
                             <Link
-                                to='/dashboard?tab=dashboard'
+                                to='/dashboard'
                                 className='tracking-widest outline-none whitespace-nowrap text-2xl sm:text-2xl font-semibold md:font-bold'
                             >
                                 <span
@@ -164,7 +164,7 @@ export default function Sidebar_Component() {
 
                         <nav className='space-y-2 w-full mt-5'>
                             <SidebarItem
-                                to='/dashboard?tab=dashboard'
+                                to='/dashboard'
                                 icon={HiChartPie}
                                 active={tab === 'dashboard'}
                                 showSidebar={showSidebar}
@@ -172,7 +172,7 @@ export default function Sidebar_Component() {
                                 Trang chủ
                             </SidebarItem>
                             <SidebarItem
-                                to='/dashboard?tab=profile'
+                                to='/profile'
                                 icon={HiUser}
                                 active={tab === 'profile'}
                                 showSidebar={showSidebar}
@@ -204,7 +204,7 @@ export default function Sidebar_Component() {
                                 </div>
                             )}
                             <SidebarItem
-                                to='/dashboard?tab=products'
+                                to='/products'
                                 icon={HiShoppingBag}
                                 active={tab === 'products'}
                                 theme={theme}
@@ -213,7 +213,7 @@ export default function Sidebar_Component() {
                                 Sản phẩm
                             </SidebarItem>
                             <SidebarItem
-                                to='/dashboard?tab=vouchers'
+                                to='/vouchers'
                                 icon={MdDiscount}
                                 active={tab === 'vouchers'}
                                 theme={theme}
@@ -222,7 +222,7 @@ export default function Sidebar_Component() {
                                 Giảm giá
                             </SidebarItem>
                             <SidebarItem
-                                to='/dashboard?tab=users'
+                                to='/users'
                                 icon={HiOutlineUserGroup}
                                 active={tab === 'users'}
                                 theme={theme}
@@ -231,7 +231,7 @@ export default function Sidebar_Component() {
                                 Người dùng
                             </SidebarItem>
                             <SidebarItem
-                                to='/dashboard?tab=orders'
+                                to='/orders'
                                 icon={FaShippingFast}
                                 active={tab === 'orders'}
                                 theme={theme}

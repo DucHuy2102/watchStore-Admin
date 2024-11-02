@@ -11,7 +11,7 @@ export default function PageNotFound() {
             <span className='text-lg font-semibold'>
                 Trang bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.
             </span>
-            <Link className='w-full py-1' to={'/dashboard?tab=dashboard'}>
+            <Link className='w-full py-1' to={'/dashboard'}>
                 <Button
                     className='w-full transition ease-in-out duration-300 hover:scale-110'
                     outline
