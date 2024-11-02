@@ -70,8 +70,13 @@ export default function ListProduct() {
 
     const getAllProducts = async () => {
         setIsLoading(true);
+
         try {
-            const filterParams = '';
+            const filterParams = Array.from(searchParams.entries())
+                .filter(([key]) => key !== 'pageNum')
+                .map(([key, value]) => `${key}=${value}`)
+                .join('&');
+
             const pageNum = searchParams.get('pageNum') || '1';
 
             const res = await axios(
