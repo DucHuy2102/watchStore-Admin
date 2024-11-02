@@ -2,10 +2,11 @@ import axios from 'axios';
 import { useEffect } from 'react';
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Table, Input, Select, Button, Space, Popconfirm, message } from 'antd';
-import { FaSearch, FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
-import { useDispatch } from 'react-redux';
+import { Table, Input, Select, Button, Space, Popconfirm, message, Tooltip, Image } from 'antd';
+import { FaSearch, FaEdit, FaTrash, FaPlus, FaCircle, FaImage } from 'react-icons/fa';
+import { useDispatch, useSelector } from 'react-redux';
 import { FilterModal_Component } from '../../components/exportComponent';
+import { toast } from 'react-toastify';
 
 const options = [
     {
@@ -47,12 +48,13 @@ const options = [
 ];
 
 export default function ListProduct() {
+    const { access_token: tokenUser } = useSelector((state) => state.user);
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const [products, setProducts] = useState([]);
+    console.log('products:', products);
     const [isLoading, setIsLoading] = useState(false);
     const [totalPages, setTotalPages] = useState(0);
-    const [currentPage, setCurrentPage] = useState(1);
     const [totalProducts, setTotalProducts] = useState(0);
     const [searchParams, setSearchParams] = useSearchParams();
     const [searchText, setSearchText] = useState('');
@@ -88,7 +90,6 @@ export default function ListProduct() {
                 setProducts(res.data.productResponses);
                 setTotalProducts(res.data.totalProducts);
                 setTotalPages(res.data.totalPages);
-                setCurrentPage(parseInt(pageNum));
             }
         } catch (error) {
             console.log(error);
@@ -166,16 +167,29 @@ export default function ListProduct() {
     const handleEdit = (id) => {
         // Xử lý sửa sản phẩm
         console.log('Edit product:', id);
+        navigate(`/product/edit/${id}`);
     };
 
     const handleDelete = async (id) => {
         try {
-            await axios.delete(`${import.meta.env.VITE_API_URL}/admin/delete-product/${id}`);
-            message.success('Xóa sản phẩm thành công');
-            // Refresh danh sách
+            await axios.delete(
+                `${import.meta.env.VITE_API_URL}/api/product/delete`,
+                null,
+                {
+                    params: {
+                        productId: id,
+                    },
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${tokenUser}`,
+                    },
+                }
+            );
+            toast.success('Xóa sản phẩm thành công');
             getAllProducts();
         } catch (error) {
-            message.error('Có lỗi xảy ra khi xóa sản phẩm');
+            toast.error('Có lỗi xảy ra khi xóa sản phẩm');
         }
     };
 
@@ -184,18 +198,23 @@ export default function ListProduct() {
             title: 'Hình ảnh',
             dataIndex: 'image',
             key: 'image',
-            render: (_, record) =>
-                record?.img && record.img.length > 0 ? (
-                    <img
-                        src={record.img[0]}
-                        alt='product'
-                        className='w-16 h-16 rounded-lg object-cover'
-                    />
-                ) : (
-                    <div className='w-16 h-16 bg-gray-200 flex items-center justify-center'>
-                        No Image
-                    </div>
-                ),
+            render: (_, record) => (
+                <div className='relative w-16 h-16'>
+                    {record?.img && record.img.length > 0 ? (
+                        <Image
+                            src={record.img[0]}
+                            alt={record.productName}
+                            className='rounded-lg object-cover w-16 h-16'
+                            fallback='/path-to-fallback-image.png'
+                            preview={true}
+                        />
+                    ) : (
+                        <div className='w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center'>
+                            <FaImage className='w-6 h-6 text-gray-400' />
+                        </div>
+                    )}
+                </div>
+            ),
         },
         {
             title: 'Tên sản phẩm',
@@ -229,7 +248,24 @@ export default function ListProduct() {
             align: 'center',
             dataIndex: 'priceNow',
             key: 'priceNow',
-            render: (_, record) => `${(record.price - record.discount).toLocaleString()}đ`,
+            render: (_, record) => {
+                const finalPrice = record.price - record.discount;
+                const discountPercent = ((record.discount / record.price) * 100).toFixed(0);
+                return (
+                    <Tooltip
+                        title={record.discount > 0 ? `Giảm ${discountPercent}%` : 'Không giảm giá'}
+                    >
+                        <span className='font-medium'>
+                            {finalPrice.toLocaleString()}đ
+                            {record.discount > 0 && (
+                                <span className='ml-2 text-xs text-red-500'>
+                                    -{discountPercent}%
+                                </span>
+                            )}
+                        </span>
+                    </Tooltip>
+                );
+            },
         },
         {
             title: 'Số lượng',
@@ -238,12 +274,40 @@ export default function ListProduct() {
             key: 'amount',
             sorter: (a, b) => a.amount - b.amount,
             render: (amount) => {
-                return amount < 20 ? (
-                    <span className='text-red-500'>{amount}</span>
-                ) : 20 <= amount && amount < 50 ? (
-                    <span className='text-yellow-400'>{amount}</span>
+                let color = 'green';
+                let status = 'Còn nhiều';
+                if (amount < 20) {
+                    color = 'red';
+                    status = 'Sắp hết hàng';
+                } else if (amount < 50) {
+                    color = 'yellow';
+                    status = 'Số lượng trung bình';
+                }
+                return (
+                    <Tooltip title={status}>
+                        <span className={`text-${color}-500 cursor-pointer font-medium`}>
+                            {amount.toLocaleString()}
+                        </span>
+                    </Tooltip>
+                );
+            },
+        },
+        {
+            title: 'Trạng thái',
+            align: 'center',
+            dataIndex: 'state',
+            key: 'state',
+            render: (state) => {
+                return state === 'saling' ? (
+                    <div className='inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 rounded-full'>
+                        <FaCircle className='w-2 h-2 text-blue-500 animate-pulse' />
+                        <span className='font-medium'>Đang bán</span>
+                    </div>
                 ) : (
-                    <span className='text-green-500'>{amount}</span>
+                    <div className='inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-700 rounded-full'>
+                        <FaCircle className='w-2 h-2 text-red-500' />
+                        <span className='font-medium'>Dừng bán</span>
+                    </div>
                 );
             },
         },
@@ -319,9 +383,13 @@ export default function ListProduct() {
                     current: parseInt(searchParams.get('pageNum') || '1'),
                     pageSize: Math.ceil(totalProducts / totalPages),
                     onChange: (page) => handleTableChange({ current: page }),
+                    showSizeChanger: false,
+                    showTotal: (total) => `Tổng ${total} sản phẩm`,
                 }}
                 onChange={handleTableChange}
                 rowKey='id'
+                scroll={{ x: 'max-content' }}
+                size='middle'
             />
         </div>
     );

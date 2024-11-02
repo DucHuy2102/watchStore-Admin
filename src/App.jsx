@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import {
     Dashboard,
     DefaultLayout_Page,
+    EditProduct,
     ListProduct,
     Login,
     PageNotFound,
@@ -23,6 +24,7 @@ export default function App() {
                             <Route path='/dashboard' element={<Dashboard />} />
                             <Route path='/profile' element={<Profile_Page />} />
                             <Route path='/products' element={<ListProduct />} />
+                            <Route path='/product/edit/:id' element={<EditProduct />} />   
                         </Route>
                     </Route>
                     <Route path='*' element={<PageNotFound />} />
