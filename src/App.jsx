@@ -4,6 +4,7 @@ import {
     DefaultLayout_Page,
     EditProduct,
     ListProduct,
+    ListUser,
     Login,
     PageNotFound,
     Profile_Page,
@@ -24,7 +25,8 @@ export default function App() {
                             <Route path='/dashboard' element={<Dashboard />} />
                             <Route path='/profile' element={<Profile_Page />} />
                             <Route path='/products' element={<ListProduct />} />
-                            <Route path='/product/edit/:id' element={<EditProduct />} />   
+                            <Route path='/product/edit/:id' element={<EditProduct />} />
+                            <Route path='/users' element={<ListUser />} />
                         </Route>
                     </Route>
                     <Route path='*' element={<PageNotFound />} />

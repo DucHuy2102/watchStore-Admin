@@ -52,7 +52,6 @@ export default function ListProduct() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const [products, setProducts] = useState([]);
-    console.log('products:', products);
     const [isLoading, setIsLoading] = useState(false);
     const [totalPages, setTotalPages] = useState(0);
     const [totalProducts, setTotalProducts] = useState(0);
@@ -84,7 +83,12 @@ export default function ListProduct() {
             const res = await axios(
                 `${
                     import.meta.env.VITE_API_URL
-                }/client/get-all-product?${filterParams}&pageNum=${pageNum}`
+                }/api/product/get-all-product?${filterParams}&pageNum=${pageNum}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${tokenUser}`,
+                    },
+                }
             );
             if (res?.status === 200) {
                 setProducts(res.data.productResponses);
@@ -172,22 +176,16 @@ export default function ListProduct() {
 
     const handleDelete = async (id) => {
         try {
-            await axios.delete(
-                `${import.meta.env.VITE_API_URL}/api/product/delete`,
-                null,
-                {
-                    params: {
-                        productId: id,
-                    },
+            await axios.delete(`${import.meta.env.VITE_API_URL}/api/product/delete`, {
+                params: {
+                    productId: id,
                 },
-                {
-                    headers: {
-                        Authorization: `Bearer ${tokenUser}`,
-                    },
-                }
-            );
+                headers: {
+                    Authorization: `Bearer ${tokenUser}`,
+                },
+            });
             toast.success('Xóa sản phẩm thành công');
-            getAllProducts();
+            await getAllProducts();
         } catch (error) {
             toast.error('Có lỗi xảy ra khi xóa sản phẩm');
         }
@@ -303,10 +301,15 @@ export default function ListProduct() {
                         <FaCircle className='w-2 h-2 text-blue-500 animate-pulse' />
                         <span className='font-medium'>Đang bán</span>
                     </div>
+                ) : state === 'soldOut' ? (
+                    <div className='inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-700 rounded-full'>
+                        <FaCircle className='w-2 h-2 text-gray-500' />
+                        <span className='font-medium'>Hết hàng</span>
+                    </div>
                 ) : (
                     <div className='inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-700 rounded-full'>
                         <FaCircle className='w-2 h-2 text-red-500' />
-                        <span className='font-medium'>Dừng bán</span>
+                        <span className='font-medium'>Đã xóa</span>
                     </div>
                 );
             },

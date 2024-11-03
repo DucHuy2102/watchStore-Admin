@@ -8,3 +8,7 @@ export { default as PageNotFound } from './PageNotFound';
 export { default as CreateProduct } from './Product/CreateProduct';
 export { default as EditProduct } from './Product/EditProduct';
 export { default as ListProduct } from './Product/ListProduct';
+
+// user
+export { default as ListUser } from './User/ListUser';
+// export { default as CreateUser } from './User/CreateUser';
