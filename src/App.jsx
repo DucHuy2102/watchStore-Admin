@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import {
+    CreateProduct,
     Dashboard,
     DefaultLayout_Page,
     EditProduct,
@@ -25,6 +26,7 @@ export default function App() {
                             <Route path='/dashboard' element={<Dashboard />} />
                             <Route path='/profile' element={<Profile_Page />} />
                             <Route path='/products' element={<ListProduct />} />
+                            <Route path='/product/create' element={<CreateProduct />} />
                             <Route path='/product/edit/:id' element={<EditProduct />} />
                             <Route path='/users' element={<ListUser />} />
                         </Route>

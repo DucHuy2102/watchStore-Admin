@@ -1,10 +1,12 @@
 import { Avatar, Button, Input, Modal, Select, Table, Tag } from 'antd';
+import TextArea from 'antd/es/input/TextArea';
 import axios from 'axios';
-import { Badge, Card } from 'flowbite-react';
+import { Badge, Card, theme } from 'flowbite-react';
 import { useEffect, useState } from 'react';
 import { AiOutlineEye, AiOutlineSearch } from 'react-icons/ai';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
 
 const { Search } = Input;
 
@@ -17,6 +19,8 @@ export default function ListUser() {
     const [selectedUser, setSelectedUser] = useState(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [blockReason, setBlockReason] = useState('');
+    const [isBlockModalVisible, setIsBlockModalVisible] = useState(false);
 
     useEffect(() => {
         getAllUsers();
@@ -123,52 +127,45 @@ export default function ListUser() {
                         Chi tiết
                     </Button>
                     <div className='h-4 w-px bg-gray-300' />
-                    <Select
-                        value={record.state === 'active' ? 'active' : 'inactive'}
-                        style={{ width: 130 }}
-                        onChange={(value) => handleChangeUserState(record.id, value)}
+                    <Button
+                        type={record.state === 'active' ? 'danger' : 'primary'}
+                        onClick={() => handleToggleUserState(record)}
                         loading={loading}
-                        className='text-center'
-                        popupClassName='min-w-[130px]'
                     >
-                        <Select.Option value='active'>
-                            <div className='flex justify-start items-center gap-2 px-1'>
-                                <div className='w-2 h-2 bg-green-500 rounded-full' />
-                                Kích hoạt
-                            </div>
-                        </Select.Option>
-                        <Select.Option value='inactive'>
-                            <div className='flex justify-start items-center gap-2 px-1'>
-                                <div className='w-2 h-2 bg-red-500 rounded-full' />
-                                Chặn
-                            </div>
-                        </Select.Option>
-                    </Select>
+                        {record.state === 'active' ? 'Chặn' : 'Mở chặn'}
+                    </Button>
                 </div>
             ),
         },
     ];
 
-    const handleChangeUserState = async (userId, newState) => {
+    const handleToggleUserState = (record) => {
+        setSelectedUser(record);
+        setIsBlockModalVisible(true);
+    };
+
+    const handleConfirmBlockUser = async () => {
+        const messageBlock = blockReason.trim() === '' ? null : blockReason;
         try {
             setLoading(true);
-            if (newState === 'inactive') {
+            if (selectedUser.state === 'active') {
                 await axios.put(`${import.meta.env.VITE_API_URL}/api/user/block-user`, null, {
-                    params: { userId: userId },
+                    params: { userId: selectedUser.id, message: messageBlock },
                     headers: {
                         Authorization: `Bearer ${tokenUser}`,
                     },
                 });
-                toast.success('Đã chặn người dùng thành công');
+                toast.success('Đã chặn người dùng!');
             } else {
                 await axios.put(`${import.meta.env.VITE_API_URL}/api/user/unblock-user`, null, {
-                    params: { userId: userId },
+                    params: { userId: selectedUser.id },
                     headers: {
                         Authorization: `Bearer ${tokenUser}`,
                     },
                 });
-                toast.success('Đã gỡ chặn người dùng thành công');
+                toast.success('Đã mở chặn người dùng');
             }
+            setIsBlockModalVisible(false);
             await getAllUsers();
         } catch (error) {
             console.log(error);
@@ -209,6 +206,7 @@ export default function ListUser() {
             </div>
 
             <Table
+                className={`${theme === 'light' ? '' : 'bg-white'} rounded-lg`}
                 columns={columns}
                 dataSource={filteredUsers}
                 rowKey='id'
@@ -227,35 +225,120 @@ export default function ListUser() {
                 width={700}
             >
                 {selectedUser && (
-                    <div className='space-y-4'>
+                    <div className='space-y-6'>
                         <div className='flex items-center gap-4'>
                             <Avatar src={selectedUser.avatarImg} size={64}>
                                 {selectedUser.username?.[0]?.toUpperCase()}
                             </Avatar>
-                            <div>
-                                <div className='text-xl font-bold'>{selectedUser.username}</div>
-                                <div>{selectedUser.email}</div>
+                            <div className='flex-1'>
+                                <div className='flex items-center gap-3'>
+                                    <span className='text-xl font-bold'>
+                                        {selectedUser.username}
+                                    </span>
+                                    <Tag
+                                        color={
+                                            selectedUser.state === 'active' ? 'success' : 'error'
+                                        }
+                                        className='px-3 py-1 text-sm font-medium rounded-full'
+                                    >
+                                        {selectedUser.state === 'active' ? (
+                                            <span className='flex items-center justify-center gap-1'>
+                                                <span className='w-2 h-2 bg-green-500 rounded-full animate-pulse' />
+                                                Hoạt động
+                                            </span>
+                                        ) : (
+                                            <span className='flex items-center gap-1'>
+                                                <span className='w-2 h-2 bg-red-500 rounded-full' />
+                                                Đã chặn
+                                            </span>
+                                        )}
+                                    </Tag>
+                                </div>
+                                <div className='text-gray-500'>{selectedUser.email}</div>
                             </div>
                         </div>
 
-                        <div className='grid grid-cols-2 gap-4'>
-                            <div>
-                                <div className='font-semibold'>Họ và tên</div>
-                                <div>{selectedUser.fullName || 'Chưa cập nhật'}</div>
-                            </div>
-                            <div>
-                                <div className='font-semibold'>Số điện thoại</div>
-                                <div>{selectedUser.phone || 'Chưa cập nhật'}</div>
-                            </div>
-                        </div>
+                        <div className='border-t border-gray-200'></div>
 
-                        {selectedUser.address && (
-                            <div>
-                                <div className='font-semibold'>Địa chỉ</div>
-                                <div>{selectedUser.address.fullAddress}</div>
+                        <div className='grid grid-cols-2 gap-6'>
+                            <div className='space-y-4'>
+                                <div>
+                                    <div className='text-gray-500 text-sm mb-1'>Họ và tên</div>
+                                    <div className='font-medium'>
+                                        {selectedUser.fullName || 'Chưa cập nhật'}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div className='text-gray-500 text-sm mb-1'>Số điện thoại</div>
+                                    <div className='font-medium'>
+                                        {selectedUser.phone || 'Chưa cập nhật'}
+                                    </div>
+                                </div>
+                                {selectedUser.address && (
+                                    <div>
+                                        <div className='text-gray-500 text-sm mb-1'>Địa chỉ</div>
+                                        <div className='font-medium'>
+                                            {selectedUser.address.fullAddress}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
-                        )}
+
+                            {selectedUser.state === 'blocked' && (
+                                <div className='bg-red-50 p-4 rounded-lg border border-red-100'>
+                                    <div className='flex items-center gap-2 mb-2'>
+                                        <ExclamationCircleOutlined className='text-red-500' />
+                                        <span className='font-semibold text-red-600'>
+                                            Thông tin chặn
+                                        </span>
+                                    </div>
+                                    <div className='space-y-2'>
+                                        <div>
+                                            <div className='text-gray-500 text-sm'>
+                                                Thời gian chặn
+                                            </div>
+                                            <div className='font-medium'>
+                                                {selectedUser.blockTime || 'Không có thông tin'}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div className='text-gray-500 text-sm'>Lý do chặn</div>
+                                            <div className='font-medium text-red-600'>
+                                                {selectedUser.blockReason || 'Không có thông tin'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
+                )}
+            </Modal>
+
+            <Modal
+                title={selectedUser?.state === 'active' ? 'Chặn người dùng' : 'Mở chặn người dùng'}
+                open={isBlockModalVisible}
+                onCancel={() => setIsBlockModalVisible(false)}
+                cancelText='Hủy'
+                onOk={handleConfirmBlockUser}
+                okText='Xác nhận'
+                confirmLoading={loading}
+            >
+                {selectedUser?.state === 'active' ? (
+                    <div>
+                        <p>
+                            Bạn có chắc muốn chặn người dùng &quot;{selectedUser?.username}&quot;?
+                        </p>
+                        <TextArea
+                            className='mt-4'
+                            rows={4}
+                            placeholder='Nhập lý do chặn'
+                            value={blockReason}
+                            onChange={(e) => setBlockReason(e.target.value)}
+                        />
+                    </div>
+                ) : (
+                    <p>Bạn có chắc muốn mở chặn người dùng &quot;{selectedUser?.username}&quot;?</p>
                 )}
             </Modal>
         </Card>
