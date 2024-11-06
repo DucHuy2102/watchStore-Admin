@@ -80,17 +80,17 @@ export default function ListProduct() {
 
             const pageNum = searchParams.get('pageNum') || '1';
 
-            const res = await axios(
-                `${
-                    import.meta.env.VITE_API_URL
-                }/api/product/get-all-product?${filterParams}&pageNum=${pageNum}`,
+            const res = await axios.get(
+                `${import.meta.env.VITE_API_URL}/api/product/get-all-product${
+                    filterParams ? `?${filterParams}&pageNum=${pageNum}` : `?pageNum=${pageNum}`
+                }`,
                 {
                     headers: {
                         Authorization: `Bearer ${tokenUser}`,
                     },
                 }
             );
-            if (res?.status === 200) {
+            if (res.status === 200) {
                 setProducts(res.data.productResponses);
                 setTotalProducts(res.data.totalProducts);
                 setTotalPages(res.data.totalPages);
@@ -343,7 +343,7 @@ export default function ListProduct() {
                 <Button
                     type='primary'
                     icon={<FaPlus />}
-                    onClick={() => navigate('/admin/products/add')}
+                    onClick={() => navigate('/product/create')}
                 >
                     Thêm sản phẩm
                 </Button>

@@ -254,6 +254,15 @@ export default function Sidebar_Component() {
                             </div>
                         </div>
                     )}
+                    <SidebarItem
+                        to='/users'
+                        icon={HiOutlineUserGroup}
+                        active={tab === 'users'}
+                        theme={theme}
+                        showSidebar={showSidebar}
+                    >
+                        Người dùng
+                    </SidebarItem>
                     <DropdownMenuItem
                         icon={HiShoppingBag}
                         label='Sản phẩm'
@@ -266,6 +275,15 @@ export default function Sidebar_Component() {
                         ]}
                     />
                     <SidebarItem
+                        to='/orders'
+                        icon={FaShippingFast}
+                        active={tab === 'orders'}
+                        theme={theme}
+                        showSidebar={showSidebar}
+                    >
+                        Đơn hàng
+                    </SidebarItem>
+                    <SidebarItem
                         to='/vouchers'
                         icon={MdDiscount}
                         active={tab === 'vouchers'}
@@ -274,24 +292,6 @@ export default function Sidebar_Component() {
                     >
                         Giảm giá
                     </SidebarItem>
-                    <SidebarItem
-                        to='/users'
-                        icon={HiOutlineUserGroup}
-                        active={tab === 'users'}
-                        theme={theme}
-                        showSidebar={showSidebar}
-                    >
-                        Người dùng
-                    </SidebarItem>
-                    <SidebarItem
-                        to='/orders'
-                        icon={FaShippingFast}
-                        active={tab === 'orders'}
-                        theme={theme}
-                        showSidebar={showSidebar}
-                    >
-                        Đơn hàng
-                    </SidebarItem>{' '}
                 </nav>
 
                 {/* Logout Button */}

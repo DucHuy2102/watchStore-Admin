@@ -1,12 +1,13 @@
 import { initializeApp } from 'firebase/app';
-
+import { getStorage } from 'firebase/storage';
 const firebaseConfig = {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-    authDomain: 'watch-store-dc53c.firebaseapp.com',
-    projectId: 'watch-store-dc53c',
-    storageBucket: 'watch-store-dc53c.appspot.com',
-    messagingSenderId: '360569910208',
-    appId: '1:360569910208:web:a2d566236d43caf8370e25',
+    authDomain: 'admin-watchstore.firebaseapp.com',
+    projectId: 'admin-watchstore',
+    storageBucket: 'admin-watchstore.firebasestorage.app',
+    messagingSenderId: '841280143401',
+    appId: '1:841280143401:web:f7371aca1e479bf9bcdc38',
 };
 
 export const app = initializeApp(firebaseConfig);
+export const storage = getStorage(app);
