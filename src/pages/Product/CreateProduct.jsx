@@ -79,7 +79,7 @@ export default function CreateProduct() {
                 ...values,
                 img: uploadedFiles?.map((file) => file.url || file),
                 discount: discountPrice(values.price, values.discount),
-                state: 'saling',
+                state: 'waiting',
             };
             console.log('Data:', productData);
 

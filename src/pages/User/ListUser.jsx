@@ -10,10 +10,22 @@ import { ExclamationCircleOutlined } from '@ant-design/icons';
 
 const { Search } = Input;
 
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    const options = {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+    };
+    return date.toLocaleString('vi-VN', options);
+}
+
 export default function ListUser() {
     const { access_token: tokenUser } = useSelector((state) => state.user);
     const [users, setUsers] = useState([]);
-    console.log(users);
     const [searchText, setSearchText] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
     const [selectedUser, setSelectedUser] = useState(null);
@@ -298,13 +310,14 @@ export default function ListUser() {
                                                 Thời gian chặn
                                             </div>
                                             <div className='font-medium'>
-                                                {selectedUser.blockTime || 'Không có thông tin'}
+                                                {formatDate(selectedUser.blockAt) ||
+                                                    'Không có thông tin'}
                                             </div>
                                         </div>
                                         <div>
                                             <div className='text-gray-500 text-sm'>Lý do chặn</div>
                                             <div className='font-medium text-red-600'>
-                                                {selectedUser.blockReason || 'Không có thông tin'}
+                                                {selectedUser.reasonBlock || 'Không có thông tin'}
                                             </div>
                                         </div>
                                     </div>

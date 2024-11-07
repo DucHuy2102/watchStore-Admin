@@ -3,7 +3,9 @@ import {
     CreateProduct,
     Dashboard,
     DefaultLayout_Page,
+    DetailOrder,
     EditProduct,
+    ListOrder,
     ListProduct,
     ListUser,
     Login,
@@ -25,10 +27,12 @@ export default function App() {
                             <Route path='/' element={<Dashboard />} />
                             <Route path='/dashboard' element={<Dashboard />} />
                             <Route path='/profile' element={<Profile_Page />} />
+                            <Route path='/users' element={<ListUser />} />
                             <Route path='/products' element={<ListProduct />} />
                             <Route path='/product/create' element={<CreateProduct />} />
                             <Route path='/product/edit/:id' element={<EditProduct />} />
-                            <Route path='/users' element={<ListUser />} />
+                            <Route path='/orders' element={<ListOrder />} />
+                            <Route path='/order/detail/:id' element={<DetailOrder />} />
                         </Route>
                     </Route>
                     <Route path='*' element={<PageNotFound />} />

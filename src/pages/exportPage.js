@@ -11,4 +11,7 @@ export { default as ListProduct } from './Product/ListProduct';
 
 // user
 export { default as ListUser } from './User/ListUser';
-// export { default as CreateUser } from './User/CreateUser';
+
+// order
+export { default as ListOrder } from './Order/ListOrder';
+export { default as DetailOrder } from './Order/DetailOrder';
