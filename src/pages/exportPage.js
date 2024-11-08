@@ -15,3 +15,6 @@ export { default as ListUser } from './User/ListUser';
 // order
 export { default as ListOrder } from './Order/ListOrder';
 export { default as DetailOrder } from './Order/DetailOrder';
+
+// voucher
+export { default as ListVouchers } from './Voucher/ListVouchers';

@@ -8,6 +8,7 @@ import {
     ListOrder,
     ListProduct,
     ListUser,
+    ListVouchers,
     Login,
     PageNotFound,
     Profile_Page,
@@ -33,6 +34,7 @@ export default function App() {
                             <Route path='/product/edit/:id' element={<EditProduct />} />
                             <Route path='/orders' element={<ListOrder />} />
                             <Route path='/order/detail/:id' element={<DetailOrder />} />
+                            <Route path='/vouchers' element={<ListVouchers />} />
                         </Route>
                     </Route>
                     <Route path='*' element={<PageNotFound />} />

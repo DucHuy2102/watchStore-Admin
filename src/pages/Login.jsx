@@ -211,42 +211,41 @@ export default function Login() {
                                     <FadeLoader color={'blue'} />
                                 </div>
                             ) : (
-                                <button
-                                    type='submit'
-                                    className={`w-full py-3 px-4 border border-transparent rounded-lg 
-                                    text-md font-bold shadow-sm transition-colors duration-300
-                                    ${
-                                        theme === 'light'
-                                            ? 'bg-[#22272e] hover:bg-[#454f5b] text-white'
-                                            : 'text-black bg-white hover:bg-[#c4cdd5]'
-                                    }
-                                    `}
-                                >
-                                    Đăng nhập
-                                </button>
-                            )}
-
-                            <div className='relative'>
-                                <div className='absolute inset-0 flex items-center'>
-                                    <div className='w-full border-t border-gray-300 dark:border-gray-600'></div>
-                                </div>
-                                <div className='relative flex justify-center text-sm'>
-                                    <span
-                                        className={`px-2 ${
+                                <>
+                                    <button
+                                        type='submit'
+                                        className={`w-full py-3 px-4 border border-transparent rounded-lg 
+                                        text-md font-bold shadow-sm transition-colors duration-300
+                                        ${
                                             theme === 'light'
-                                                ? 'bg-white text-black'
-                                                : 'bg-[#141a21]'
-                                        }`}
+                                                ? 'bg-[#22272e] hover:bg-[#454f5b] text-white'
+                                                : 'text-black bg-white hover:bg-[#c4cdd5]'
+                                        }
+                                        `}
                                     >
-                                        Hoặc đăng nhập với
-                                    </span>
-                                </div>
-                            </div>
+                                        Đăng nhập
+                                    </button>
+                                    <div className='relative'>
+                                        <div className='absolute inset-0 flex items-center'>
+                                            <div className='w-full border-t border-gray-300 dark:border-gray-600'></div>
+                                        </div>
+                                        <div className='relative flex justify-center text-sm'>
+                                            <span
+                                                className={`px-2 ${
+                                                    theme === 'light'
+                                                        ? 'bg-white text-black'
+                                                        : 'bg-[#141a21]'
+                                                }`}
+                                            >
+                                                Hoặc đăng nhập với
+                                            </span>
+                                        </div>
+                                    </div>
 
-                            <button
-                                onClick={() => loginGoogle()}
-                                type='button'
-                                className={`w-full flex items-center justify-center gap-x-3 py-3
+                                    <button
+                                        onClick={() => loginGoogle()}
+                                        type='button'
+                                        className={`w-full flex items-center justify-center gap-x-3 py-3
                                 border rounded-lg
                                 ${
                                     theme === 'light'
@@ -254,16 +253,18 @@ export default function Login() {
                                         : 'border-gray-600 hover:bg-gray-800 bg-[#22272e]'
                                 }
                                 transition-colors duration-300`}
-                            >
-                                <FcGoogle className='mt-1/2 text-lg' />
-                                <span
-                                    className={`text-md font-medium ${
-                                        theme === 'light' ? 'text-[#22272e]' : 'text-white'
-                                    }`}
-                                >
-                                    Đăng nhập với Google
-                                </span>
-                            </button>
+                                    >
+                                        <FcGoogle className='mt-1/2 text-lg' />
+                                        <span
+                                            className={`text-md font-medium ${
+                                                theme === 'light' ? 'text-[#22272e]' : 'text-white'
+                                            }`}
+                                        >
+                                            Đăng nhập với Google
+                                        </span>
+                                    </button>
+                                </>
+                            )}
                         </form>
                     </div>
                 </div>

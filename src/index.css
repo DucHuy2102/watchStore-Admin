@@ -1,3 +1,22 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.custom-tabs .ant-tabs-tab {
+    padding: 8px 16px !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+    margin: 0 !important;
+}
+
+.custom-tabs .ant-tabs-tab:hover {
+    background-color: #f5f5f5 !important;
+}
+
+.custom-tabs .ant-tabs-tab-active {
+    background-color: #e6f4ff !important;
+}
+
+.custom-tabs .ant-tabs-ink-bar {
+    display: none !important;
+}

@@ -271,7 +271,6 @@ export default function Sidebar_Component() {
                         items={[
                             { path: '/products', label: 'Danh sách' },
                             { path: '/product/create', label: 'Tạo mới' },
-                            { path: '/product/edit/:id', label: 'Chỉnh sửa' },
                         ]}
                     />
                     <SidebarItem
