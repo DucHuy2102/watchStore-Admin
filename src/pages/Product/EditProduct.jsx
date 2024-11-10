@@ -154,7 +154,6 @@ export default function CreateProduct() {
                 discount: discountPrice(values.price, values.discount),
                 state: 'saling',
             };
-            console.log('Data:', productData);
 
             const res = await axios.put(
                 `${import.meta.env.VITE_API_URL}/api/product/update`,

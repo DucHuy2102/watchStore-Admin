@@ -41,6 +41,7 @@ const formatOrderId = (id, maxLength = 10) => {
 export default function ListOrder() {
     const { access_token: tokenUser } = useSelector((state) => state.user);
     const [orders, setOrders] = useState([]);
+    console.log('orders', orders);
     const [currentTab, setCurrentTab] = useState('all');
     const [loading, setLoading] = useState(false);
     const [tableParams, setTableParams] = useState({
@@ -60,7 +61,7 @@ export default function ListOrder() {
     const getAllOrders = async () => {
         try {
             setLoading(true);
-            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/order`, {
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/order/get-all-order`, {
                 headers: {
                     Authorization: `Bearer ${tokenUser}`,
                 },
@@ -84,38 +85,38 @@ export default function ListOrder() {
         console.log('Deleting record:', record.id);
     };
 
-    const menuItems = (record) => (
-        <Menu
-            style={{
-                padding: '4px',
-                borderRadius: '8px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-            }}
-        >
-            <Menu.Item key='detail'>
-                <Button
-                    onClick={() => handleView(record)}
-                    type='primary'
-                    size='middle'
-                    icon={<FaEye />}
-                    style={{ borderRadius: '6px', width: '100%' }}
-                >
-                    Chi tiết
-                </Button>
-            </Menu.Item>
-            <Menu.Item key='delete'>
-                <Button
-                    onClick={() => handleDelete(record)}
-                    className='bg-red-500 w-full !text-white hover:!bg-red-600 !border-none'
-                    size='middle'
-                    icon={<MdDelete />}
-                    style={{ borderRadius: '6px' }}
-                >
-                    Xóa
-                </Button>
-            </Menu.Item>
-        </Menu>
-    );
+    // const menuItems = (record) => (
+    //     <Menu
+    //         style={{
+    //             padding: '4px',
+    //             borderRadius: '8px',
+    //             boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+    //         }}
+    //     >
+    //         <Menu.Item key='detail'>
+    //             <Button
+    //                 onClick={() => handleView(record)}
+    //                 type='primary'
+    //                 size='middle'
+    //                 icon={<FaEye />}
+    //                 style={{ borderRadius: '6px', width: '100%' }}
+    //             >
+    //                 Chi tiết
+    //             </Button>
+    //         </Menu.Item>
+    //         <Menu.Item key='delete'>
+    //             <Button
+    //                 onClick={() => handleDelete(record)}
+    //                 className='bg-red-500 w-full !text-white hover:!bg-red-600 !border-none'
+    //                 size='middle'
+    //                 icon={<MdDelete />}
+    //                 style={{ borderRadius: '6px' }}
+    //             >
+    //                 Xóa
+    //             </Button>
+    //         </Menu.Item>
+    //     </Menu>
+    // );
 
     const columns = [
         {
@@ -274,13 +275,15 @@ export default function ListOrder() {
             align: 'center',
             key: 'action',
             render: (_, record) => (
-                <Dropdown overlay={menuItems(record)} placement='bottomRight' trigger={['click']}>
-                    <Button
-                        type='text'
-                        icon={<MoreOutlined />}
-                        className='hover:bg-gray-100 rounded-full'
-                    />
-                </Dropdown>
+                <Button
+                    onClick={() => handleView(record)}
+                    type='primary'
+                    size='middle'
+                    icon={<FaEye />}
+                    style={{ borderRadius: '6px', width: '100%' }}
+                >
+                    Chi tiết
+                </Button>
             ),
         },
     ];

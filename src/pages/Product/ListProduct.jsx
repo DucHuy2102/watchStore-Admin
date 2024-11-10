@@ -169,8 +169,6 @@ export default function ListProduct() {
     };
 
     const handleEdit = (id) => {
-        // Xử lý sửa sản phẩm
-        console.log('Edit product:', id);
         navigate(`/product/edit/${id}`);
     };
 
