@@ -41,7 +41,6 @@ const formatOrderId = (id, maxLength = 10) => {
 export default function ListOrder() {
     const { access_token: tokenUser } = useSelector((state) => state.user);
     const [orders, setOrders] = useState([]);
-    console.log('orders', orders);
     const [currentTab, setCurrentTab] = useState('all');
     const [loading, setLoading] = useState(false);
     const [tableParams, setTableParams] = useState({
@@ -259,10 +258,12 @@ export default function ListOrder() {
                         icon={config.icon}
                         color={config.color}
                         style={{
-                            width: '130px',
                             padding: '5px 12px',
                             borderRadius: '10px',
                             fontSize: '13px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
                         }}
                     >
                         {config.text}
@@ -464,9 +465,7 @@ export default function ListOrder() {
                         rowKey='id'
                         pagination={{
                             ...tableParams.pagination,
-                            showSizeChanger: true,
                             showTotal: (total) => `Tổng ${total} đơn hàng`,
-                            pageSizeOptions: ['10', '20', '50'],
                         }}
                         loading={loading}
                         onChange={handleTableChange}

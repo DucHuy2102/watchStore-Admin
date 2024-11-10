@@ -2,9 +2,9 @@ import axios from 'axios';
 import { useEffect } from 'react';
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Table, Input, Select, Button, Space, Popconfirm, message, Tooltip, Image } from 'antd';
-import { FaSearch, FaEdit, FaTrash, FaPlus, FaCircle, FaImage } from 'react-icons/fa';
-import { useDispatch, useSelector } from 'react-redux';
+import { Table, Input, Button, Space, Popconfirm, Tooltip, Image, Skeleton } from 'antd';
+import { FaSearch, FaEdit, FaTrash, FaPlus, FaCircle, FaImage, FaFilter } from 'react-icons/fa';
+import { useSelector } from 'react-redux';
 import { FilterModal_Component } from '../../components/exportComponent';
 import { toast } from 'react-toastify';
 
@@ -49,11 +49,9 @@ const options = [
 
 export default function ListProduct() {
     const { access_token: tokenUser } = useSelector((state) => state.user);
-    const dispatch = useDispatch();
     const navigate = useNavigate();
     const [products, setProducts] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
-    const [totalPages, setTotalPages] = useState(0);
     const [totalProducts, setTotalProducts] = useState(0);
     const [searchParams, setSearchParams] = useSearchParams();
     const [searchText, setSearchText] = useState('');
@@ -70,9 +68,8 @@ export default function ListProduct() {
     }, [searchParams]);
 
     const getAllProducts = async () => {
-        setIsLoading(true);
-
         try {
+            setIsLoading(true);
             const filterParams = Array.from(searchParams.entries())
                 .filter(([key]) => key !== 'pageNum')
                 .map(([key, value]) => `${key}=${value}`)
@@ -93,7 +90,6 @@ export default function ListProduct() {
             if (res.status === 200) {
                 setProducts(res.data.productResponses);
                 setTotalProducts(res.data.totalProducts);
-                setTotalPages(res.data.totalPages);
             }
         } catch (error) {
             console.log(error);
@@ -103,7 +99,14 @@ export default function ListProduct() {
     };
 
     const handleSearch = () => {
-        console.log('Search:', searchText);
+        const search = new URLSearchParams(searchParams);
+        search.set('pageNum', '1');
+        if (searchText.trim() !== '') {
+            search.set('q', searchText.trim());
+        } else {
+            search.delete('q');
+        }
+        setSearchParams(search);
     };
 
     const filteredOptions = options.map((option) => ({
@@ -132,23 +135,33 @@ export default function ListProduct() {
 
     const updateSearchParams = (filters) => {
         const newSearchParams = new URLSearchParams();
+        newSearchParams.set('pageNum', '1');
 
         const filterGroups = {};
         filters.forEach((filter) => {
-            if (!filterGroups[filter.key]) {
-                filterGroups[filter.key] = [];
+            if (filter?.value.trim()) {
+                if (!filterGroups[filter.key]) {
+                    filterGroups[filter.key] = new Set();
+                }
+                filterGroups[filter.key].add(filter.value.trim());
             }
-            filterGroups[filter.key].push(filter.value);
         });
 
         Object.entries(filterGroups).forEach(([key, values]) => {
-            if (values.length > 0) {
-                newSearchParams.set(key, values.join(','));
+            const valuesArray = Array.from(values);
+            if (valuesArray.length > 0) {
+                newSearchParams.set(key, valuesArray.join(','));
             }
         });
 
         searchParams.forEach((value, key) => {
             if (key !== 'pageNum' && !options.some((option) => option.choices[0].key === key)) {
+                newSearchParams.set(key, value);
+            }
+        });
+
+        searchParams.forEach((value, key) => {
+            if (key === 'q' && value.trim()) {
                 newSearchParams.set(key, value);
             }
         });
@@ -339,6 +352,7 @@ export default function ListProduct() {
             <div className='mb-4 flex justify-between items-center'>
                 <h1 className='text-2xl font-bold'>Quản lý sản phẩm</h1>
                 <Button
+                    className='w-44'
                     type='primary'
                     icon={<FaPlus />}
                     onClick={() => navigate('/product/create')}
@@ -347,20 +361,57 @@ export default function ListProduct() {
                 </Button>
             </div>
 
-            <div className='mb-4 flex gap-4'>
-                <Input
-                    placeholder='Tìm kiếm sản phẩm...'
-                    prefix={<FaSearch className='text-gray-500' />}
-                    value={searchText}
-                    onChange={(e) => setSearchText(e.target.value)}
-                    onPressEnter={handleSearch}
-                />
-                <Button type='primary' onClick={() => setShowModalFilter(true)}>
-                    Bộ lọc
-                </Button>
-                <Button type='primary' onClick={handleSearch}>
-                    Tìm kiếm
-                </Button>
+            <div className='mb-6 flex gap-x-3 items-center'>
+                <div className='flex-1 relative'>
+                    <Input
+                        placeholder='Tìm kiếm sản phẩm theo tên, mã, thương hiệu...'
+                        value={searchText}
+                        onChange={(e) => setSearchText(e.target.value)}
+                        onPressEnter={handleSearch}
+                        className='h-10 pl-11'
+                        allowClear
+                    />
+                    <span className='absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none'>
+                        <FaSearch className='w-4 h-4 text-gray-400' />
+                    </span>
+                </div>
+
+                <Space size='middle'>
+                    <Button
+                        type='primary'
+                        onClick={handleSearch}
+                        icon={<FaSearch className='text-sm' />}
+                        className='h-10 px-6 flex items-center gap-2 shadow-sm'
+                    >
+                        Tìm kiếm
+                    </Button>
+
+                    <Tooltip
+                        title={
+                            selectedFilters.length > 0
+                                ? `${selectedFilters.length} bộ lọc đang được áp dụng`
+                                : 'Mở bộ lọc nâng cao'
+                        }
+                    >
+                        <Button
+                            type='default'
+                            onClick={() => setShowModalFilter(true)}
+                            className={`h-10 px-5 flex items-center gap-2 border-2 transition-all duration-200 hover:border-blue-500 hover:text-blue-500 ${
+                                selectedFilters.length > 0
+                                    ? 'border-blue-500 text-blue-500'
+                                    : 'border-gray-200'
+                            }`}
+                        >
+                            <FaFilter className='text-sm' />
+                            <span>Bộ lọc</span>
+                            {selectedFilters.length > 0 && (
+                                <span className='flex items-center justify-center w-5 h-5 text-xs font-medium bg-blue-500 text-white rounded-full'>
+                                    {selectedFilters.length}
+                                </span>
+                            )}
+                        </Button>
+                    </Tooltip>
+                </Space>
             </div>
 
             <FilterModal_Component
@@ -375,23 +426,27 @@ export default function ListProduct() {
                 onSubmit={handleSubmitFilter}
             />
 
-            <Table
-                columns={columns}
-                dataSource={products}
-                loading={isLoading}
-                pagination={{
-                    total: totalProducts,
-                    current: parseInt(searchParams.get('pageNum') || '1'),
-                    pageSize: Math.ceil(totalProducts / totalPages),
-                    onChange: (page) => handleTableChange({ current: page }),
-                    showSizeChanger: false,
-                    showTotal: (total) => `Tổng ${total} sản phẩm`,
-                }}
-                onChange={handleTableChange}
-                rowKey='id'
-                scroll={{ x: 'max-content' }}
-                size='middle'
-            />
+            {isLoading ? (
+                <Skeleton active />
+            ) : (
+                <Table
+                    columns={columns}
+                    dataSource={products}
+                    loading={isLoading}
+                    pagination={{
+                        total: totalProducts,
+                        current: parseInt(searchParams.get('pageNum') || '1'),
+                        pageSize: 12,
+                        onChange: (page) => handleTableChange({ current: page }),
+                        showSizeChanger: false,
+                        showTotal: (total) => `Tổng ${total} sản phẩm`,
+                    }}
+                    onChange={handleTableChange}
+                    rowKey='id'
+                    scroll={{ x: 'max-content' }}
+                    size='middle'
+                />
+            )}
         </div>
     );
 }
