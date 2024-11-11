@@ -2,7 +2,7 @@ import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link, useParams } from 'react-router-dom';
-import { Card, Steps, Tag, Divider } from 'antd';
+import { Card, Steps, Tag, Divider, Spin } from 'antd';
 import { FaBox, FaTruck, FaCheckCircle, FaClock } from 'react-icons/fa';
 import { FaArrowLeftLong } from 'react-icons/fa6';
 const formatPrice = (price) => {
@@ -43,6 +43,14 @@ export default function DetailOrder() {
             setIsLoading(false);
         }
     };
+
+    if (isLoading) {
+        return (
+            <div className='min-h-screen bg-gray-50 flex items-center justify-center'>
+                <Spin size='large' tip='Đang tải thông tin đơn hàng...' />
+            </div>
+        );
+    }
 
     const getOrderStatus = () => {
         if (order?.delivered) return 3;

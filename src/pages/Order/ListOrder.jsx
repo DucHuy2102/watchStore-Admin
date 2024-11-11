@@ -409,7 +409,7 @@ export default function ListOrder() {
 
     return (
         <div className='p-6 min-h-screen'>
-            <Title level={3} style={{ marginBottom: '24px' }} className='dark:text-white'>
+            <Title level={3} style={{ marginBottom: '24px' }} className='dark:text-[#fbfcfc]'>
                 Danh sách đơn hàng
             </Title>
 

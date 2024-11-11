@@ -2,17 +2,42 @@ import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
-import { Table, Tag, Badge, Tooltip, Skeleton, Button, Space, Switch } from 'antd';
-import { FaCalendarAlt, FaPercentage, FaMapMarkerAlt, FaTags, FaPlusCircle } from 'react-icons/fa';
+import {
+    Table,
+    Tag,
+    Badge,
+    Tooltip,
+    Skeleton,
+    Button,
+    Space,
+    Switch,
+    Modal,
+    Descriptions,
+} from 'antd';
+import {
+    FaMapMarkerAlt,
+    FaTags,
+    FaPlusCircle,
+    FaCheckCircle,
+    FaTimesCircle,
+    FaCalendarTimes,
+    FaCalendarAlt,
+    FaTag,
+    FaInfoCircle,
+} from 'react-icons/fa';
 import dayjs from 'dayjs';
+import { CiWarning } from 'react-icons/ci';
 import { useNavigate } from 'react-router-dom';
 
 export default function ListVouchers() {
+    const navigate = useNavigate();
     const { access_token: tokenUser } = useSelector((state) => state.user);
     const [loading, setLoading] = useState(false);
     const [vouchers, setVouchers] = useState([]);
     console.log(vouchers);
-    const navigate = useNavigate();
+    const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+    const [selectedVoucher, setSelectedVoucher] = useState(null);
+    const [voucherDetailsModalOpen, setVoucherDetailsModalOpen] = useState(false);
 
     useEffect(() => {
         getAllVouchers();
@@ -59,58 +84,34 @@ export default function ListVouchers() {
             key: 'couponName',
             render: (text, record) => (
                 <div className='flex flex-col'>
-                    <span className='font-medium'>{text}</span>
+                    <span
+                        onClick={() => showVoucherDetails(record)}
+                        className='font-medium cursor-pointer'
+                    >
+                        {text}
+                    </span>
                     <span className='text-gray-500 text-sm'>{record.description}</span>
                 </div>
             ),
         },
         {
-            title: 'Giá trị tối thiểu',
-            align: 'center',
-            dataIndex: 'minPrice',
-            key: 'minPrice',
-            render: (value) => (
-                <span className='font-medium'>{value.toLocaleString('vi-VN')}đ</span>
-            ),
-        },
-        {
-            title: 'Khu vực',
+            title: 'Khu vực áp dụng',
             dataIndex: 'province',
             align: 'center',
             key: 'province',
-            render: (text) => (
+            render: (_, record) => (
                 <div className='flex items-center gap-1.5'>
                     <FaMapMarkerAlt className='text-red-500' />
-                    <span>{text}</span>
+                    <span>{record?.province?.label ?? 'Áp dụng toàn quốc'}</span>
                 </div>
             ),
         },
-        // {
-        //     title: 'Thời hạn',
-        //     align: 'center',
-        //     key: 'dates',
-        //     render: (_, record) => (
-        //         <div className='space-y-1'>
-        //             <Tooltip title='Ngày tạo'>
-        //                 <div className='flex items-center gap-1.5 text-sm text-gray-600'>
-        //                     <FaCalendarAlt className='text-green-500' />
-        //                     <span>{dayjs(record.createdDate).format('DD/MM/YYYY HH:mm')}</span>
-        //                 </div>
-        //             </Tooltip>
-        //             <Tooltip title='Ngày hết hạn'>
-        //                 <div className='flex items-center gap-1.5 text-sm text-gray-600'>
-        //                     <FaCalendarAlt className='text-red-500' />
-        //                     <span>{dayjs(record.expiryDate).format('DD/MM/YYYY HH:mm')}</span>
-        //                 </div>
-        //             </Tooltip>
-        //         </div>
-        //     ),
-        // },
         {
             title: 'Số lượt dùng',
             dataIndex: 'times',
             align: 'center',
             key: 'times',
+            sorter: (a, b) => a.times - b.times,
             render: (value) => (
                 <div className='flex justify-center items-center gap-2'>
                     <FaTags className='text-blue-500' />
@@ -118,55 +119,52 @@ export default function ListVouchers() {
                 </div>
             ),
         },
-        // {
-        //     title: 'Trạng thái',
-        //     dataIndex: 'state',
-        //     align: 'center',
-        //     key: 'state',
-        //     render: (state) => {
-        //         const stateConfig = {
-        //             active: {
-        //                 color: 'success',
-        //                 text: 'Đang hoạt động',
-        //             },
-        //             inactive: {
-        //                 color: 'error',
-        //                 text: 'Ngừng hoạt động',
-        //             },
-        //             expired: {
-        //                 color: 'default',
-        //                 text: 'Hết hạn',
-        //             },
-        //         };
-
-        //         const config = stateConfig[state] || stateConfig.inactive;
-
-        //         return <Badge status={config.color} text={config.text} />;
-        //     },
-        // },
         {
             title: 'Trạng thái',
             dataIndex: 'state',
+            align: 'center',
             key: 'state',
             render: (state) => {
                 const stateConfig = {
                     active: {
-                        color: 'success',
+                        color: 'green',
                         text: 'Đang hoạt động',
+                        icon: (
+                            <div className='bg-green-500 text-white p-1 rounded-full'>
+                                <FaCheckCircle />
+                            </div>
+                        ),
                     },
                     inactive: {
-                        color: 'error',
+                        color: 'red',
                         text: 'Ngừng hoạt động',
+                        icon: (
+                            <div className='bg-red-500 text-white p-1 rounded-full'>
+                                <FaTimesCircle />
+                            </div>
+                        ),
                     },
                     expired: {
-                        color: 'default',
+                        color: 'gray',
                         text: 'Hết hạn',
+                        icon: (
+                            <div className='bg-gray-500 text-white p-1 rounded-full'>
+                                <FaCalendarTimes />
+                            </div>
+                        ),
                     },
                 };
 
                 const config = stateConfig[state] || stateConfig.inactive;
 
-                return <Badge status={config.color} text={config.text} />;
+                return (
+                    <div className='flex items-center gap-2'>
+                        {config.icon}
+                        <span className={`font-medium text-${config.color}-500`}>
+                            {config.text}
+                        </span>
+                    </div>
+                );
             },
         },
         {
@@ -178,13 +176,10 @@ export default function ListVouchers() {
 
                 return (
                     <Space size='middle'>
-                        <Tooltip
-                            title={isExpired ? 'Voucher đã hết hạn' : 'Kích hoạt/Dừng voucher'}
-                        >
+                        <Tooltip title={isExpired ? 'Voucher đã hết hạn' : 'Kích hoạt/Dừng'}>
                             <Switch
                                 checked={record.state === 'active'}
                                 onChange={() => handleToggleStatus(record.id, record.state)}
-                                disabled={isExpired}
                                 className={`${record.state === 'active' ? 'bg-blue-600' : ''}`}
                             />
                         </Tooltip>
@@ -193,7 +188,7 @@ export default function ListVouchers() {
                             <Button
                                 type='primary'
                                 className='bg-blue-500'
-                                onClick={() => navigate(`/vouchers/edit/${record.id}`)}
+                                onClick={() => navigate(`/voucher/edit/${record.id}`)}
                             >
                                 Sửa
                             </Button>
@@ -204,21 +199,88 @@ export default function ListVouchers() {
         },
     ];
 
-    const handleToggleStatus = async (id, currentState) => {};
+    const handleToggleStatus = async (id, currentState) => {
+        if (currentState === 'active') {
+            setSelectedVoucher({ id, currentState });
+            setConfirmModalOpen(true);
+        } else {
+            try {
+                const res = await axios.put(
+                    `${import.meta.env.VITE_API_URL}/api/coupon/active`,
+                    null,
+                    {
+                        params: {
+                            couponId: id,
+                        },
+                        headers: {
+                            Authorization: `Bearer ${tokenUser}`,
+                        },
+                    }
+                );
+                if (res.status === 200) {
+                    toast.success('Kích hoạt voucher thành công!');
+                    setTimeout(() => {
+                        getAllVouchers();
+                    }, 3000);
+                }
+            } catch (error) {
+                console.log(error);
+                toast.error('Có lỗi xảy ra!');
+            }
+        }
+    };
+
+    const handleConfirmDeactivate = async () => {
+        try {
+            const res = await axios.put(
+                `${import.meta.env.VITE_API_URL}/api/coupon/inactive`,
+                null,
+                {
+                    params: {
+                        couponId: selectedVoucher.id,
+                    },
+                    headers: {
+                        Authorization: `Bearer ${tokenUser}`,
+                    },
+                }
+            );
+            if (res.status === 200) {
+                toast.success('Đã dừng kích hoạt voucher!');
+                setTimeout(() => {
+                    getAllVouchers();
+                }, 3000);
+            }
+        } catch (error) {
+            console.log(error);
+            toast.error('Có lỗi xảy ra!');
+        } finally {
+            setConfirmModalOpen(false);
+            setSelectedVoucher(null);
+        }
+    };
+
+    const showVoucherDetails = (voucher) => {
+        setSelectedVoucher(voucher);
+        setVoucherDetailsModalOpen(true);
+    };
 
     return (
         <div className='p-6 mt-10'>
             <div className='mb-6 flex justify-between items-center'>
                 <div>
-                    <h1 className='text-2xl font-bold text-gray-800'>Quản lý Voucher</h1>
-                    <p className='text-gray-600 mt-1'>Quản lý tất cả voucher trong hệ thống</p>
+                    <h1 className='text-2xl font-bold text-gray-800 dark:text-[#fbfcfc]'>
+                        Quản lý Voucher
+                    </h1>
+                    <p className='text-gray-600 dark:text-gray-400 mt-1'>
+                        Quản lý tất cả voucher trong hệ thống
+                    </p>
                 </div>
 
                 <Button
                     type='primary'
                     size='large'
                     icon={<FaPlusCircle className='text-lg' />}
-                    onClick={() => navigate('/vouchers/create')}
+                    onClick={() => navigate('/voucher/create')}
                     className='flex items-center gap-2 h-11 px-6 bg-blue-500 hover:bg-blue-600 shadow-sm'
                 >
                     <span className='font-medium'>Tạo Voucher mới</span>
@@ -241,6 +303,127 @@ export default function ListVouchers() {
                     />
                 </div>
             )}
+
+            <Modal
+                open={voucherDetailsModalOpen}
+                onCancel={() => {
+                    setVoucherDetailsModalOpen(false);
+                    setSelectedVoucher(null);
+                }}
+                footer={null}
+                width={700}
+                title={
+                    <div className='flex items-center gap-2'>
+                        <FaTag className='text-blue-500' />
+                        <span>Thông tin chi tiết</span>
+                    </div>
+                }
+                className='rounded-lg shadow-lg'
+            >
+                <div className='space-y-6'>
+                    <Descriptions bordered className='rounded-lg'>
+                        <Descriptions.Item
+                            label={
+                                <div className='flex items-center gap-2'>
+                                    <FaTag className='text-blue-500' />
+                                    Mã voucher
+                                </div>
+                            }
+                            span={3}
+                        >
+                            <Tag color='blue' className='px-3 py-1 text-sm font-medium uppercase'>
+                                {selectedVoucher?.couponCode}
+                            </Tag>
+                        </Descriptions.Item>
+                        <Descriptions.Item
+                            label={
+                                <div className='flex items-center gap-2'>
+                                    <FaInfoCircle className='text-blue-500' />
+                                    Mô tả
+                                </div>
+                            }
+                            span={3}
+                        >
+                            {selectedVoucher?.description}
+                        </Descriptions.Item>
+                        <Descriptions.Item
+                            label={
+                                <div className='flex items-center gap-2'>
+                                    <FaMapMarkerAlt className='text-red-500' />
+                                    Khu vực áp dụng
+                                </div>
+                            }
+                            span={3}
+                        >
+                            {selectedVoucher?.province?.label ?? 'Toàn quốc'}
+                        </Descriptions.Item>
+                        <Descriptions.Item
+                            label={
+                                <div className='flex items-center gap-2'>
+                                    <FaTag className='text-blue-500' />
+                                    Số lượt dùng
+                                </div>
+                            }
+                            span={3}
+                        >
+                            {selectedVoucher?.times}
+                        </Descriptions.Item>
+                        <Descriptions.Item
+                            label={
+                                <div className='flex items-center gap-2'>
+                                    <FaCheckCircle className='text-green-500' />
+                                    Trạng thái
+                                </div>
+                            }
+                            span={3}
+                        >
+                            <Tag
+                                color={selectedVoucher?.state === 'active' ? 'green' : 'red'}
+                                className='px-3 py-1 text-sm font-medium uppercase'
+                            >
+                                {selectedVoucher?.state === 'active'
+                                    ? 'Đang hoạt động'
+                                    : 'Ngừng hoạt động'}
+                            </Tag>
+                        </Descriptions.Item>
+                        <Descriptions.Item
+                            label={
+                                <div className='flex items-center gap-2'>
+                                    <FaCalendarAlt className='text-blue-500' />
+                                    Ngày hết hạn
+                                </div>
+                            }
+                            span={3}
+                        >
+                            {dayjs(selectedVoucher?.expiryDate).format('DD/MM/YYYY')}
+                        </Descriptions.Item>
+                    </Descriptions>
+                </div>
+            </Modal>
+
+            <Modal
+                open={confirmModalOpen}
+                onOk={handleConfirmDeactivate}
+                onCancel={() => {
+                    setConfirmModalOpen(false);
+                    setSelectedVoucher(null);
+                }}
+                okText='Xác nhận'
+                cancelText='Hủy'
+                okButtonProps={{
+                    className: 'bg-blue-500 hover:bg-blue-600',
+                }}
+            >
+                <div className='text-center'>
+                    <CiWarning className='text-yellow-400 mx-auto w-20 h-20 mb-2' />
+                    <p className='font-medium text-lg'>
+                        Bạn có chắc chắn muốn dừng kích hoạt voucher này?
+                    </p>
+                    <p className='text-gray-500 mt-2'>
+                        Voucher sẽ không thể sử dụng cho đến khi được kích hoạt lại.
+                    </p>
+                </div>
+            </Modal>
         </div>
     );
 }

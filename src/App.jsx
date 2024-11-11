@@ -9,9 +9,11 @@ import {
     ListProduct,
     ListUser,
     ListVouchers,
+    CreateVoucher,
     Login,
     PageNotFound,
     Profile_Page,
+    EditVoucher,
 } from './pages/exportPage';
 import { PrivateRoute } from './components/exportComponent';
 import { ToastContainer } from 'react-toastify';
@@ -35,6 +37,8 @@ export default function App() {
                             <Route path='/orders' element={<ListOrder />} />
                             <Route path='/order/detail/:id' element={<DetailOrder />} />
                             <Route path='/vouchers' element={<ListVouchers />} />
+                            <Route path='/voucher/edit/:id' element={<EditVoucher />} />
+                            <Route path='/voucher/create' element={<CreateVoucher />} />
                         </Route>
                     </Route>
                     <Route path='*' element={<PageNotFound />} />
