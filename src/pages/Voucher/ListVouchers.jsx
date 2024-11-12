@@ -2,18 +2,7 @@ import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
-import {
-    Table,
-    Tag,
-    Badge,
-    Tooltip,
-    Skeleton,
-    Button,
-    Space,
-    Switch,
-    Modal,
-    Descriptions,
-} from 'antd';
+import { Table, Tag, Tooltip, Skeleton, Button, Space, Switch, Modal } from 'antd';
 import {
     FaMapMarkerAlt,
     FaTags,
@@ -21,13 +10,11 @@ import {
     FaCheckCircle,
     FaTimesCircle,
     FaCalendarTimes,
-    FaCalendarAlt,
-    FaTag,
-    FaInfoCircle,
 } from 'react-icons/fa';
 import dayjs from 'dayjs';
 import { CiWarning } from 'react-icons/ci';
 import { useNavigate } from 'react-router-dom';
+import VoucherDetailModal from './VoucherDetailModal';
 
 export default function ListVouchers() {
     const navigate = useNavigate();
@@ -304,102 +291,14 @@ export default function ListVouchers() {
                 </div>
             )}
 
-            <Modal
+            <VoucherDetailModal
+                voucher={selectedVoucher}
                 open={voucherDetailsModalOpen}
-                onCancel={() => {
+                onClose={() => {
                     setVoucherDetailsModalOpen(false);
                     setSelectedVoucher(null);
                 }}
-                footer={null}
-                width={700}
-                title={
-                    <div className='flex items-center gap-2'>
-                        <FaTag className='text-blue-500' />
-                        <span>Thông tin chi tiết</span>
-                    </div>
-                }
-                className='rounded-lg shadow-lg'
-            >
-                <div className='space-y-6'>
-                    <Descriptions bordered className='rounded-lg'>
-                        <Descriptions.Item
-                            label={
-                                <div className='flex items-center gap-2'>
-                                    <FaTag className='text-blue-500' />
-                                    Mã voucher
-                                </div>
-                            }
-                            span={3}
-                        >
-                            <Tag color='blue' className='px-3 py-1 text-sm font-medium uppercase'>
-                                {selectedVoucher?.couponCode}
-                            </Tag>
-                        </Descriptions.Item>
-                        <Descriptions.Item
-                            label={
-                                <div className='flex items-center gap-2'>
-                                    <FaInfoCircle className='text-blue-500' />
-                                    Mô tả
-                                </div>
-                            }
-                            span={3}
-                        >
-                            {selectedVoucher?.description}
-                        </Descriptions.Item>
-                        <Descriptions.Item
-                            label={
-                                <div className='flex items-center gap-2'>
-                                    <FaMapMarkerAlt className='text-red-500' />
-                                    Khu vực áp dụng
-                                </div>
-                            }
-                            span={3}
-                        >
-                            {selectedVoucher?.province?.label ?? 'Toàn quốc'}
-                        </Descriptions.Item>
-                        <Descriptions.Item
-                            label={
-                                <div className='flex items-center gap-2'>
-                                    <FaTag className='text-blue-500' />
-                                    Số lượt dùng
-                                </div>
-                            }
-                            span={3}
-                        >
-                            {selectedVoucher?.times}
-                        </Descriptions.Item>
-                        <Descriptions.Item
-                            label={
-                                <div className='flex items-center gap-2'>
-                                    <FaCheckCircle className='text-green-500' />
-                                    Trạng thái
-                                </div>
-                            }
-                            span={3}
-                        >
-                            <Tag
-                                color={selectedVoucher?.state === 'active' ? 'green' : 'red'}
-                                className='px-3 py-1 text-sm font-medium uppercase'
-                            >
-                                {selectedVoucher?.state === 'active'
-                                    ? 'Đang hoạt động'
-                                    : 'Ngừng hoạt động'}
-                            </Tag>
-                        </Descriptions.Item>
-                        <Descriptions.Item
-                            label={
-                                <div className='flex items-center gap-2'>
-                                    <FaCalendarAlt className='text-blue-500' />
-                                    Ngày hết hạn
-                                </div>
-                            }
-                            span={3}
-                        >
-                            {dayjs(selectedVoucher?.expiryDate).format('DD/MM/YYYY')}
-                        </Descriptions.Item>
-                    </Descriptions>
-                </div>
-            </Modal>
+            />
 
             <Modal
                 open={confirmModalOpen}

@@ -71,29 +71,59 @@ export default function EditVoucher() {
     }, [id]);
 
     const getVoucherDetail = async () => {
-        // try {
-        //     const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/coupon/detail`, {
-        //         params: {
-        //             voucherId: id,
-        //         },
-        //         headers: {
-        //             Authorization: `Bearer ${tokenUser}`,
-        //         },
-        //     });
-        //     if (res.status === 200) {
-        //         const formData = {
-        //             ...res.data,
-        //             expiryDate: dayjs(res.data.expiryDate),
-        //             createdDate: dayjs(res.data.createdDate),
-        //         };
-        //         form.setFieldsValue(formData);
-        //     }
-        // } catch (error) {
-        //     console.error(error);
-        //     toast.error('Không thể tải thông tin voucher!');
-        // } finally {
-        //     setLoading(false);
-        // }
+        try {
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/coupon/get-by-id`, {
+                params: {
+                    couponId: id,
+                },
+                headers: {
+                    Authorization: `Bearer ${tokenUser}`,
+                },
+            });
+            if (res.status === 200) {
+                const { data } = res;
+                const formData = {
+                    couponCode: data?.couponCode || '',
+                    couponName: data?.couponName || '',
+                    description: data?.description || '',
+                    discount: data?.discount || 0,
+                    minPrice: data?.minPrice || 0,
+                    province: data?.province?.value || null,
+                    times: data?.times || 100, // default value 100
+                    state: data?.state || 'active', // default active
+                    expiryDate: data?.expiryDate ? dayjs(data.expiryDate) : null,
+                    createdDate: data?.expiryDate ? dayjs(data.createdDate) : dayjs(),
+                    img: data?.img || '',
+                };
+
+                if (data?.province) {
+                    setProvinceSelected({
+                        key: data.province.value,
+                        label: data.province.label,
+                    });
+                } else {
+                    setProvinceSelected({
+                        key: '',
+                        label: '',
+                    });
+                }
+
+                if (data?.img) {
+                    setImageUrl(data.img);
+                    setImageType('custom');
+                } else {
+                    setImageUrl('');
+                    setImageType('default');
+                }
+
+                form.setFieldsValue(formData);
+            }
+        } catch (error) {
+            console.log(error);
+            toast.error('Không thể tải thông tin voucher!');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const getProvince = async () => {
@@ -115,45 +145,40 @@ export default function EditVoucher() {
     };
 
     const onFinish = async (values) => {
-        const province = {
-            ProvinceID: values.province,
-            ProvinceName: provinces.find((p) => p.ProvinceID === values.province).ProvinceName,
-        };
-        const submitData = {
-            ...values,
-            province,
-            expiryDate: values.expiryDate.toISOString(),
-            createdDate: values.createdDate.toISOString(),
-        };
-        console.log(submitData);
+        const { couponName, couponCode, description, discount, minPrice, times, state } = values;
         try {
             setSubmitting(true);
             const submitData = {
-                ...values,
-                province: {
-                    key: provinceSelected.key,
-                    label: provinceSelected.label,
-                },
-                image: imageUrl,
+                id: id,
+                couponName,
+                couponCode,
+                description,
+                discount,
+                minPrice,
+                province: provinceSelected,
+                times,
+                state,
+                img: imageUrl,
                 expiryDate: values.expiryDate.toISOString(),
                 createdDate: values.createdDate.toISOString(),
             };
             console.log(submitData);
+            const res = await axios.put(
+                `${import.meta.env.VITE_API_URL}/api/coupon/update`,
+                submitData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${tokenUser}`,
+                    },
+                }
+            );
 
-            // const res = await axios.put(
-            //     `${import.meta.env.VITE_API_URL}/api/coupon/update`,
-            //     submitData,
-            //     {
-            //         headers: {
-            //             Authorization: `Bearer ${tokenUser}`,
-            //         },
-            //     }
-            // );
-
-            // if (res.status === 200) {
-            //     toast.success('Cập nhật voucher thành công!');
-            //     navigate('/voucher');
-            // }
+            if (res.status === 200) {
+                toast.success('Cập nhật voucher thành công!');
+                setTimeout(() => {
+                    navigate('/vouchers');
+                }, 3000);
+            }
         } catch (error) {
             console.error(error);
             toast.error('Có lỗi xảy ra khi cập nhật voucher!');
@@ -179,30 +204,29 @@ export default function EditVoucher() {
     };
 
     const handleDelete = async () => {
-        console.log('Delete voucher');
-        // try {
-        //     setSubmitting(true);
-        //     const res = await axios.delete(`${import.meta.env.VITE_API_URL}/api/coupon/delete/`, {
-        //         params: {
-        //             couponId: id,
-        //         },
-        //         headers: {
-        //             Authorization: `Bearer ${tokenUser}`,
-        //         },
-        //     });
-        //     if (res.status === 200) {
-        //         toast.success('Xóa voucher thành công!');
-        //         setTimeout(() => {
-        //             navigate('/voucher');
-        //         }, 2000);
-        //     }
-        // } catch (error) {
-        //     console.error(error);
-        //     toast.error('Có lỗi xảy ra khi xóa voucher!');
-        // } finally {
-        //     setSubmitting(false);
-        //     setDeleteModalVisible(false);
-        // }
+        try {
+            setSubmitting(true);
+            const res = await axios.delete(`${import.meta.env.VITE_API_URL}/api/coupon/delete/`, {
+                params: {
+                    couponId: id,
+                },
+                headers: {
+                    Authorization: `Bearer ${tokenUser}`,
+                },
+            });
+            if (res.status === 200) {
+                toast.success('Xóa voucher thành công!');
+                setTimeout(() => {
+                    navigate('/voucher');
+                }, 3000);
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error('Có lỗi xảy ra khi xóa voucher!');
+        } finally {
+            setSubmitting(false);
+            setDeleteModalVisible(false);
+        }
     };
 
     return (
@@ -278,6 +302,48 @@ export default function EditVoucher() {
                                         placeholder='Nhập mô tả về voucher và điều kiện áp dụng'
                                         rows={4}
                                         className='text-gray-700'
+                                    />
+                                </Form.Item>
+                            </div>
+                        </div>
+
+                        <div className='mb-8'>
+                            <h2 className='text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2'>
+                                <TagOutlined className='text-blue-500' />
+                                Thông tin giảm giá
+                            </h2>
+                            <div className='grid grid-cols-2 gap-6'>
+                                <Form.Item
+                                    label='Giá trị giảm'
+                                    name='discount'
+                                    rules={[
+                                        { required: true, message: 'Vui lòng nhập giá trị giảm!' },
+                                    ]}
+                                >
+                                    <InputNumber
+                                        min={0}
+                                        max={100}
+                                        formatter={(value) => `${value}%`}
+                                        parser={(value) => value.replace('%', '')}
+                                        className='w-full h-11 flex items-center'
+                                    />
+                                </Form.Item>
+
+                                <Form.Item
+                                    label='Giá tối thiểu'
+                                    name='minPrice'
+                                    rules={[
+                                        { required: true, message: 'Vui lòng nhập giá tối thiểu!' },
+                                    ]}
+                                >
+                                    <InputNumber
+                                        min={0}
+                                        className='w-full h-11 flex items-center'
+                                        formatter={(value) =>
+                                            `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                                        }
+                                        parser={(value) => value.replace(/\$\s?|(,*)/g, '')}
+                                        placeholder='Nhập giá tối thiểu để áp dụng voucher'
                                     />
                                 </Form.Item>
                             </div>
@@ -465,13 +531,15 @@ export default function EditVoucher() {
                                     {
                                         value: 'active',
                                         label: (
-                                            <span className='text-green-600'>Đang hoạt động</span>
+                                            <span className='text-green-600'>
+                                                Kích hoạt voucher
+                                            </span>
                                         ),
                                     },
                                     {
                                         value: 'inactive',
                                         label: (
-                                            <span className='text-red-600'>Ngừng hoạt động</span>
+                                            <span className='text-red-600'>Ngừng kích hoạt</span>
                                         ),
                                     },
                                 ]}
