@@ -154,7 +154,6 @@ export default function Sidebar_Component() {
             } ${showSidebar ? 'w-64' : 'w-20'}`}
         >
             <div className='flex flex-col h-screen'>
-                {/* Logo Section */}
                 <div className='relative p-5'>
                     <div className='flex flex-col items-center justify-center'>
                         {showSidebar && (
@@ -175,8 +174,6 @@ export default function Sidebar_Component() {
                         {showSidebar ? <SlArrowLeft size={16} /> : <SlArrowRight size={16} />}
                     </button>
                 </div>
-
-                {/* Profile Section */}
                 <div
                     className={`px-5 ${
                         !showSidebar
@@ -184,24 +181,52 @@ export default function Sidebar_Component() {
                             : 'flex flex-col items-center justify-center'
                     }`}
                 >
-                    <div className='relative inline-block'>
-                        <img
-                            src={currentUser?.avatarImg ?? '/assets/default_Avatar.jpg'}
-                            className={`rounded-xl object-cover transition-all duration-300 ring-2 ring-offset-2 ring-blue-500
-                                ${showSidebar ? 'w-20 h-20' : 'w-12 h-12'}`}
-                            alt='Avatar'
-                        />
-                        <div className='absolute bottom-0 right-0 w-4 h-4 bg-green-400 rounded-full border-2 border-white' />
+                    <div className='relative group'>
+                        <div
+                            className={`relative rounded-2xl overflow-hidden transform transition-all duration-300 cursor-pointer 
+            ${showSidebar ? 'w-24 h-24' : 'w-14 h-14 mt-5'}
+            group-hover:shadow-xl group-hover:scale-105`}
+                        >
+                            <div
+                                className='absolute inset-0 bg-gradient-to-b from-transparent to-blue-500/20 opacity-0 
+                group-hover:opacity-100 transition-opacity duration-300'
+                            />
+
+                            <img
+                                src={currentUser?.avatarImg ?? '/assets/default_Avatar.jpg'}
+                                className='w-full h-full object-cover'
+                                alt={currentUser?.username || 'User avatar'}
+                            />
+
+                            <div
+                                className='absolute inset-0 border-4 border-transparent rounded-2xl 
+                bg-gradient-to-r from-blue-400 to-blue-600 opacity-20 
+                group-hover:opacity-40 transition-opacity duration-300'
+                                style={{ margin: '-2px' }}
+                            />
+                        </div>
+
+                        <div className='absolute bottom-1 right-1'>
+                            <div
+                                className='w-4 h-4 rounded-full bg-green-400 border-2 border-white dark:border-gray-800
+                shadow-lg transform transition-transform duration-300 
+                group-hover:scale-110 group-hover:ring-2 ring-green-400/50'
+                            />
+                        </div>
                     </div>
 
                     {showSidebar && (
-                        <div className='mt-3 space-y-1'>
-                            <h2 className='text-lg font-semibold text-gray-800 dark:text-gray-200'>
+                        <div className='mt-4 space-y-1.5 text-center'>
+                            <h2
+                                className='text-lg font-semibold text-gray-800 dark:text-gray-200 
+                tracking-wide transition-colors duration-300'
+                            >
                                 {currentUser.username}
                             </h2>
                             <span
-                                className='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                                className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+                bg-gradient-to-r from-blue-500 to-blue-600 text-white
+                shadow-sm transition-all duration-300 hover:shadow-md'
                             >
                                 {currentUser.admin ? 'ADMIN' : 'USER'}
                             </span>
@@ -209,8 +234,7 @@ export default function Sidebar_Component() {
                     )}
                 </div>
 
-                {/* Navigation Section */}
-                <nav className='flex-1 flex flex-col items-center px-5 mt-8 space-y-2'>
+                <nav className='flex-1 flex flex-col items-center px-5 mt-2 space-y-2'>
                     <SidebarItem
                         to='/dashboard'
                         icon={HiChartPie}
@@ -292,7 +316,6 @@ export default function Sidebar_Component() {
                         Giảm giá
                     </SidebarItem>
                 </nav>
-
                 {/* Logout Button */}
                 <div className='p-5'>
                     <Tooltip title='Đăng xuất' placement='right'>

@@ -88,7 +88,7 @@ export default function EditVoucher() {
                     description: data?.description || '',
                     discount: data?.discount || 0,
                     minPrice: data?.minPrice || 0,
-                    province: data?.province?.value || null,
+                    province: data?.province?.label || null,
                     times: data?.times || 100, // default value 100
                     state: data?.state || 'active', // default active
                     expiryDate: data?.expiryDate ? dayjs(data.expiryDate) : null,
@@ -366,7 +366,7 @@ export default function EditVoucher() {
                                         onChange={handleProvinceChange}
                                         options={provinces?.map((p) => ({
                                             value: p.ProvinceID,
-                                            label: p.ProvinceName,
+                                            label: p.NameExtension[1] || p.NameExtension[0],
                                         }))}
                                     />
                                 </Form.Item>

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Modal, Badge } from 'antd';
 import { motion } from 'framer-motion';
 import {
@@ -79,7 +78,7 @@ export default function VoucherDetailModal({ voucher, open, onClose }) {
                                 <h3 className='font-semibold'>Khu vực áp dụng</h3>
                             </div>
                             <p className='text-gray-700'>
-                                {voucher.province?.label || 'Toàn quốc'}
+                                {voucher.province?.label || 'Áp dụng toàn quốc'}
                             </p>
                         </div>
                     </motion.div>

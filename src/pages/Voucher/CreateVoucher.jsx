@@ -151,10 +151,10 @@ export default function CreateVoucher() {
         <div className='p-6 max-w-4xl mx-auto'>
             <div className='flex items-center justify-between mb-6'>
                 <div>
-                    <h1 className='text-3xl font-extrabold text-gray-800 tracking-tight'>
+                    <h1 className='text-3xl font-extrabold text-gray-800 dark:text-[#fbfcfc] tracking-tight'>
                         Tạo Voucher Mới
                     </h1>
-                    <p className='text-gray-600 mt-2'>
+                    <p className='text-gray-600 dark:text-gray-400 mt-2'>
                         Tạo voucher mới với các thông tin chi tiết bên dưới
                     </p>
                 </div>
@@ -277,7 +277,7 @@ export default function CreateVoucher() {
                                     onChange={handleProvinceChange}
                                     options={provinces?.map((p) => ({
                                         value: p.ProvinceID,
-                                        label: p.ProvinceName,
+                                        label: p.NameExtension[1] || p.NameExtension[0],
                                     }))}
                                 />
                             </Form.Item>
