@@ -1,8 +1,15 @@
-export { default as DefaultLayout_Page } from './DefaultLayout';
-export { default as Profile_Page } from './Profile';
-export { default as Login } from './Login';
-export { default as Dashboard } from './Dashboard';
-export { default as PageNotFound } from './PageNotFound';
+export { default as DefaultLayout_Page } from './MainPage/DefaultLayout';
+export { default as Dashboard } from './MainPage/Dashboard';
+export { default as PageNotFound } from './MainPage/PageNotFound';
+
+// profile
+export { default as Profile_Page } from './Profile/Profile';
+
+// auth
+export { default as Login } from './Auth/Login';
+export { default as VerifyEmail } from './Auth/VerifyEmail';
+export { default as ForgotPassword } from './Auth/ForgotPassword';
+export { default as ResetPassword } from './Auth/ResetPassword';
 
 // product
 export { default as CreateProduct } from './Product/CreateProduct';

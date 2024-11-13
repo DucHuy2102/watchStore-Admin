@@ -11,7 +11,7 @@ import {
 } from 'react-icons/fa';
 import dayjs from 'dayjs';
 
-const VoucherDetailModal = ({ voucher, open, onClose }) => {
+export default function VoucherDetailModal({ voucher, open, onClose }) {
     if (!voucher) return null;
 
     const isExpired = dayjs(voucher.expiryDate).isBefore(dayjs());
@@ -22,7 +22,7 @@ const VoucherDetailModal = ({ voucher, open, onClose }) => {
             open={open}
             onCancel={onClose}
             footer={null}
-            width={800}
+            width={600}
             centered
             className='voucher-detail-modal'
         >
@@ -133,6 +133,4 @@ const VoucherDetailModal = ({ voucher, open, onClose }) => {
             </div>
         </Modal>
     );
-};
-
-export default VoucherDetailModal;
+}

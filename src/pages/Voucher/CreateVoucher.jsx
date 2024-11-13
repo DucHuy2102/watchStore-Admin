@@ -13,6 +13,7 @@ import {
     Radio,
     Upload,
     Alert,
+    Image,
 } from 'antd';
 import {
     ArrowLeftOutlined,
@@ -33,16 +34,16 @@ const useVoucherSubmit = (navigate) => {
     const [submitting, setSubmitting] = useState(false);
 
     const handleSubmit = async (values, provinceSelected, imageUrl) => {
+        const { imageType, ...rest } = values;
         try {
             setSubmitting(true);
             const submitData = {
-                ...values,
+                ...rest,
                 img: imageUrl,
                 province: provinceSelected,
                 expiryDate: values.expiryDate.toISOString(),
                 createdDate: values.createdDate.toISOString(),
             };
-
             const res = await axios.post(
                 `${import.meta.env.VITE_API_URL}/api/coupon/create`,
                 submitData,
@@ -75,11 +76,9 @@ const useVoucherSubmit = (navigate) => {
 
 const useProvinces = () => {
     const [provinces, setProvinces] = useState([]);
-    const [loading, setLoading] = useState(false);
 
     const getProvinces = async () => {
         try {
-            setLoading(true);
             const res = await axios.get(
                 'https://online-gateway.ghn.vn/shiip/public-api/master-data/province',
                 {
@@ -94,14 +93,11 @@ const useProvinces = () => {
         } catch (error) {
             console.error('Error getting provinces:', error);
             toast.error('Không thể tải danh sách tỉnh thành!');
-        } finally {
-            setLoading(false);
         }
     };
 
     return {
         provinces,
-        loading,
         getProvinces,
     };
 };
@@ -115,6 +111,7 @@ export default function CreateVoucher() {
     const [provinceSelected, setProvinceSelected] = useState({ key: '', label: '' });
     const [imageType, setImageType] = useState('default');
     const [imageUrl, setImageUrl] = useState(defaultImages[0].url);
+    const [fileList, setFileList] = useState([]);
 
     useEffect(() => {
         getProvinces();
@@ -128,11 +125,22 @@ export default function CreateVoucher() {
     }, []);
 
     const handleProvinceChange = (value, option) => {
+        console.log('Selected province:', option);
         setProvinceSelected({
             key: value,
             label: option.label,
         });
         form.setFieldValue('province', value);
+    };
+
+    const handleUploadChange = ({ file, fileList }) => {
+        if (fileList.length > 1) {
+            toast.warning('Bạn chỉ được phép tải lên 1 ảnh!');
+            return fileList.slice(0, 1);
+        }
+        setFileList(fileList);
+        setImageUrl(file.thumbUrl);
+        form.setFieldValue('image', file.thumbUrl);
     };
 
     const onFinish = (values) => {
@@ -219,7 +227,7 @@ export default function CreateVoucher() {
                         </h2>
                         <div className='grid grid-cols-2 gap-6'>
                             <Form.Item
-                                label='Giá trị giảm'
+                                label='Giá trị giảm (%)'
                                 name='discount'
                                 rules={[{ required: true, message: 'Vui lòng nhập giá trị giảm!' }]}
                             >
@@ -381,6 +389,7 @@ export default function CreateVoucher() {
                                     }
                                     return e?.fileList;
                                 }}
+                                rules={[{ required: true, message: 'Vui lòng tải lên hình ảnh!' }]}
                             >
                                 <Upload.Dragger
                                     name='file'
@@ -396,6 +405,7 @@ export default function CreateVoucher() {
                                         return false;
                                     }}
                                     onRemove={() => {
+                                        setFileList([]);
                                         setImageUrl('');
                                         form.setFieldValue('image', null);
                                     }}
@@ -413,12 +423,16 @@ export default function CreateVoucher() {
                             </Form.Item>
                         )}
 
-                        {imageUrl && (
+                        {/* {imageUrl && imageType !== 'default' && (
                             <div className='mt-4'>
                                 <p className='font-medium mb-2'>Xem trước:</p>
-                                <img src={imageUrl} alt='Preview' className='max-w-xs rounded-lg' />
+                                <Image
+                                    src={imageUrl}
+                                    alt='Preview'
+                                    className='max-w-xs rounded-lg'
+                                />
                             </div>
-                        )}
+                        )} */}
                     </div>
 
                     <Form.Item label='Trạng thái hoạt động' name='state'>

@@ -14,6 +14,9 @@ import {
     PageNotFound,
     Profile_Page,
     EditVoucher,
+    ForgotPassword,
+    VerifyEmail,
+    ResetPassword,
 } from './pages/exportPage';
 import { PrivateRoute } from './components/exportComponent';
 import { ToastContainer } from 'react-toastify';
@@ -25,6 +28,11 @@ export default function App() {
             <Router>
                 <Routes>
                     <Route path='/login' element={<Login />} />
+                    <Route path='/forgot-password' element={<ForgotPassword />} />
+                    <Route path='/verify-email' element={<VerifyEmail />} />
+                    <Route path='/reset-password/:token' element={<ResetPassword />} />
+
+                    {/* private route */}
                     <Route element={<PrivateRoute />}>
                         <Route element={<DefaultLayout_Page />}>
                             <Route path='/' element={<Dashboard />} />
@@ -41,6 +49,8 @@ export default function App() {
                             <Route path='/voucher/create' element={<CreateVoucher />} />
                         </Route>
                     </Route>
+
+                    {/* page not found */}
                     <Route path='*' element={<PageNotFound />} />
                 </Routes>
             </Router>

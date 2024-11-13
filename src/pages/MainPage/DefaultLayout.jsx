@@ -1,7 +1,7 @@
 import { Outlet } from 'react-router-dom';
-import { Sidebar_Component } from '../components/exportComponent';
+import { Sidebar_Component } from '../../components/exportComponent';
 import { useDispatch, useSelector } from 'react-redux';
-import { toggleTheme } from '../redux/slices/themeSlice';
+import { toggleTheme } from '../../redux/slices/themeSlice';
 import { FaMoon } from 'react-icons/fa';
 import { IoIosSunny } from 'react-icons/io';
 

@@ -1,14 +1,14 @@
 import axios from 'axios';
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { user_SignIn } from '../redux/slices/userSlice';
+import { user_SignIn } from '../../redux/slices/userSlice';
 import { FadeLoader } from 'react-spinners';
 import { FcGoogle } from 'react-icons/fc';
 import { useGoogleLogin } from '@react-oauth/google';
 import { FaMoon } from 'react-icons/fa';
-import { toggleTheme } from '../redux/slices/themeSlice';
+import { toggleTheme } from '../../redux/slices/themeSlice';
 import { IoIosSunny } from 'react-icons/io';
 
 export default function Login() {
@@ -198,12 +198,12 @@ export default function Login() {
                             </div>
 
                             <div className='flex items-center justify-end'>
-                                <a
-                                    href='#'
+                                <Link
+                                    to='/forgot-password'
                                     className='text-sm text-blue-500 hover:text-blue-600 dark:hover:text-blue-400 font-medium'
                                 >
                                     Quên mật khẩu?
-                                </a>
+                                </Link>
                             </div>
 
                             {isLoading ? (

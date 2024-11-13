@@ -2,11 +2,11 @@ import { Alert, Button, Card, Modal, Spinner, TextInput } from 'flowbite-react';
 import { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { getDownloadURL, getStorage, ref, uploadBytesResumable } from 'firebase/storage';
-import { app } from '../firebase';
+import { app } from '../../firebase';
 import { CircularProgressbar } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
 import axios from 'axios';
-import { user_SignOut, user_UpdateProfile } from '../redux/slices/userSlice';
+import { user_SignOut, user_UpdateProfile } from '../../redux/slices/userSlice';
 import { HiOutlineExclamationCircle } from 'react-icons/hi';
 import { Link, useNavigate } from 'react-router-dom';
 import { CiHome, CiMail, CiPhone, CiUser } from 'react-icons/ci';
@@ -16,7 +16,7 @@ import { GoLock } from 'react-icons/go';
 import { PiHouseLineLight } from 'react-icons/pi';
 import { Select } from 'antd';
 import { FaBan } from 'react-icons/fa';
-import { PasswordStrengthMeter } from '../Utils/exportUtil';
+import { PasswordStrengthMeter } from '../../Utils/exportUtil';
 
 export default function Profile() {
     // get token user from redux store
