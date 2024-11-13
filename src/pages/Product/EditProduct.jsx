@@ -169,7 +169,7 @@ export default function CreateProduct() {
             toast.success('Lưu sản phẩm thành công!');
             setTimeout(() => {
                 navigate('/products');
-            }, 3000);
+            }, 2000);
         } catch (error) {
             console.error(error);
             toast.error('Có lỗi xảy ra khi chỉnh sửa sản phẩm');

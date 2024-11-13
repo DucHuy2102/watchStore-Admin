@@ -59,7 +59,7 @@ export default function EmailVerification() {
                 toast.success('Xác thực thành công');
                 setTimeout(() => {
                     navigate('/login');
-                }, 3000);
+                }, 2000);
             }
         } catch (error) {
             console.log(error);

@@ -34,11 +34,10 @@ const useVoucherSubmit = (navigate) => {
     const [submitting, setSubmitting] = useState(false);
 
     const handleSubmit = async (values, provinceSelected, imageUrl) => {
-        const { imageType, ...rest } = values;
         try {
             setSubmitting(true);
             const submitData = {
-                ...rest,
+                ...values,
                 img: imageUrl,
                 province: provinceSelected,
                 expiryDate: values.expiryDate.toISOString(),
@@ -58,7 +57,7 @@ const useVoucherSubmit = (navigate) => {
                 toast.success('Tạo voucher thành công!');
                 setTimeout(() => {
                     navigate('/vouchers');
-                }, 3000);
+                }, 2000);
             }
         } catch (error) {
             console.error(error);
@@ -108,7 +107,7 @@ export default function CreateVoucher() {
     const { provinces, getProvinces } = useProvinces();
     const { submitting, handleSubmit } = useVoucherSubmit(navigate);
 
-    const [provinceSelected, setProvinceSelected] = useState({ key: '', label: '' });
+    const [provinceSelected, setProvinceSelected] = useState({ value: '', label: '' });
     const [imageType, setImageType] = useState('default');
     const [imageUrl, setImageUrl] = useState(defaultImages[0].url);
     const [fileList, setFileList] = useState([]);
@@ -125,9 +124,8 @@ export default function CreateVoucher() {
     }, []);
 
     const handleProvinceChange = (value, option) => {
-        console.log('Selected province:', option);
         setProvinceSelected({
-            key: value,
+            value: value,
             label: option.label,
         });
         form.setFieldValue('province', value);
@@ -435,7 +433,7 @@ export default function CreateVoucher() {
                         )} */}
                     </div>
 
-                    <Form.Item label='Trạng thái hoạt động' name='state'>
+                    {/* <Form.Item label='Trạng thái hoạt động' name='state'>
                         <Select
                             className='h-11'
                             options={[
@@ -451,7 +449,7 @@ export default function CreateVoucher() {
                                 },
                             ]}
                         />
-                    </Form.Item>
+                    </Form.Item> */}
 
                     {dayjs().isAfter(form.getFieldValue('expiryDate')) && (
                         <Alert

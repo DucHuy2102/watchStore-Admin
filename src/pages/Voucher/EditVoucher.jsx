@@ -58,7 +58,7 @@ export default function EditVoucher() {
     const [submitting, setSubmitting] = useState(false);
     const [provinces, setProvinces] = useState([]);
     const [provinceSelected, setProvinceSelected] = useState({
-        key: '',
+        value: '',
         label: '',
     });
     const [imageType, setImageType] = useState('default');
@@ -89,8 +89,9 @@ export default function EditVoucher() {
                     discount: data?.discount || 0,
                     minPrice: data?.minPrice || 0,
                     province: data?.province?.label || null,
-                    times: data?.times || 100, // default value 100
-                    state: data?.state || 'active', // default active
+                    times: data?.times || 100,
+                    state: data?.state || 'active',
+                    imageType: data?.imageType || 'default',
                     expiryDate: data?.expiryDate ? dayjs(data.expiryDate) : null,
                     createdDate: data?.expiryDate ? dayjs(data.createdDate) : dayjs(),
                     img: data?.img || '',
@@ -98,12 +99,12 @@ export default function EditVoucher() {
 
                 if (data?.province) {
                     setProvinceSelected({
-                        key: data.province.value,
+                        value: data.province.value,
                         label: data.province.label,
                     });
                 } else {
                     setProvinceSelected({
-                        key: '',
+                        value: '',
                         label: '',
                     });
                 }
@@ -162,7 +163,7 @@ export default function EditVoucher() {
                 expiryDate: values.expiryDate.toISOString(),
                 createdDate: values.createdDate.toISOString(),
             };
-            console.log(submitData);
+            console.log('submitData', submitData);
             const res = await axios.put(
                 `${import.meta.env.VITE_API_URL}/api/coupon/update`,
                 submitData,
@@ -177,7 +178,7 @@ export default function EditVoucher() {
                 toast.success('Cập nhật voucher thành công!');
                 setTimeout(() => {
                     navigate('/vouchers');
-                }, 3000);
+                }, 2000);
             }
         } catch (error) {
             console.error(error);
@@ -218,7 +219,7 @@ export default function EditVoucher() {
                 toast.success('Xóa voucher thành công!');
                 setTimeout(() => {
                     navigate('/voucher');
-                }, 3000);
+                }, 2000);
             }
         } catch (error) {
             console.error(error);

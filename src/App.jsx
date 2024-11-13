@@ -58,7 +58,7 @@ export default function App() {
             <ToastContainer
                 className={'w-fit'}
                 position='bottom-right'
-                autoClose={2500}
+                autoClose={2000}
                 hideProgressBar={false}
                 newestOnTop={false}
                 closeOnClick

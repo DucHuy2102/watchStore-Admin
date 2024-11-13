@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
     HiChartPie,
     HiOutlineCog,
@@ -46,9 +46,19 @@ const SidebarItem = ({ to, icon: Icon, active, showSidebar, children }) => {
     );
 };
 
-const DropdownMenuItem = ({ icon: Icon, label, items, isActive, showSidebar }) => {
+const DropdownMenuItem = ({ icon: Icon, label, items, isActive, showSidebar, onClick }) => {
+    const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(false);
     const location = useLocation();
+
+    const handleItemClick = (path) => {
+        setIsOpen(false);
+        if (path === '/products') {
+            navigate('/products');
+        } else {
+            navigate(path);
+        }
+    };
 
     return (
         <div className='w-full'>
@@ -120,11 +130,11 @@ const DropdownMenuItem = ({ icon: Icon, label, items, isActive, showSidebar }) =
 
 export default function Sidebar_Component() {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     const [showModal, setShowModal] = useState(false);
     const { theme } = useSelector((state) => state.theme);
     const currentUser = useSelector((state) => state.user.user);
     const [showSidebar, setShowSidebar] = useState(true);
-    const [showSubmenu, setShowSubmenu] = useState(false);
 
     // get tab from url
     const location = useLocation();
@@ -167,8 +177,8 @@ export default function Sidebar_Component() {
                     <button
                         onClick={toggleSidebar}
                         className={`absolute ${
-                            showSidebar ? '-right-4' : 'right-1/2 translate-x-1/2'
-                        } top-2 p-1.5 rounded-full bg-blue-500 text-white
+                            showSidebar ? 'left-5' : 'right-1/2 translate-x-1/2'
+                        } top-6 p-1.5 rounded-full bg-blue-500 text-white
             hover:bg-blue-600 transition-all duration-300 shadow-lg shadow-blue-500/50`}
                     >
                         {showSidebar ? <SlArrowLeft size={16} /> : <SlArrowRight size={16} />}
@@ -177,14 +187,14 @@ export default function Sidebar_Component() {
                 <div
                     className={`px-5 ${
                         !showSidebar
-                            ? 'flex justify-center'
+                            ? 'flex justify-center mt-7'
                             : 'flex flex-col items-center justify-center'
                     }`}
                 >
                     <div className='relative group'>
                         <div
                             className={`relative rounded-2xl overflow-hidden transform transition-all duration-300 cursor-pointer 
-            ${showSidebar ? 'w-24 h-24' : 'w-14 h-14 mt-5'}
+            ${showSidebar ? 'w-24 h-24' : 'w-14 h-14'}
             group-hover:shadow-xl group-hover:scale-105`}
                         >
                             <div
@@ -316,7 +326,7 @@ export default function Sidebar_Component() {
                         Giảm giá
                     </SidebarItem>
                 </nav>
-                {/* Logout Button */}
+
                 <div className='p-5'>
                     <Tooltip title='Đăng xuất' placement='right'>
                         <button

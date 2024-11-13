@@ -334,7 +334,7 @@ export default function Profile() {
                 setTimeout(() => {
                     dispatch(user_SignOut());
                     navigate('/login');
-                }, 3000);
+                }, 2000);
             }
         } catch (error) {
             toast.error('Hệ thống đang bận, vui lòng thử lại!');

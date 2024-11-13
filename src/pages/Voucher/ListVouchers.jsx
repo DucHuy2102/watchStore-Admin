@@ -21,7 +21,7 @@ export default function ListVouchers() {
     const { access_token: tokenUser } = useSelector((state) => state.user);
     const [loading, setLoading] = useState(false);
     const [vouchers, setVouchers] = useState([]);
-    console.log(vouchers);
+    console.log('-->', vouchers);
     const [confirmModalOpen, setConfirmModalOpen] = useState(false);
     const [selectedVoucher, setSelectedVoucher] = useState(null);
     const [voucherDetailsModalOpen, setVoucherDetailsModalOpen] = useState(false);
@@ -208,7 +208,7 @@ export default function ListVouchers() {
                     toast.success('Kích hoạt voucher thành công!');
                     setTimeout(() => {
                         getAllVouchers();
-                    }, 3000);
+                    }, 2000);
                 }
             } catch (error) {
                 console.log(error);
@@ -235,7 +235,7 @@ export default function ListVouchers() {
                 toast.success('Đã dừng kích hoạt voucher!');
                 setTimeout(() => {
                     getAllVouchers();
-                }, 3000);
+                }, 2000);
             }
         } catch (error) {
             console.log(error);

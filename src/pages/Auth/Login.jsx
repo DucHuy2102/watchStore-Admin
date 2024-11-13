@@ -54,7 +54,7 @@ export default function Login() {
                     } else {
                         navigate('/');
                     }
-                }, 3000);
+                }, 2000);
             }
         } catch (error) {
             if (error.response.status === 401) {
@@ -94,7 +94,7 @@ export default function Login() {
                     } else {
                         navigate('/');
                     }
-                }, 3000);
+                }, 2000);
             }
         } catch (error) {
             console.log(error);
