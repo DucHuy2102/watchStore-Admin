@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
@@ -29,25 +29,61 @@ import {
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
 import { CiWarning } from 'react-icons/ci';
+import { defaultImages } from './defaultImages';
 
-const defaultImages = [
-    {
-        url: 'https://res.cloudinary.com/dajzl4hdt/image/upload/v1731319344/aqsmz8libwikhsvlvfhj.png',
-        title: 'Miễn phí vận chuyển',
-    },
-    {
-        url: 'https://res.cloudinary.com/dajzl4hdt/image/upload/v1731319279/wlp0352fmr4qmjwxn7hc.jpg',
-        title: 'Hàng quốc tế',
-    },
-    {
-        url: 'https://res.cloudinary.com/dajzl4hdt/image/upload/v1731319322/lcl9dvcqovgx0wyjenk8.png',
-        title: 'Hàng mới về',
-    },
-    {
-        url: 'https://res.cloudinary.com/dajzl4hdt/image/upload/v1731319361/usugcntczyjuai9c3jau.png',
-        title: 'Siêu giảm giá',
-    },
-];
+const handleUploadToCloudinary = async (file) => {
+    if (!file) return null;
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', `${import.meta.env.VITE_CLOUDINARY_PRESETS_NAME}`);
+
+    try {
+        const response = await fetch(
+            `https://api.cloudinary.com/v1_1/${
+                import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
+            }/image/upload`,
+            {
+                method: 'POST',
+                body: formData,
+            }
+        );
+        const data = await response.json();
+        return data.secure_url;
+    } catch (error) {
+        console.error('Lỗi khi upload:', error);
+        toast.error('Không thể tải ảnh lên. Vui lòng thử lại!');
+        return null;
+    }
+};
+
+const useProvinces = () => {
+    const [provinces, setProvinces] = useState([]);
+
+    const getProvinces = async () => {
+        try {
+            const res = await axios.get(
+                'https://online-gateway.ghn.vn/shiip/public-api/master-data/province',
+                {
+                    headers: {
+                        Token: import.meta.env.VITE_TOKEN_GHN,
+                    },
+                }
+            );
+            if (res?.status === 200) {
+                setProvinces(res.data.data);
+            }
+        } catch (error) {
+            console.error('Error getting provinces:', error);
+            toast.error('Không thể tải danh sách tỉnh thành!');
+        }
+    };
+
+    return {
+        provinces,
+        getProvinces,
+    };
+};
 
 export default function EditVoucher() {
     const { id } = useParams();
@@ -56,19 +92,58 @@ export default function EditVoucher() {
     const { access_token: tokenUser } = useSelector((state) => state.user);
     const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
-    const [provinces, setProvinces] = useState([]);
+    const { provinces, getProvinces } = useProvinces();
     const [provinceSelected, setProvinceSelected] = useState({
         value: '',
         label: '',
     });
+    const [fileList, setFileList] = useState([]);
     const [imageType, setImageType] = useState('default');
     const [imageUrl, setImageUrl] = useState('');
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
     useEffect(() => {
         getVoucherDetail();
-        getProvince();
+        getProvinces();
     }, [id]);
+
+    const memoizedProvinces = useMemo(() => {
+        return provinces?.map((p) => ({
+            value: p.ProvinceID,
+            label: p.NameExtension[1] || p.NameExtension[0],
+        }));
+    }, [provinces]);
+
+    const handleProvinceChange = useCallback(
+        (value, option) => {
+            if (!value) {
+                setProvinceSelected({
+                    value: 0,
+                    label: 'Áp dụng toàn quốc',
+                });
+            } else {
+                setProvinceSelected({
+                    value: value,
+                    label: option.label,
+                });
+            }
+            form.setFieldValue('province', value);
+        },
+        [form]
+    );
+
+    const handleImageTypeChange = useCallback(
+        (e) => {
+            const newType = e.target.value;
+            setImageType(newType);
+
+            if (newType === 'custom') {
+                setImageUrl('');
+                form.setFieldValue('image', null);
+            }
+        },
+        [form]
+    );
 
     const getVoucherDetail = async () => {
         try {
@@ -82,19 +157,20 @@ export default function EditVoucher() {
             });
             if (res.status === 200) {
                 const { data } = res;
+                console.log('data', data);
                 const formData = {
-                    couponCode: data?.couponCode || '',
-                    couponName: data?.couponName || '',
-                    description: data?.description || '',
-                    discount: data?.discount || 0,
-                    minPrice: data?.minPrice || 0,
-                    province: data?.province?.label || null,
-                    times: data?.times || 100,
-                    state: data?.state || 'active',
-                    imageType: data?.imageType || 'default',
+                    couponCode: data?.couponCode ?? '',
+                    couponName: data?.couponName ?? '',
+                    description: data?.description ?? '',
+                    discount: data?.discount ?? 0,
+                    minPrice: data?.minPrice ?? 0,
+                    province: data?.province?.label ?? null,
+                    times: data?.times ?? 100,
+                    state: data?.state ?? 'active',
+                    imageType: data?.imageType ?? 'default',
+                    img: data?.img ?? '',
                     expiryDate: data?.expiryDate ? dayjs(data.expiryDate) : null,
                     createdDate: data?.expiryDate ? dayjs(data.createdDate) : dayjs(),
-                    img: data?.img || '',
                 };
 
                 if (data?.province) {
@@ -111,7 +187,8 @@ export default function EditVoucher() {
 
                 if (data?.img) {
                     setImageUrl(data.img);
-                    setImageType('custom');
+                    const matchedDefault = defaultImages.some((image) => image.url === data.img);
+                    setImageType(matchedDefault ? 'default' : 'custom');
                 } else {
                     setImageUrl('');
                     setImageType('default');
@@ -127,39 +204,17 @@ export default function EditVoucher() {
         }
     };
 
-    const getProvince = async () => {
-        try {
-            const res = await axios.get(
-                'https://online-gateway.ghn.vn/shiip/public-api/master-data/province',
-                {
-                    headers: {
-                        Token: import.meta.env.VITE_TOKEN_GHN,
-                    },
-                }
-            );
-            if (res?.status === 200) {
-                setProvinces(res.data.data);
-            }
-        } catch (error) {
-            console.log('Error get api province', error);
-        }
-    };
-
     const onFinish = async (values) => {
-        const { couponName, couponCode, description, discount, minPrice, times, state } = values;
+        const imageUpload = await handleUploadToCloudinary(fileList[0]?.originFileObj);
+        console.log('imageUpload success', imageUpload);
+        const { image, ...rest } = values;
         try {
             setSubmitting(true);
             const submitData = {
+                ...rest,
                 id: id,
-                couponName,
-                couponCode,
-                description,
-                discount,
-                minPrice,
                 province: provinceSelected,
-                times,
-                state,
-                img: imageUrl,
+                img: imageUpload || imageUrl,
                 expiryDate: values.expiryDate.toISOString(),
                 createdDate: values.createdDate.toISOString(),
             };
@@ -195,14 +250,6 @@ export default function EditVoucher() {
             </div>
         );
     }
-
-    const handleProvinceChange = (value, option) => {
-        setProvinceSelected({
-            key: value,
-            label: option.label,
-        });
-        form.setFieldValue('province', value);
-    };
 
     const handleDelete = async () => {
         try {
@@ -254,11 +301,6 @@ export default function EditVoucher() {
                         layout='vertical'
                         onFinish={onFinish}
                         className='max-w-4xl mx-auto'
-                        initialValues={{
-                            state: 'active',
-                            discount: 0,
-                            times: 100,
-                        }}
                     >
                         <div className='mb-8'>
                             <h2 className='text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2'>
@@ -298,7 +340,12 @@ export default function EditVoucher() {
                                         className='h-12 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500'
                                     />
                                 </Form.Item>
-                                <Form.Item label='Mô tả' name='description' className='col-span-2'>
+                                <Form.Item
+                                    label='Mô tả'
+                                    name='description'
+                                    className='col-span-2'
+                                    rules={[{ required: true, message: 'Vui lòng nhập mô tả!' }]}
+                                >
                                     <Input.TextArea
                                         placeholder='Nhập mô tả về voucher và điều kiện áp dụng'
                                         rows={4}
@@ -314,13 +361,7 @@ export default function EditVoucher() {
                                 Thông tin giảm giá
                             </h2>
                             <div className='grid grid-cols-2 gap-6'>
-                                <Form.Item
-                                    label='Giá trị giảm'
-                                    name='discount'
-                                    rules={[
-                                        { required: true, message: 'Vui lòng nhập giá trị giảm!' },
-                                    ]}
-                                >
+                                <Form.Item label='Giá trị giảm' name='discount'>
                                     <InputNumber
                                         min={0}
                                         max={100}
@@ -330,13 +371,7 @@ export default function EditVoucher() {
                                     />
                                 </Form.Item>
 
-                                <Form.Item
-                                    label='Giá tối thiểu'
-                                    name='minPrice'
-                                    rules={[
-                                        { required: true, message: 'Vui lòng nhập giá tối thiểu!' },
-                                    ]}
-                                >
+                                <Form.Item label='Giá tối thiểu' name='minPrice'>
                                     <InputNumber
                                         min={0}
                                         className='w-full h-11 flex items-center'
@@ -356,19 +391,12 @@ export default function EditVoucher() {
                                 Phạm vi & Giới hạn
                             </h2>
                             <div className='grid grid-cols-2 gap-6'>
-                                <Form.Item
-                                    label='Khu vực áp dụng'
-                                    name='province'
-                                    rules={[{ required: true, message: 'Vui lòng chọn khu vực!' }]}
-                                >
+                                <Form.Item label='Khu vực áp dụng' name='province'>
                                     <Select
                                         placeholder='Chọn khu vực áp dụng'
                                         className='h-11'
                                         onChange={handleProvinceChange}
-                                        options={provinces?.map((p) => ({
-                                            value: p.ProvinceID,
-                                            label: p.NameExtension[1] || p.NameExtension[0],
-                                        }))}
+                                        options={memoizedProvinces}
                                     />
                                 </Form.Item>
 
@@ -438,10 +466,7 @@ export default function EditVoucher() {
                             </h2>
 
                             <Form.Item name='imageType' label='Loại hình ảnh'>
-                                <Radio.Group
-                                    onChange={(e) => setImageType(e.target.value)}
-                                    value={imageType}
-                                >
+                                <Radio.Group onChange={handleImageTypeChange} value={imageType}>
                                     <Radio value='default'>Sử dụng mẫu có sẵn</Radio>
                                     <Radio value='custom'>Tải lên hình ảnh mới</Radio>
                                 </Radio.Group>
@@ -472,56 +497,73 @@ export default function EditVoucher() {
                                     ))}
                                 </div>
                             ) : (
-                                <Form.Item
-                                    name='image'
-                                    valuePropName='fileList'
-                                    getValueFromEvent={(e) => {
-                                        if (Array.isArray(e)) {
-                                            return e;
-                                        }
-                                        return e?.fileList;
-                                    }}
-                                >
-                                    <Upload.Dragger
-                                        name='file'
-                                        multiple={false}
-                                        listType='picture'
-                                        accept='image/*'
-                                        beforeUpload={(file) => {
-                                            const reader = new FileReader();
-                                            reader.readAsDataURL(file);
-                                            reader.onload = () => {
-                                                setImageUrl(reader.result);
-                                            };
-                                            return false;
-                                        }}
-                                        onRemove={() => {
-                                            setImageUrl('');
-                                            form.setFieldValue('image', null);
-                                        }}
-                                    >
-                                        <p className='ant-upload-drag-icon'>
-                                            <InboxOutlined />
-                                        </p>
-                                        <p className='ant-upload-text'>
-                                            Kéo thả hoặc click để tải ảnh lên
-                                        </p>
-                                        <p className='ant-upload-hint'>
-                                            Hỗ trợ định dạng: JPG, PNG. Dung lượng tối đa: 2MB
-                                        </p>
-                                    </Upload.Dragger>
+                                <Form.Item name='image'>
+                                    {imageUrl ? (
+                                        <div className='relative inline-block'>
+                                            <img
+                                                src={imageUrl}
+                                                alt='Uploaded preview'
+                                                className='max-w-[300px] rounded-lg shadow-sm'
+                                            />
+                                            <Button
+                                                icon={<DeleteOutlined />}
+                                                className='absolute top-2 right-2 bg-white/80 hover:bg-white shadow-sm'
+                                                onClick={() => {
+                                                    setImageUrl('');
+                                                    form.setFieldValue('image', null);
+                                                    setFileList([]);
+                                                }}
+                                            />
+                                        </div>
+                                    ) : (
+                                        <Upload.Dragger
+                                            name='file'
+                                            multiple={false}
+                                            maxCount={1}
+                                            listType='picture'
+                                            accept='image/*'
+                                            fileList={fileList}
+                                            beforeUpload={(file) => {
+                                                const isImage = file.type.startsWith('image/');
+                                                if (!isImage) {
+                                                    toast.error('Bạn chỉ có thể tải lên file ảnh!');
+                                                    return false;
+                                                }
+                                                const isLt2M = file.size / 1024 / 1024 < 2;
+                                                if (!isLt2M) {
+                                                    toast.error('Ảnh phải nhỏ hơn 2MB!');
+                                                    return false;
+                                                }
+                                                const reader = new FileReader();
+                                                reader.readAsDataURL(file);
+                                                reader.onload = () => {
+                                                    setImageUrl(reader.result);
+                                                    form.setFieldValue('image', reader.result);
+                                                    setFileList([
+                                                        {
+                                                            uid: '-1',
+                                                            name: file.name,
+                                                            status: 'done',
+                                                            url: reader.result,
+                                                            originFileObj: file,
+                                                        },
+                                                    ]);
+                                                };
+                                                return false;
+                                            }}
+                                        >
+                                            <p className='ant-upload-drag-icon'>
+                                                <InboxOutlined />
+                                            </p>
+                                            <p className='ant-upload-text'>
+                                                Kéo thả hoặc click để tải ảnh lên
+                                            </p>
+                                            <p className='ant-upload-hint'>
+                                                Hỗ trợ định dạng: JPG, PNG. Dung lượng tối đa: 2MB
+                                            </p>
+                                        </Upload.Dragger>
+                                    )}
                                 </Form.Item>
-                            )}
-
-                            {imageUrl && (
-                                <div className='mt-4'>
-                                    <p className='font-medium mb-2'>Xem trước:</p>
-                                    <img
-                                        src={imageUrl}
-                                        alt='Preview'
-                                        className='max-w-xs rounded-lg'
-                                    />
-                                </div>
                             )}
                         </div>
 

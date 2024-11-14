@@ -78,7 +78,9 @@ export default function VoucherDetailModal({ voucher, open, onClose }) {
                                 <h3 className='font-semibold'>Khu vực áp dụng</h3>
                             </div>
                             <p className='text-gray-700'>
-                                {voucher.province?.label || 'Áp dụng toàn quốc'}
+                                {voucher.province?.value !== 0
+                                    ? voucher.province?.label
+                                    : 'Áp dụng toàn quốc'}
                             </p>
                         </div>
                     </motion.div>

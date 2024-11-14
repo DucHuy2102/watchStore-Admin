@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
@@ -13,7 +13,6 @@ import {
     Radio,
     Upload,
     Alert,
-    Image,
 } from 'antd';
 import {
     ArrowLeftOutlined,
@@ -23,11 +22,37 @@ import {
     ClockCircleOutlined,
     PictureOutlined,
     InboxOutlined,
+    DeleteOutlined,
 } from '@ant-design/icons';
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
-
 import { defaultImages } from './defaultImages';
+
+const handleUploadToCloudinary = async (file) => {
+    if (!file) return null;
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', `${import.meta.env.VITE_CLOUDINARY_PRESETS_NAME}`);
+
+    try {
+        const response = await fetch(
+            `https://api.cloudinary.com/v1_1/${
+                import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
+            }/image/upload`,
+            {
+                method: 'POST',
+                body: formData,
+            }
+        );
+        const data = await response.json();
+        return data.secure_url;
+    } catch (error) {
+        console.error('Lỗi khi upload:', error);
+        toast.error('Không thể tải ảnh lên. Vui lòng thử lại!');
+        return null;
+    }
+};
 
 const useVoucherSubmit = (navigate) => {
     const { access_token: tokenUser } = useSelector((state) => state.user);
@@ -54,6 +79,7 @@ const useVoucherSubmit = (navigate) => {
             );
 
             if (res.status === 200) {
+                console.log('Voucher created:', res);
                 toast.success('Tạo voucher thành công!');
                 setTimeout(() => {
                     navigate('/vouchers');
@@ -106,44 +132,68 @@ export default function CreateVoucher() {
     const [form] = Form.useForm();
     const { provinces, getProvinces } = useProvinces();
     const { submitting, handleSubmit } = useVoucherSubmit(navigate);
-
     const [provinceSelected, setProvinceSelected] = useState({ value: '', label: '' });
     const [imageType, setImageType] = useState('default');
     const [imageUrl, setImageUrl] = useState(defaultImages[0].url);
     const [fileList, setFileList] = useState([]);
+    const memoizedDefaultImages = useMemo(() => defaultImages, []);
 
     useEffect(() => {
         getProvinces();
         form.setFieldsValue({
             state: 'active',
-            times: 100,
+            times: 10,
             discount: 0,
             createdDate: dayjs(),
             imageType: 'default',
         });
     }, []);
 
-    const handleProvinceChange = (value, option) => {
-        setProvinceSelected({
-            value: value,
-            label: option.label,
-        });
-        form.setFieldValue('province', value);
-    };
+    const memoizedProvinces = useMemo(() => {
+        return provinces?.map((p) => ({
+            value: p.ProvinceID,
+            label: p.NameExtension[1] || p.NameExtension[0],
+        }));
+    }, [provinces]);
 
-    const handleUploadChange = ({ file, fileList }) => {
-        if (fileList.length > 1) {
-            toast.warning('Bạn chỉ được phép tải lên 1 ảnh!');
-            return fileList.slice(0, 1);
-        }
-        setFileList(fileList);
-        setImageUrl(file.thumbUrl);
-        form.setFieldValue('image', file.thumbUrl);
-    };
+    const handleProvinceChange = useCallback(
+        (value, option) => {
+            if (!value) {
+                setProvinceSelected({
+                    value: 0,
+                    label: 'Áp dụng toàn quốc',
+                });
+            } else {
+                setProvinceSelected({
+                    value: value,
+                    label: option.label,
+                });
+            }
+            form.setFieldValue('province', value);
+        },
+        [form]
+    );
 
-    const onFinish = (values) => {
-        handleSubmit(values, provinceSelected, imageUrl);
-    };
+    const handleImageTypeChange = useCallback(
+        (e) => {
+            const newType = e.target.value;
+            setImageType(newType);
+
+            if (newType === 'custom') {
+                setImageUrl('');
+                form.setFieldValue('image', null);
+            }
+        },
+        [form]
+    );
+
+    const onFinish = useCallback(
+        async (values) => {
+            const imageUpload = await handleUploadToCloudinary(fileList[0]?.originFileObj);
+            handleSubmit(values, provinceSelected, imageUpload || imageUrl);
+        },
+        [fileList, handleSubmit, provinceSelected, imageUrl]
+    );
 
     return (
         <div className='p-6 max-w-4xl mx-auto'>
@@ -208,9 +258,16 @@ export default function CreateVoucher() {
                                     className='h-12 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500'
                                 />
                             </Form.Item>
-                            <Form.Item label='Mô tả' name='description' className='col-span-2'>
+                            <Form.Item
+                                label='Mô tả'
+                                name='description'
+                                className='col-span-2'
+                                rules={[
+                                    { required: true, message: 'Vui lòng nhập mô tả voucher!' },
+                                ]}
+                            >
                                 <Input.TextArea
-                                    placeholder='Nhập mô tả về voucher và điều kiện áp dụng'
+                                    placeholder='Nhập mô tả về voucher'
                                     rows={4}
                                     className='text-gray-700'
                                 />
@@ -224,11 +281,7 @@ export default function CreateVoucher() {
                             Thông tin giảm giá
                         </h2>
                         <div className='grid grid-cols-2 gap-6'>
-                            <Form.Item
-                                label='Giá trị giảm (%)'
-                                name='discount'
-                                rules={[{ required: true, message: 'Vui lòng nhập giá trị giảm!' }]}
-                            >
+                            <Form.Item label='Giá trị giảm (%)' name='discount'>
                                 <InputNumber
                                     min={0}
                                     max={100}
@@ -238,13 +291,7 @@ export default function CreateVoucher() {
                                 />
                             </Form.Item>
 
-                            <Form.Item
-                                label='Giá tối thiểu'
-                                name='minPrice'
-                                rules={[
-                                    { required: true, message: 'Vui lòng nhập giá tối thiểu!' },
-                                ]}
-                            >
+                            <Form.Item label='Giá tối thiểu' name='minPrice'>
                                 <InputNumber
                                     min={0}
                                     className='w-full h-11 flex items-center'
@@ -264,19 +311,12 @@ export default function CreateVoucher() {
                             Phạm vi & Giới hạn
                         </h2>
                         <div className='grid grid-cols-2 gap-6'>
-                            <Form.Item
-                                label='Khu vực áp dụng'
-                                name='province'
-                                rules={[{ required: true, message: 'Vui lòng chọn khu vực!' }]}
-                            >
+                            <Form.Item label='Khu vực áp dụng' name='province'>
                                 <Select
                                     placeholder='Chọn khu vực áp dụng'
                                     className='h-11'
                                     onChange={handleProvinceChange}
-                                    options={provinces?.map((p) => ({
-                                        value: p.ProvinceID,
-                                        label: p.NameExtension[1] || p.NameExtension[0],
-                                    }))}
+                                    options={memoizedProvinces}
                                 />
                             </Form.Item>
 
@@ -344,10 +384,7 @@ export default function CreateVoucher() {
                         </h2>
 
                         <Form.Item name='imageType' label='Loại hình ảnh'>
-                            <Radio.Group
-                                onChange={(e) => setImageType(e.target.value)}
-                                value={imageType}
-                            >
+                            <Radio.Group onChange={handleImageTypeChange} value={imageType}>
                                 <Radio value='default'>Sử dụng mẫu có sẵn</Radio>
                                 <Radio value='custom'>Tải lên hình ảnh mới</Radio>
                             </Radio.Group>
@@ -355,7 +392,7 @@ export default function CreateVoucher() {
 
                         {imageType === 'default' ? (
                             <div className='grid grid-cols-4 gap-4 mt-4'>
-                                {defaultImages.map((image, index) => (
+                                {memoizedDefaultImages.map((image, index) => (
                                     <div
                                         key={index}
                                         className={`border-2 rounded-lg p-2 cursor-pointer ${
@@ -378,78 +415,75 @@ export default function CreateVoucher() {
                                 ))}
                             </div>
                         ) : (
-                            <Form.Item
-                                name='image'
-                                valuePropName='fileList'
-                                getValueFromEvent={(e) => {
-                                    if (Array.isArray(e)) {
-                                        return e;
-                                    }
-                                    return e?.fileList;
-                                }}
-                                rules={[{ required: true, message: 'Vui lòng tải lên hình ảnh!' }]}
-                            >
-                                <Upload.Dragger
-                                    name='file'
-                                    multiple={false}
-                                    listType='picture'
-                                    accept='image/*'
-                                    beforeUpload={(file) => {
-                                        const reader = new FileReader();
-                                        reader.readAsDataURL(file);
-                                        reader.onload = () => {
-                                            setImageUrl(reader.result);
-                                        };
-                                        return false;
-                                    }}
-                                    onRemove={() => {
-                                        setFileList([]);
-                                        setImageUrl('');
-                                        form.setFieldValue('image', null);
-                                    }}
-                                >
-                                    <p className='ant-upload-drag-icon'>
-                                        <InboxOutlined />
-                                    </p>
-                                    <p className='ant-upload-text'>
-                                        Kéo thả hoặc click để tải ảnh lên
-                                    </p>
-                                    <p className='ant-upload-hint'>
-                                        Hỗ trợ định dạng: JPG, PNG. Dung lượng tối đa: 2MB
-                                    </p>
-                                </Upload.Dragger>
+                            <Form.Item name='image'>
+                                {imageUrl ? (
+                                    <div className='relative inline-block'>
+                                        <img
+                                            src={imageUrl}
+                                            alt='Uploaded preview'
+                                            className='max-w-[300px] rounded-lg shadow-sm'
+                                        />
+                                        <Button
+                                            icon={<DeleteOutlined />}
+                                            className='absolute top-2 right-2 bg-white/80 hover:bg-white shadow-sm'
+                                            onClick={() => {
+                                                setImageUrl('');
+                                                form.setFieldValue('image', null);
+                                                setFileList([]);
+                                            }}
+                                        />
+                                    </div>
+                                ) : (
+                                    <Upload.Dragger
+                                        name='file'
+                                        multiple={false}
+                                        maxCount={1}
+                                        listType='picture'
+                                        accept='image/*'
+                                        fileList={fileList}
+                                        beforeUpload={(file) => {
+                                            const isImage = file.type.startsWith('image/');
+                                            if (!isImage) {
+                                                toast.error('Bạn chỉ có thể tải lên file ảnh!');
+                                                return false;
+                                            }
+                                            const isLt2M = file.size / 1024 / 1024 < 2;
+                                            if (!isLt2M) {
+                                                toast.error('Ảnh phải nhỏ hơn 2MB!');
+                                                return false;
+                                            }
+                                            const reader = new FileReader();
+                                            reader.readAsDataURL(file);
+                                            reader.onload = () => {
+                                                setImageUrl(reader.result);
+                                                form.setFieldValue('image', reader.result);
+                                                setFileList([
+                                                    {
+                                                        uid: '-1',
+                                                        name: file.name,
+                                                        status: 'done',
+                                                        url: reader.result,
+                                                        originFileObj: file,
+                                                    },
+                                                ]);
+                                            };
+                                            return false;
+                                        }}
+                                    >
+                                        <p className='ant-upload-drag-icon'>
+                                            <InboxOutlined />
+                                        </p>
+                                        <p className='ant-upload-text'>
+                                            Kéo thả hoặc click để tải ảnh lên
+                                        </p>
+                                        <p className='ant-upload-hint'>
+                                            Hỗ trợ định dạng: JPG, PNG. Dung lượng tối đa: 2MB
+                                        </p>
+                                    </Upload.Dragger>
+                                )}
                             </Form.Item>
                         )}
-
-                        {/* {imageUrl && imageType !== 'default' && (
-                            <div className='mt-4'>
-                                <p className='font-medium mb-2'>Xem trước:</p>
-                                <Image
-                                    src={imageUrl}
-                                    alt='Preview'
-                                    className='max-w-xs rounded-lg'
-                                />
-                            </div>
-                        )} */}
                     </div>
-
-                    {/* <Form.Item label='Trạng thái hoạt động' name='state'>
-                        <Select
-                            className='h-11'
-                            options={[
-                                {
-                                    value: 'active',
-                                    label: (
-                                        <span className='text-green-600'>Kích hoạt voucher</span>
-                                    ),
-                                },
-                                {
-                                    value: 'inactive',
-                                    label: <span className='text-red-600'>Ngừng kích hoạt</span>,
-                                },
-                            ]}
-                        />
-                    </Form.Item> */}
 
                     {dayjs().isAfter(form.getFieldValue('expiryDate')) && (
                         <Alert

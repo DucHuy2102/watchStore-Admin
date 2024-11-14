@@ -21,7 +21,7 @@ export default function ListVouchers() {
     const { access_token: tokenUser } = useSelector((state) => state.user);
     const [loading, setLoading] = useState(false);
     const [vouchers, setVouchers] = useState([]);
-    console.log('-->', vouchers);
+    console.log(vouchers);
     const [confirmModalOpen, setConfirmModalOpen] = useState(false);
     const [selectedVoucher, setSelectedVoucher] = useState(null);
     const [voucherDetailsModalOpen, setVoucherDetailsModalOpen] = useState(false);
@@ -89,7 +89,11 @@ export default function ListVouchers() {
             render: (_, record) => (
                 <div className='flex items-center gap-1.5'>
                     <FaMapMarkerAlt className='text-red-500' />
-                    <span>{record?.province?.label ?? 'Áp dụng toàn quốc'}</span>
+                    <span>
+                        {record?.province?.value !== 0
+                            ? record?.province?.label
+                            : 'Áp dụng toàn quốc'}
+                    </span>
                 </div>
             ),
         },
@@ -131,18 +135,18 @@ export default function ListVouchers() {
                             </div>
                         ),
                     },
-                    expired: {
-                        color: 'gray',
-                        text: 'Hết hạn',
+                    waiting: {
+                        color: 'orange',
+                        text: 'Chờ kích hoạt',
                         icon: (
-                            <div className='bg-gray-500 text-white p-1 rounded-full'>
+                            <div className='bg-orange-500 text-white p-1 rounded-full'>
                                 <FaCalendarTimes />
                             </div>
                         ),
                     },
                 };
 
-                const config = stateConfig[state] || stateConfig.inactive;
+                const config = stateConfig[state];
 
                 return (
                     <div className='flex items-center gap-2'>

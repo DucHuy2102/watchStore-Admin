@@ -36,7 +36,6 @@ export default function CreateProduct() {
     const { access_token: token } = useSelector((state) => state.user);
     const [selectedColors, setSelectedColors] = useState([]);
     const [product, setProduct] = useState({});
-    console.log('Product:', product);
     const { id } = useParams();
 
     useEffect(() => {
