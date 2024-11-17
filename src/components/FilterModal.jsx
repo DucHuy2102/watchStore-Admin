@@ -89,11 +89,11 @@ const FilterModal = ({
                 </div>
             </div>
 
-            <div className='flex justify-between items-center px-6 py-1 bg-gray-50 rounded-b-lg'>
-                <Button color='gray' onClick={onClose} className='px-4 py-1'>
+            <div className='flex justify-between items-center px-6 py-3 bg-gray-50 rounded-b-lg'>
+                <Button color='gray' size='sm' onClick={onClose}>
                     Đóng
                 </Button>
-                <Button color='blue' onClick={onSubmit} className='px-4 py-1'>
+                <Button color='blue' size='sm' onClick={onSubmit}>
                     Áp dụng bộ lọc
                 </Button>
             </div>

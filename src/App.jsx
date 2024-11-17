@@ -17,6 +17,7 @@ import {
     ForgotPassword,
     VerifyEmail,
     ResetPassword,
+    ProductDetail,
 } from './pages/exportPage';
 import { PrivateRoute } from './components/exportComponent';
 import { ToastContainer } from 'react-toastify';
@@ -42,6 +43,7 @@ export default function App() {
                             <Route path='/products' element={<ListProduct />} />
                             <Route path='/product/create' element={<CreateProduct />} />
                             <Route path='/product/edit/:id' element={<EditProduct />} />
+                            <Route path='/product-detail/:id' element={<ProductDetail />} />
                             <Route path='/orders' element={<ListOrder />} />
                             <Route path='/order/detail/:id' element={<DetailOrder />} />
                             <Route path='/vouchers' element={<ListVouchers />} />

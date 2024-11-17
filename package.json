@@ -32,6 +32,7 @@
         "react-router-dom": "^6.27.0",
         "react-spinners": "^0.14.1",
         "react-toastify": "^10.0.6",
+        "recharts": "^2.13.3",
         "redux-persist": "^6.0.0"
     },
     "devDependencies": {

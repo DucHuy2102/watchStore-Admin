@@ -15,6 +15,7 @@ export { default as ResetPassword } from './Auth/ResetPassword';
 export { default as CreateProduct } from './Product/CreateProduct';
 export { default as EditProduct } from './Product/EditProduct';
 export { default as ListProduct } from './Product/ListProduct';
+export { default as ProductDetail } from './Product/ProductDetail';
 
 // user
 export { default as ListUser } from './User/ListUser';

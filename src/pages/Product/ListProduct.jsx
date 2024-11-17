@@ -2,11 +2,13 @@ import axios from 'axios';
 import { useEffect } from 'react';
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Table, Input, Button, Space, Popconfirm, Tooltip, Image, Skeleton } from 'antd';
-import { FaSearch, FaEdit, FaTrash, FaPlus, FaCircle, FaImage, FaFilter } from 'react-icons/fa';
+import { Table, Button, Space, Popconfirm, Tooltip, Image, Skeleton, Badge } from 'antd';
+import { FaEdit, FaTrash, FaPlus, FaCircle, FaImage, FaFilter, FaEye } from 'react-icons/fa';
 import { useSelector } from 'react-redux';
 import { FilterModal_Component } from '../../components/exportComponent';
 import { toast } from 'react-toastify';
+import SearchInput from './components/SearchInput';
+import { Empty } from 'antd';
 
 const options = [
     {
@@ -51,10 +53,10 @@ export default function ListProduct() {
     const { access_token: tokenUser } = useSelector((state) => state.user);
     const navigate = useNavigate();
     const [products, setProducts] = useState([]);
+    console.log(products);
     const [isLoading, setIsLoading] = useState(false);
     const [totalProducts, setTotalProducts] = useState(0);
     const [searchParams, setSearchParams] = useSearchParams();
-    const [searchText, setSearchText] = useState('');
     const [showModalFilter, setShowModalFilter] = useState(false);
     const [searchFilterOption, setSearchFilterOption] = useState('');
     const [selectedFilters, setSelectedFilters] = useState([]);
@@ -96,17 +98,6 @@ export default function ListProduct() {
         } finally {
             setIsLoading(false);
         }
-    };
-
-    const handleSearch = () => {
-        const search = new URLSearchParams(searchParams);
-        search.set('pageNum', '1');
-        if (searchText.trim() !== '') {
-            search.set('q', searchText.trim());
-        } else {
-            search.delete('q');
-        }
-        setSearchParams(search);
     };
 
     const filteredOptions = options.map((option) => ({
@@ -204,145 +195,156 @@ export default function ListProduct() {
 
     const columns = [
         {
-            title: 'Hình ảnh',
-            dataIndex: 'image',
-            key: 'image',
+            title: 'Sản phẩm',
+            dataIndex: 'product',
+            key: 'product',
+            width: '40%',
             render: (_, record) => (
-                <div className='relative w-16 h-16'>
-                    {record?.img && record.img.length > 0 ? (
-                        <Image
-                            src={record.img[0]}
-                            alt={record.productName}
-                            className='rounded-lg object-cover w-16 h-16'
-                            fallback='/path-to-fallback-image.png'
-                            preview={true}
-                        />
-                    ) : (
-                        <div className='w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center'>
-                            <FaImage className='w-6 h-6 text-gray-400' />
-                        </div>
-                    )}
+                <div className='flex items-center gap-4'>
+                    <div className='relative w-20 h-20'>
+                        {record?.img && record.img.length > 0 ? (
+                            <Image
+                                src={record.img[0]}
+                                alt={record.productName}
+                                className='rounded-lg object-cover w-full h-full'
+                                loading='lazy'
+                                preview={{
+                                    mask: <div className='text-xs'>Xem</div>,
+                                }}
+                            />
+                        ) : (
+                            <div className='w-full h-full bg-gray-100 rounded-lg flex items-center justify-center'>
+                                <FaImage className='w-6 h-6 text-gray-400' />
+                            </div>
+                        )}
+                    </div>
+                    <div className='flex flex-col'>
+                        <Link
+                            to={`/product-detail/${record.id}`}
+                            className='font-medium text-gray-900 hover:text-blue-600 mb-1'
+                        >
+                            {record.productName}
+                        </Link>
+                        <span className='text-sm text-gray-500'>
+                            {record.origin} · {record.type}
+                        </span>
+                    </div>
                 </div>
             ),
         },
         {
-            title: 'Tên sản phẩm',
-            dataIndex: 'name',
-            key: 'name',
-            render: (_, record) =>
-                record?.productName && (
-                    <Link to={`/product-detail/${record.id}`} className='truncate'>
-                        {record.productName}
-                    </Link>
-                ),
-        },
-        {
-            title: 'Giá gốc',
+            title: 'Màu sắc',
+            dataIndex: 'variants',
+            key: 'variants',
             align: 'center',
-            dataIndex: 'price',
-            sorter: (a, b) => a.price - b.price,
-            key: 'price',
-            render: (price) => `${price.toLocaleString()}đ`,
-        },
-        {
-            title: 'Giảm giá',
-            align: 'center',
-            dataIndex: 'discount',
-            sorter: (a, b) => a.discount - b.discount,
-            key: 'discount',
-            render: (discount) => `${discount.toLocaleString()}đ`,
-        },
-        {
-            title: 'Giá đang bán',
-            align: 'center',
-            dataIndex: 'priceNow',
-            key: 'priceNow',
-            render: (_, record) => {
-                const finalPrice = record.price - record.discount;
-                const discountPercent = ((record.discount / record.price) * 100).toFixed(0);
-                return (
-                    <Tooltip
-                        title={record.discount > 0 ? `Giảm ${discountPercent}%` : 'Không giảm giá'}
-                    >
-                        <span className='font-medium'>
-                            {finalPrice.toLocaleString()}đ
-                            {record.discount > 0 && (
-                                <span className='ml-2 text-xs text-red-500'>
-                                    -{discountPercent}%
+            width: '35%',
+            render: (_, record) => (
+                <div className='flex flex-wrap justify-center items-center gap-2'>
+                    {record.option?.map((opt, index) => (
+                        <Tooltip
+                            key={opt.key || index}
+                            title={
+                                <div className='space-y-1'>
+                                    <div>
+                                        Giá:{' '}
+                                        {(opt.value.price - opt.value.discount).toLocaleString()}đ
+                                    </div>
+                                    <div>Kho: {opt.value.quantity}</div>
+                                    {opt.value.discount > 0 && (
+                                        <div className='text-red-400'>
+                                            Giảm:{' '}
+                                            {((opt.value.discount / opt.value.price) * 100).toFixed(
+                                                0
+                                            )}
+                                            %
+                                        </div>
+                                    )}
+                                </div>
+                            }
+                        >
+                            <div className='flex items-center cursor-pointer gap-2 px-3 py-1.5 bg-gray-50 rounded-full'>
+                                <div
+                                    className='w-4 h-4 rounded-full border shadow-sm'
+                                    style={{ backgroundColor: opt.key }}
+                                />
+                                <span className='text-sm font-medium text-gray-700'>
+                                    {opt.value.color}
                                 </span>
-                            )}
-                        </span>
-                    </Tooltip>
-                );
-            },
-        },
-        {
-            title: 'Số lượng',
-            align: 'center',
-            dataIndex: 'amount',
-            key: 'amount',
-            sorter: (a, b) => a.amount - b.amount,
-            render: (amount) => {
-                let color = 'green';
-                let status = 'Còn nhiều';
-                if (amount < 20) {
-                    color = 'red';
-                    status = 'Sắp hết hàng';
-                } else if (amount < 50) {
-                    color = 'yellow';
-                    status = 'Số lượng trung bình';
-                }
-                return (
-                    <Tooltip title={status}>
-                        <span className={`text-${color}-500 cursor-pointer font-medium`}>
-                            {amount.toLocaleString()}
-                        </span>
-                    </Tooltip>
-                );
-            },
+                                {opt.value.quantity === 0 && (
+                                    <Badge status='error' text='Hết' className='text-xs' />
+                                )}
+                            </div>
+                        </Tooltip>
+                    ))}
+                </div>
+            ),
         },
         {
             title: 'Trạng thái',
+            key: 'status',
+            width: '15%',
             align: 'center',
-            dataIndex: 'state',
-            key: 'state',
-            render: (state) => {
-                return state === 'saling' ? (
-                    <div className='inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 rounded-full'>
-                        <FaCircle className='w-2 h-2 text-blue-500 animate-pulse' />
-                        <span className='font-medium'>Đang bán</span>
-                    </div>
-                ) : state === 'soldOut' ? (
-                    <div className='inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-700 rounded-full'>
-                        <FaCircle className='w-2 h-2 text-gray-500' />
-                        <span className='font-medium'>Hết hàng</span>
-                    </div>
-                ) : (
-                    <div className='inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-700 rounded-full'>
-                        <FaCircle className='w-2 h-2 text-red-500' />
-                        <span className='font-medium'>Đã xóa</span>
+            render: (_, record) => {
+                const totalQuantity =
+                    record.option?.reduce((sum, opt) => sum + opt.value.quantity, 0) || 0;
+                const hasDiscount = record.option?.some((opt) => opt.value.discount > 0);
+
+                return (
+                    <div className='space-y-2'>
+                        <div
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full ${
+                                totalQuantity > 0
+                                    ? 'bg-green-50 text-green-700'
+                                    : 'bg-red-50 text-red-700'
+                            }`}
+                        >
+                            <FaCircle
+                                onClick={() => navigate(`/product-detail/${record.id}`)}
+                                className={`w-2 h-2 ${
+                                    totalQuantity > 0 ? 'text-green-500' : 'text-red-500'
+                                }`}
+                            />
+                            <span className='font-medium'>
+                                {totalQuantity > 0 ? 'Còn hàng' : 'Hết hàng'}
+                            </span>
+                        </div>
+                        {hasDiscount && (
+                            <div className='text-xs px-2 py-1 bg-red-50 text-red-600 rounded-full inline-block'>
+                                Đang giảm giá
+                            </div>
+                        )}
                     </div>
                 );
             },
         },
         {
             title: 'Thao tác',
-            align: 'center',
             key: 'action',
+            width: '10%',
+            align: 'center',
             render: (_, record) => (
-                <Space>
-                    <Button type='primary' icon={<FaEdit />} onClick={() => handleEdit(record.id)}>
-                        Sửa
-                    </Button>
-                    <Popconfirm
-                        title='Bạn có chắc muốn xóa sản phẩm này?'
-                        onConfirm={() => handleDelete(record.id)}
-                    >
-                        <Button type='primary' danger icon={<FaTrash />}>
-                            Xóa
-                        </Button>
-                    </Popconfirm>
-                </Space>
+                <div className='flex items-center justify-center gap-2'>
+                    <Tooltip title='Xem chi tiết'>
+                        <Link to={`/product-detail/${record.id}`}>
+                            <Button type='text' icon={<FaEye className='text-blue-600' />} />
+                        </Link>
+                    </Tooltip>
+                    <Tooltip title='Chỉnh sửa'>
+                        <Button
+                            type='text'
+                            icon={<FaEdit className='text-gray-600' />}
+                            onClick={() => handleEdit(record.id)}
+                        />
+                    </Tooltip>
+                    <Tooltip title='Xóa'>
+                        <Popconfirm
+                            title='Bạn có chắc muốn xóa sản phẩm này?'
+                            onConfirm={() => handleDelete(record.id)}
+                        >
+                            <Button type='text' icon={<FaTrash className='text-red-600' />} />
+                        </Popconfirm>
+                    </Tooltip>
+                </div>
             ),
         },
     ];
@@ -361,49 +363,33 @@ export default function ListProduct() {
                 </Button>
             </div>
 
-            <div className='mb-6 flex gap-x-3 items-center'>
-                <div className='flex-1 relative'>
-                    <Input
-                        placeholder='Tìm kiếm sản phẩm theo tên, mã, thương hiệu...'
-                        value={searchText}
-                        onChange={(e) => setSearchText(e.target.value)}
-                        onPressEnter={handleSearch}
-                        className='h-10 pl-11'
-                        allowClear
-                    />
-                    <span className='absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none'>
-                        <FaSearch className='w-4 h-4 text-gray-400' />
-                    </span>
-                </div>
-
-                <Space size='middle'>
-                    <Button
-                        type='primary'
-                        onClick={handleSearch}
-                        icon={<FaSearch className='text-sm' />}
-                        className='h-10 px-6 flex items-center gap-2 shadow-sm'
-                    >
-                        Tìm kiếm
-                    </Button>
-
-                    <Tooltip
-                        title={
-                            selectedFilters.length > 0
-                                ? `${selectedFilters.length} bộ lọc đang được áp dụng`
-                                : 'Mở bộ lọc nâng cao'
+            <div className='mb-6 space-y-4 sm:space-y-0 sm:flex sm:gap-x-3 sm:items-center'>
+                <SearchInput
+                    onSearch={(text) => {
+                        const search = new URLSearchParams(searchParams);
+                        search.set('pageNum', '1');
+                        if (text.trim() !== '') {
+                            search.set('q', text.trim());
+                        } else {
+                            search.delete('q');
                         }
+                        setSearchParams(search);
+                    }}
+                    placeholder='Tìm kiếm theo tên sản phẩm, mã sản phẩm...'
+                />
+
+                <Space size='middle' className='flex-shrink-0'>
+                    <Tooltip
+                        title={selectedFilters.length ? `${selectedFilters.length} bộ lọc` : 'Lọc'}
                     >
                         <Button
-                            type='default'
                             onClick={() => setShowModalFilter(true)}
-                            className={`h-10 px-5 flex items-center gap-2 border-2 transition-all duration-200 hover:border-blue-500 hover:text-blue-500 ${
-                                selectedFilters.length > 0
-                                    ? 'border-blue-500 text-blue-500'
-                                    : 'border-gray-200'
+                            className={`h-11 px-5 flex items-center gap-2 border-2 ${
+                                selectedFilters.length ? 'border-blue-500 text-blue-500' : ''
                             }`}
                         >
-                            <FaFilter className='text-sm' />
-                            <span>Bộ lọc</span>
+                            <FaFilter />
+                            <span className='hidden sm:inline'>Bộ lọc</span>
                             {selectedFilters.length > 0 && (
                                 <span className='flex items-center justify-center w-5 h-5 text-xs font-medium bg-blue-500 text-white rounded-full'>
                                     {selectedFilters.length}
@@ -429,23 +415,25 @@ export default function ListProduct() {
             {isLoading ? (
                 <Skeleton active />
             ) : (
-                <Table
-                    columns={columns}
-                    dataSource={products}
-                    loading={isLoading}
-                    pagination={{
-                        total: totalProducts,
-                        current: parseInt(searchParams.get('pageNum') || '1'),
-                        pageSize: 12,
-                        onChange: (page) => handleTableChange({ current: page }),
-                        showSizeChanger: false,
-                        showTotal: (total) => `Tổng ${total} sản phẩm`,
-                    }}
-                    onChange={handleTableChange}
-                    rowKey='id'
-                    scroll={{ x: 'max-content' }}
-                    size='middle'
-                />
+                <div className='bg-white rounded-lg shadow'>
+                    {products.length > 0 ? (
+                        <Table
+                            columns={columns}
+                            dataSource={products}
+                            rowKey='id'
+                            pagination={{
+                                total: totalProducts,
+                                pageSize: 12,
+                                showSizeChanger: false,
+                                showQuickJumper: false,
+                                showTotal: (total) => `Tổng số ${total} sản phẩm`,
+                            }}
+                            onChange={handleTableChange}
+                        />
+                    ) : (
+                        <Empty description='Không có sản phẩm nào' />
+                    )}
+                </div>
             )}
         </div>
     );

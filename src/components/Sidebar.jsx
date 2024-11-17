@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import {
     HiChartPie,
     HiOutlineCog,
@@ -9,13 +9,15 @@ import {
     HiShoppingBag,
     HiUser,
 } from 'react-icons/hi';
-import { FaShippingFast } from 'react-icons/fa';
+import { FaMoon, FaShippingFast } from 'react-icons/fa';
 import { TbLogout2 } from 'react-icons/tb';
 import { MdDiscount } from 'react-icons/md';
 import { SlArrowLeft, SlArrowRight } from 'react-icons/sl';
 import { user_SignOut } from '../redux/slices/userSlice';
 import { Button, Modal } from 'flowbite-react';
 import { Tooltip } from 'antd';
+import { IoIosSunny } from 'react-icons/io';
+import { toggleTheme } from '../redux/slices/themeSlice';
 
 const SidebarItem = ({ to, icon: Icon, active, showSidebar, children }) => {
     return (
@@ -46,19 +48,9 @@ const SidebarItem = ({ to, icon: Icon, active, showSidebar, children }) => {
     );
 };
 
-const DropdownMenuItem = ({ icon: Icon, label, items, isActive, showSidebar, onClick }) => {
-    const navigate = useNavigate();
+const DropdownMenuItem = ({ icon: Icon, label, items, isActive, showSidebar }) => {
     const [isOpen, setIsOpen] = useState(false);
     const location = useLocation();
-
-    const handleItemClick = (path) => {
-        setIsOpen(false);
-        if (path === '/products') {
-            navigate('/products');
-        } else {
-            navigate(path);
-        }
-    };
 
     return (
         <div className='w-full'>
@@ -130,13 +122,11 @@ const DropdownMenuItem = ({ icon: Icon, label, items, isActive, showSidebar, onC
 
 export default function Sidebar_Component() {
     const dispatch = useDispatch();
-    const navigate = useNavigate();
     const [showModal, setShowModal] = useState(false);
     const { theme } = useSelector((state) => state.theme);
     const currentUser = useSelector((state) => state.user.user);
     const [showSidebar, setShowSidebar] = useState(true);
 
-    // get tab from url
     const location = useLocation();
     const [tab, setTab] = useState('');
     useEffect(() => {
@@ -145,7 +135,6 @@ export default function Sidebar_Component() {
         setTab(tabURL);
     }, [location.search]);
 
-    // sign out function
     const handleSignOutAccount = useCallback(async () => {
         dispatch(user_SignOut());
     }, [dispatch]);
@@ -164,30 +153,61 @@ export default function Sidebar_Component() {
             } ${showSidebar ? 'w-64' : 'w-20'}`}
         >
             <div className='flex flex-col h-screen'>
-                <div className='relative p-5'>
-                    <div className='flex flex-col items-center justify-center'>
+                <div className='relative p-4'>
+                    <div
+                        className={`flex items-center ${
+                            !showSidebar ? 'justify-center' : 'justify-between'
+                        }`}
+                    >
                         {showSidebar && (
-                            <Link to='/dashboard'>
-                                <h1 className='text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent'>
+                            <Link to='/dashboard' className='flex items-center space-x-2 group'>
+                                <h1
+                                    className='text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent
+                    transition-all duration-300 group-hover:translate-x-1'
+                                >
                                     WatcHes
                                 </h1>
                             </Link>
                         )}
+
+                        <div className='flex items-center space-x-2'>
+                            <button
+                                onClick={toggleSidebar}
+                                className='p-2 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400
+                    hover:bg-blue-500/20 transition-all duration-300'
+                                title={showSidebar ? 'Thu gọn' : 'Mở rộng'}
+                            >
+                                {showSidebar ? (
+                                    <SlArrowLeft size={16} />
+                                ) : (
+                                    <SlArrowRight size={16} />
+                                )}
+                            </button>
+
+                            <button
+                                onClick={() => dispatch(toggleTheme())}
+                                className={`p-2 rounded-lg transition-all duration-300
+                    ${
+                        theme === 'light'
+                            ? 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                            : 'bg-gray-800 hover:bg-gray-700 text-yellow-400'
+                    }`}
+                                title={theme === 'light' ? 'Chế độ tối' : 'Chế độ sáng'}
+                            >
+                                {theme === 'light' ? (
+                                    <FaMoon className='w-4 h-4' />
+                                ) : (
+                                    <IoIosSunny className='w-4 h-4' />
+                                )}
+                            </button>
+                        </div>
                     </div>
-                    <button
-                        onClick={toggleSidebar}
-                        className={`absolute ${
-                            showSidebar ? 'left-5' : 'right-1/2 translate-x-1/2'
-                        } top-6 p-1.5 rounded-full bg-blue-500 text-white
-            hover:bg-blue-600 transition-all duration-300 shadow-lg shadow-blue-500/50`}
-                    >
-                        {showSidebar ? <SlArrowLeft size={16} /> : <SlArrowRight size={16} />}
-                    </button>
                 </div>
+
                 <div
                     className={`px-5 ${
                         !showSidebar
-                            ? 'flex justify-center mt-7'
+                            ? 'flex justify-center'
                             : 'flex flex-col items-center justify-center'
                     }`}
                 >
@@ -243,7 +263,6 @@ export default function Sidebar_Component() {
                         </div>
                     )}
                 </div>
-
                 <nav className='flex-1 flex flex-col items-center px-5 mt-2 space-y-2'>
                     <SidebarItem
                         to='/dashboard'
@@ -326,7 +345,6 @@ export default function Sidebar_Component() {
                         Giảm giá
                     </SidebarItem>
                 </nav>
-
                 <div className='p-5'>
                     <Tooltip title='Đăng xuất' placement='right'>
                         <button

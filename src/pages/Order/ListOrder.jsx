@@ -84,39 +84,6 @@ export default function ListOrder() {
         console.log('Deleting record:', record.id);
     };
 
-    // const menuItems = (record) => (
-    //     <Menu
-    //         style={{
-    //             padding: '4px',
-    //             borderRadius: '8px',
-    //             boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-    //         }}
-    //     >
-    //         <Menu.Item key='detail'>
-    //             <Button
-    //                 onClick={() => handleView(record)}
-    //                 type='primary'
-    //                 size='middle'
-    //                 icon={<FaEye />}
-    //                 style={{ borderRadius: '6px', width: '100%' }}
-    //             >
-    //                 Chi tiết
-    //             </Button>
-    //         </Menu.Item>
-    //         <Menu.Item key='delete'>
-    //             <Button
-    //                 onClick={() => handleDelete(record)}
-    //                 className='bg-red-500 w-full !text-white hover:!bg-red-600 !border-none'
-    //                 size='middle'
-    //                 icon={<MdDelete />}
-    //                 style={{ borderRadius: '6px' }}
-    //             >
-    //                 Xóa
-    //             </Button>
-    //         </Menu.Item>
-    //     </Menu>
-    // );
-
     const columns = [
         {
             title: 'STT',
@@ -294,7 +261,7 @@ export default function ListOrder() {
             {
                 key: 'all',
                 label: (
-                    <Badge count={20} style={{ backgroundColor: '#36cfc9' }}>
+                    <Badge count={orders.length} style={{ backgroundColor: '#36cfc9' }}>
                         <span style={{ padding: '0 4px', fontWeight: 500 }}>Tất cả</span>
                     </Badge>
                 ),

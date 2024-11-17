@@ -44,3 +44,13 @@
 .custom-table .ant-table-tbody > tr:hover > td {
     background-color: #f1f5f9;
 }
+.custom-table {
+    .ant-table-thead > tr > th {
+        background: #f8fafc;
+        font-weight: 600;
+    }
+
+    .ant-table-tbody > tr:hover > td {
+        background: #f1f5f9;
+    }
+}

@@ -1,13 +1,13 @@
 import { Avatar, Button, Input, Modal, Select, Table, Tag } from 'antd';
 import TextArea from 'antd/es/input/TextArea';
 import axios from 'axios';
-import { Badge, Card, theme } from 'flowbite-react';
+import { Badge } from 'flowbite-react';
 import { useEffect, useState } from 'react';
 import { AiOutlineEye, AiOutlineSearch } from 'react-icons/ai';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
-import { ExclamationCircleOutlined } from '@ant-design/icons';
-
+import { ExclamationCircleOutlined, MailOutlined } from '@ant-design/icons';
+import { UserStats } from './components/exportComponentUser';
 const { Search } = Input;
 
 function formatDate(dateString) {
@@ -26,6 +26,7 @@ function formatDate(dateString) {
 export default function ListUser() {
     const { access_token: tokenUser } = useSelector((state) => state.user);
     const [users, setUsers] = useState([]);
+    console.log(users);
     const [searchText, setSearchText] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
     const [selectedUser, setSelectedUser] = useState(null);
@@ -35,11 +36,14 @@ export default function ListUser() {
     const [isBlockModalVisible, setIsBlockModalVisible] = useState(false);
 
     useEffect(() => {
-        getAllUsers();
+        if (!users.length) {
+            getAllUsers();
+        }
     }, []);
 
     const getAllUsers = async () => {
         try {
+            setLoading(true);
             const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/user/get-all-user`, {
                 headers: {
                     Authorization: `Bearer ${tokenUser}`,
@@ -51,6 +55,8 @@ export default function ListUser() {
             }
         } catch (error) {
             console.log(error);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -58,14 +64,23 @@ export default function ListUser() {
         {
             title: 'Người dùng',
             key: 'user',
+            sorter: (a, b) => a.username.localeCompare(b.username),
             render: (_, record) => (
                 <div className='flex items-center gap-3'>
                     <Avatar src={record.avatarImg} size='large'>
                         {record.username?.[0]?.toUpperCase()}
                     </Avatar>
                     <div>
-                        <div className='font-semibold'>{record.username}</div>
-                        <div className='text-gray-500 text-sm'>{record.email}</div>
+                        <div className='flex items-center gap-x-2'>
+                            <div className='font-semibold'>
+                                {record.fullName ?? 'Chưa cập nhật'}
+                            </div>{' '}
+                            - <div className='font-semibold italic'>{record.username}</div>
+                        </div>
+                        <div className='flex items-center gap-1.5 truncate text-gray-600'>
+                            <MailOutlined />
+                            <span>{record.email}</span>
+                        </div>
                     </div>
                 </div>
             ),
@@ -74,6 +89,7 @@ export default function ListUser() {
             title: 'Số điện thoại',
             dataIndex: 'phone',
             align: 'center',
+            sorter: (a, b) => a.phone?.localeCompare(b.phone),
             key: 'phone',
             render: (phone) => phone || 'Chưa cập nhật',
         },
@@ -88,14 +104,6 @@ export default function ListUser() {
                 >
                     {record.verified ? 'Đã xác thực' : 'Chưa xác thực'}
                 </Badge>
-            ),
-        },
-        {
-            title: 'Vai trò',
-            key: 'role',
-            align: 'center',
-            render: (_, record) => (
-                <Tag color={record.admin ? 'red' : 'blue'}>{record.admin ? 'Admin' : 'User'}</Tag>
             ),
         },
         {
@@ -130,7 +138,8 @@ export default function ListUser() {
                     <Button
                         type='link'
                         className='flex items-center gap-1'
-                        onClick={() => {
+                        onClick={(e) => {
+                            e.stopPropagation();
                             setSelectedUser(record);
                             setIsModalVisible(true);
                         }}
@@ -141,7 +150,10 @@ export default function ListUser() {
                     <div className='h-4 w-px bg-gray-300' />
                     <Button
                         type={record.state === 'active' ? 'danger' : 'primary'}
-                        onClick={() => handleToggleUserState(record)}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleUserState(record);
+                        }}
                         loading={loading}
                     >
                         {record.state === 'active' ? 'Chặn' : 'Mở chặn'}
@@ -198,36 +210,62 @@ export default function ListUser() {
     });
 
     return (
-        <Card className='p-6 mt-16 ml-2'>
-            <div className='flex justify-between items-center mb-6'>
-                <div className='text-2xl font-bold'>Quản lý người dùng</div>
-                <div className='flex gap-4'>
-                    <Select defaultValue='all' style={{ width: 120 }} onChange={setFilterStatus}>
-                        <Select.Option value='all'>Tất cả</Select.Option>
-                        <Select.Option value='active'>Hoạt động</Select.Option>
-                        <Select.Option value='inactive'>Bị chặn</Select.Option>
-                    </Select>
-                    <Search
-                        placeholder='Tìm kiếm người dùng...'
-                        allowClear
-                        enterButton={<AiOutlineSearch />}
-                        onChange={(e) => setSearchText(e.target.value)}
-                        style={{ width: 300 }}
-                    />
-                </div>
+        <div className='container mx-auto px-6'>
+            <div className='mb-6'>
+                <h1 className='text-2xl font-bold text-gray-900 dark:text-white'>
+                    Quản lý người dùng
+                </h1>
+                <p className='text-gray-500 mt-2'>Theo dõi và quản lý người dùng trong hệ thống</p>
             </div>
 
-            <Table
-                className={`${theme === 'light' ? '' : 'bg-white'} rounded-lg`}
-                columns={columns}
-                dataSource={filteredUsers}
-                rowKey='id'
-                pagination={{
-                    pageSize: 10,
-                    total: filteredUsers.length,
-                    showTotal: (total) => `Tổng ${total} người dùng`,
-                }}
-            />
+            {!loading && (
+                <div className='mb-6'>
+                    <UserStats users={users} />
+                </div>
+            )}
+
+            <div className='bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden'>
+                <div className='bg-white dark:bg-gray-800 rounded-xl p-4'>
+                    <div className='flex flex-wrap gap-4 items-center justify-between'>
+                        <div className='flex gap-4'>
+                            <Select
+                                defaultValue='all'
+                                className='min-w-[140px]'
+                                onChange={setFilterStatus}
+                            >
+                                <Select.Option value='all'>Tất cả</Select.Option>
+                                <Select.Option value='active'>Hoạt động</Select.Option>
+                                <Select.Option value='inactive'>Bị chặn</Select.Option>
+                            </Select>
+                            <Search
+                                placeholder='Tìm kiếm người dùng...'
+                                allowClear
+                                enterButton={<AiOutlineSearch />}
+                                onChange={(e) => setSearchText(e.target.value)}
+                                className='w-full md:w-[300px]'
+                            />
+                        </div>
+                    </div>
+                </div>
+                <Table
+                    loading={loading}
+                    columns={columns}
+                    dataSource={filteredUsers}
+                    rowKey='id'
+                    rowClassName='hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer'
+                    onRow={(record) => ({
+                        onClick: () => {
+                            setSelectedUser(record);
+                            setIsModalVisible(true);
+                        },
+                    })}
+                    pagination={{
+                        className: 'px-6 py-3',
+                        showSizeChanger: true,
+                        showTotal: (total) => `Tổng ${total} người dùng`,
+                    }}
+                />
+            </div>
 
             <Modal
                 title='Thông tin chi tiết người dùng'
@@ -324,6 +362,96 @@ export default function ListUser() {
                                 </div>
                             )}
                         </div>
+
+                        {selectedUser.orders && selectedUser.orders.length > 0 && (
+                            <>
+                                <div className='border-t border-gray-200 pt-6'>
+                                    <div className='text-lg font-semibold mb-4'>
+                                        Lịch sử đơn hàng
+                                    </div>
+                                    <div className='space-y-4'>
+                                        {selectedUser.orders.map((order) => (
+                                            <div
+                                                key={order.id.timestamp}
+                                                className='bg-gray-50 rounded-lg p-4'
+                                            >
+                                                <div className='flex justify-between items-start'>
+                                                    <div>
+                                                        <div className='font-medium text-gray-900'>
+                                                            Đơn hàng #{order.id.timestamp}
+                                                        </div>
+                                                        <div className='text-sm text-gray-500'>
+                                                            {new Date(
+                                                                order.createdAt
+                                                            ).toLocaleString('vi-VN')}
+                                                        </div>
+                                                    </div>
+                                                    <Tag
+                                                        color={
+                                                            order.state === 'processing'
+                                                                ? 'processing'
+                                                                : order.state === 'delivered'
+                                                                ? 'success'
+                                                                : 'default'
+                                                        }
+                                                    >
+                                                        {order.state === 'processing'
+                                                            ? 'Đang xử lý'
+                                                            : order.state === 'delivered'
+                                                            ? 'Đã giao'
+                                                            : 'Chờ xử lý'}
+                                                    </Tag>
+                                                </div>
+
+                                                <div className='mt-3 space-y-2'>
+                                                    {order.products.map((item) => (
+                                                        <div
+                                                            key={item.id}
+                                                            className='flex justify-between items-center text-sm'
+                                                        >
+                                                            <div className='flex items-center gap-2'>
+                                                                <div className='font-medium'>
+                                                                    {item.product.productName}
+                                                                </div>
+                                                                <div className='text-gray-500'>
+                                                                    x{item.quantity}
+                                                                </div>
+                                                            </div>
+                                                            <div className='font-medium'>
+                                                                {Number(
+                                                                    item.product.priceSafely
+                                                                ).toLocaleString('vi-VN')}
+                                                                đ
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+
+                                                <div className='mt-3 pt-3 border-t border-gray-200 flex justify-between items-center'>
+                                                    <div className='text-sm'>
+                                                        <span className='text-gray-500'>
+                                                            Phương thức thanh toán:
+                                                        </span>
+                                                        <span className='font-medium ml-1'>
+                                                            {order.paymentMethod === 'cash'
+                                                                ? 'Tiền mặt'
+                                                                : 'Chuyển khoản VnPay'}
+                                                        </span>
+                                                    </div>
+                                                    <div className='font-medium text-lg'>
+                                                        Tổng tiền:{' '}
+                                                        {Number(order.totalPrice).toLocaleString(
+                                                            'vi-VN'
+                                                        )}
+                                                        đ
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </>
+                        )}
                     </div>
                 )}
             </Modal>
@@ -354,6 +482,6 @@ export default function ListUser() {
                     <p>Bạn có chắc muốn mở chặn người dùng &quot;{selectedUser?.username}&quot;?</p>
                 )}
             </Modal>
-        </Card>
+        </div>
     );
 }

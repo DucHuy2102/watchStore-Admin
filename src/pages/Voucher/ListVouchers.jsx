@@ -21,7 +21,6 @@ export default function ListVouchers() {
     const { access_token: tokenUser } = useSelector((state) => state.user);
     const [loading, setLoading] = useState(false);
     const [vouchers, setVouchers] = useState([]);
-    console.log(vouchers);
     const [confirmModalOpen, setConfirmModalOpen] = useState(false);
     const [selectedVoucher, setSelectedVoucher] = useState(null);
     const [voucherDetailsModalOpen, setVoucherDetailsModalOpen] = useState(false);
@@ -256,7 +255,7 @@ export default function ListVouchers() {
     };
 
     return (
-        <div className='p-6 mt-10'>
+        <div className='p-6'>
             <div className='mb-6 flex justify-between items-center'>
                 <div>
                     <h1 className='text-2xl font-bold text-gray-800 dark:text-[#fbfcfc]'>
