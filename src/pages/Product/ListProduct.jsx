@@ -350,7 +350,7 @@ export default function ListProduct() {
     ];
 
     return (
-        <div className='p-4 mt-10'>
+        <div className='p-4'>
             <div className='mb-4 flex justify-between items-center'>
                 <h1 className='text-2xl font-bold'>Quản lý sản phẩm</h1>
                 <Button

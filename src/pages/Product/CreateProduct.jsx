@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Button, Card, Form, Input, InputNumber, Select, Upload, Spin, Modal } from 'antd';
+import { Button, Card, Form, Input, InputNumber, Select, Upload, Spin, Modal, Radio } from 'antd';
 import {
     InboxOutlined,
     InfoCircleOutlined,
@@ -16,9 +16,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { ColorPicker } from 'antd';
-import 'react-quill/dist/quill.snow.css';
 import { toast } from 'react-toastify';
-import { placeholder } from '@cloudinary/react';
 
 const { TextArea } = Input;
 
@@ -26,17 +24,14 @@ export default function CreateProduct() {
     const [form] = Form.useForm();
     const navigate = useNavigate();
     const [category, setCategory] = useState([]);
-    const [selectedCategory, setSelectedCategory] = useState(null);
-    const [customBrand, setCustomBrand] = useState('');
     const [loading, setLoading] = useState(false);
     const [fileList, setFileList] = useState([]);
     const { access_token: token } = useSelector((state) => state.user);
     const [productOptions, setProductOptions] = useState([]);
-    console.log('productOptions:', productOptions);
     const [isColorModalVisible, setColorModalVisible] = useState(false);
 
     useEffect(() => {
-        if (!category) {
+        if (category.length === 0) {
             getAllCategory();
         }
     }, []);
@@ -52,29 +47,13 @@ export default function CreateProduct() {
                     },
                 }
             );
-            if (res?.status === 200) {
-                const { data } = res;
-                const category = data?.map((item) => item?.categoryName);
-                setCategory(category);
-            }
+            setCategory(res?.data?.map((item) => item?.categoryName) || []);
         } catch (error) {
             console.log('Lỗi khi lấy danh mục sản phẩm:', error);
         } finally {
             setLoading(false);
         }
     };
-
-    const categoryOptions = [...category, 'Hãng khác'];
-
-    const handleBrandChange = useCallback((value) => {
-        setSelectedCategory(value);
-        if (value !== 'Hãng khác') {
-            setCustomBrand('');
-            form.setFieldValue('category', value);
-        } else {
-            form.setFieldValue('category', '');
-        }
-    }, []);
 
     const handleUploadToCloudinary = async () => {
         const uploadedFiles = await Promise.all(
@@ -114,19 +93,26 @@ export default function CreateProduct() {
         return uploadedFiles;
     };
 
-    const discountPrice = useMemo((price, discount) => {
-        return (price * discount) / 100;
-    }, []);
-
     const onFinish = async (values) => {
         try {
             setLoading(true);
             const uploadedFiles = await handleUploadToCloudinary();
 
+            const formattedOptions = productOptions.map((opt) => ({
+                key: opt.key,
+                value: {
+                    price: opt.price,
+                    discount: opt.discount,
+                    quantity: opt.amount,
+                    color: opt.color,
+                    state: 'active',
+                },
+            }));
+
             const productData = {
                 ...values,
                 img: uploadedFiles?.map((file) => file.url || file),
-                discount: discountPrice(values.price, values.discount),
+                option: formattedOptions,
                 state: 'waiting',
             };
             console.log('Data:', productData);
@@ -166,7 +152,10 @@ export default function CreateProduct() {
                         label: 'Tên sản phẩm',
                         rules: [{ required: true, message: 'Vui lòng nhập tên sản phẩm!' }],
                         input: (
-                            <Input className='rounded-lg border-gray-300 hover:border-blue-400 focus:border-blue-500 transition-colors duration-300 h-[38px]' />
+                            <Input
+                                placeholder='Đồng hồ Casio G-Shock GA-2100-1A1DR'
+                                className='rounded-lg border-gray-300 hover:border-blue-400 focus:border-blue-500 transition-colors duration-300 h-[38px]'
+                            />
                         ),
                     },
                     {
@@ -174,38 +163,24 @@ export default function CreateProduct() {
                         label: 'Hãng đồng hồ',
                         rules: [{ required: true, message: 'Vui lòng chọn hãng đồng hồ!' }],
                         input: (
-                            <>
-                                <Select
-                                    placeholder='Chọn hãng đồng hồ'
-                                    onChange={handleBrandChange}
-                                    value={selectedCategory}
-                                    className='w-full h-[38px] rounded-lg hover:border-blue-400 focus:border-blue-500 transition-colors duration-300'
-                                >
-                                    {categoryOptions.map((item, index) => (
-                                        <Select.Option key={index} value={item}>
-                                            {item}
-                                        </Select.Option>
-                                    ))}
-                                </Select>
-                                {selectedCategory === 'Hãng khác' && (
-                                    <Form.Item
-                                        name='customBrand'
-                                        rules={[
-                                            {
-                                                required: true,
-                                                message: 'Vui lòng nhập tên hãng đồng hồ!',
-                                            },
-                                        ]}
-                                    >
-                                        <Input
-                                            placeholder='Nhập tên hãng đồng hồ'
-                                            value={customBrand}
-                                            className='h-[38px] rounded-lg border-gray-300 hover:border-blue-400 focus:border-blue-500 transition-colors duration-300'
-                                            onChange={(e) => setCustomBrand(e.target.value)}
-                                        />
-                                    </Form.Item>
-                                )}
-                            </>
+                            <Select
+                                placeholder='Chọn hãng đồng hồ'
+                                loading={loading}
+                                notFoundContent={
+                                    loading ? (
+                                        <Spin size='small' />
+                                    ) : (
+                                        'Không tìm thấy hãng đồng hồ nào'
+                                    )
+                                }
+                                className='w-full h-[38px] rounded-lg hover:border-blue-400 focus:border-blue-500 transition-colors duration-300'
+                            >
+                                {category.map((item, index) => (
+                                    <Select.Option key={index} value={item}>
+                                        {item}
+                                    </Select.Option>
+                                ))}
+                            </Select>
                         ),
                     },
                     {
@@ -213,7 +188,10 @@ export default function CreateProduct() {
                         label: 'Danh mục sản phẩm',
                         rules: [{ required: true, message: 'Vui lòng nhập danh mục!' }],
                         input: (
-                            <Input className='rounded-lg border-gray-300 hover:border-blue-400 focus:border-blue-500 transition-colors duration-300 h-[38px]' />
+                            <Input
+                                placeholder='G-Shock, Quartz, Eco-Drive...'
+                                className='rounded-lg border-gray-300 hover:border-blue-400 focus:border-blue-500 transition-colors duration-300 h-[38px]'
+                            />
                         ),
                     },
                     {
@@ -221,7 +199,10 @@ export default function CreateProduct() {
                         label: 'Xuất xứ',
                         rules: [{ required: true, message: 'Vui lòng nhập xuất xứ sản phẩm!' }],
                         input: (
-                            <Input className='rounded-lg border-gray-300 hover:border-blue-400 focus:border-blue-500 transition-colors duration-300 h-[38px]' />
+                            <Input
+                                placeholder='Việt Nam, Thụy Sĩ, Trung Quốc...'
+                                className='rounded-lg border-gray-300 hover:border-blue-400 focus:border-blue-500 transition-colors duration-300 h-[38px]'
+                            />
                         ),
                     },
                     {
@@ -282,7 +263,10 @@ export default function CreateProduct() {
                         label: 'Chất liệu dây',
                         rules: [{ required: true, message: 'Vui lòng nhập chất liệu dây!' }],
                         input: (
-                            <Input className='rounded-lg border-gray-300 hover:border-blue-400 focus:border-blue-500 transition-colors duration-300 h-[38px]' />
+                            <Input
+                                placeholder='Dây da, dây thép không gỉ, dây cao su...'
+                                className='rounded-lg border-gray-300 hover:border-blue-400 focus:border-blue-500 transition-colors duration-300 h-[38px]'
+                            />
                         ),
                     },
                     {
@@ -290,7 +274,10 @@ export default function CreateProduct() {
                         label: 'Chất liệu vỏ',
                         rules: [{ required: true, message: 'Vui lòng nhập chất liệu vỏ!' }],
                         input: (
-                            <Input className='rounded-lg border-gray-300 hover:border-blue-400 focus:border-blue-500 transition-colors duration-300 h-[38px]' />
+                            <Input
+                                placeholder='Vỏ thép không gỉ, vỏ nhựa, vỏ titan...'
+                                className='rounded-lg border-gray-300 hover:border-blue-400 focus:border-blue-500 transition-colors duration-300 h-[38px]'
+                            />
                         ),
                     },
                     {
@@ -298,15 +285,51 @@ export default function CreateProduct() {
                         label: 'Kiểu dáng',
                         rules: [{ required: true, message: 'Vui lòng nhập kiểu dáng sản phẩm!' }],
                         input: (
-                            <Input className='rounded-lg border-gray-300 hover:border-blue-400 focus:border-blue-500 transition-colors duration-300 h-[38px]' />
+                            <Input
+                                placeholder='Thể thao, lịch lãm, thanh lịch...'
+                                className='rounded-lg border-gray-300 hover:border-blue-400 focus:border-blue-500 transition-colors duration-300 h-[38px]'
+                            />
                         ),
                     },
                     {
                         name: 'shape',
                         label: 'Hình dáng mặt đồng hồ',
-                        rules: [{ required: true, message: 'Vui lòng nhập hình dáng mặt!' }],
+                        rules: [
+                            { required: true, message: 'Vui lòng chọn hình dáng mặt đồng hồ!' },
+                        ],
                         input: (
-                            <Input className='rounded-lg border-gray-300 hover:border-blue-400 focus:border-blue-500 transition-colors duration-300 h-[38px]' />
+                            <Select
+                                className='w-full h-[38px] rounded-lg hover:border-blue-400 focus:border-blue-500 transition-colors duration-300'
+                                placeholder='Chọn hình dáng mặt đồng hồ'
+                            >
+                                <Select.Option value='Đồng hồ mặt tròn (Round Watches)'>
+                                    Đồng hồ mặt tròn (Round Watches)
+                                </Select.Option>
+                                <Select.Option value='Đồng hồ mặt vuông (Square Watches)'>
+                                    Đồng hồ mặt vuông (Square Watches){' '}
+                                </Select.Option>
+                                <Select.Option value='Đồng hồ mặt chữ nhật (Rectangular Watches)'>
+                                    Đồng hồ mặt chữ nhật (Rectangular Watches){' '}
+                                </Select.Option>
+                                <Select.Option value='Đồng hồ mặt tam giác (Triangle Watches)'>
+                                    Đồng hồ mặt tam giác (Triangle Watches){' '}
+                                </Select.Option>
+                                <Select.Option value='Đồng hồ mặt bầu dục (Oval Watches)'>
+                                    Đồng hồ mặt bầu dục (Oval Watches){' '}
+                                </Select.Option>
+                                <Select.Option value='Đồng hồ mặt Tonneau (Tonneau Watches)'>
+                                    Đồng hồ mặt Tonneau (Tonneau Watches){' '}
+                                </Select.Option>
+                                <Select.Option value='Đồng hồ mặt Carage (Carage Watches)'>
+                                    Đồng hồ mặt Carage (Carage Watches){' '}
+                                </Select.Option>
+                                <Select.Option value='Đồng hồ mặt Cushion (Cushion Watches)'>
+                                    Đồng hồ mặt Cushion (Cushion Watches){' '}
+                                </Select.Option>
+                                <Select.Option value='Đồng hồ mặt bát giác (Octagonal Watches)'>
+                                    Đồng hồ mặt bát giác (Octagonal Watches){' '}
+                                </Select.Option>
+                            </Select>
                         ),
                     },
                     {
@@ -315,6 +338,7 @@ export default function CreateProduct() {
                         rules: [{ required: true, message: 'Vui lòng nhập tính năng sản phẩm!' }],
                         input: (
                             <TextArea
+                                placeholder='Chống nước, chống sốc, chống từ trường, chống xước...'
                                 style={{ minHeight: 130 }}
                                 className='rounded-lg border-gray-300 hover:border-blue-400 focus:border-blue-500 transition-colors duration-300 h-[38px]'
                             />
@@ -331,8 +355,9 @@ export default function CreateProduct() {
                         rules: [{ required: true, message: 'Vui lòng nhập chiều dài!' }],
                         input: (
                             <InputNumber
-                                className='w-full h-[38px] rounded-lg hover:border-blue-400 focus:border-blue-500'
+                                className='w-full h-[38px] rounded-lg hover:border-blue-400 focus:border-blue-500 flex items-center'
                                 min={0}
+                                controls={false}
                             />
                         ),
                     },
@@ -342,8 +367,9 @@ export default function CreateProduct() {
                         rules: [{ required: true, message: 'Vui lòng nhập chiều rộng!' }],
                         input: (
                             <InputNumber
-                                className='w-full h-[38px] rounded-lg hover:border-blue-400 focus:border-blue-500'
+                                className='w-full h-[38px] rounded-lg hover:border-blue-400 focus:border-blue-500 flex items-center'
                                 min={0}
+                                controls={false}
                             />
                         ),
                     },
@@ -353,8 +379,9 @@ export default function CreateProduct() {
                         rules: [{ required: true, message: 'Vui lòng nhập chiều cao!' }],
                         input: (
                             <InputNumber
-                                className='w-full h-[38px] rounded-lg hover:border-blue-400 focus:border-blue-500'
+                                className='w-full h-[38px] rounded-lg hover:border-blue-400 focus:border-blue-500 flex items-center'
                                 min={0}
+                                controls={false}
                             />
                         ),
                     },
@@ -364,8 +391,9 @@ export default function CreateProduct() {
                         rules: [{ required: true, message: 'Vui lòng nhập khối lượng!' }],
                         input: (
                             <InputNumber
-                                className='w-full h-[38px] rounded-lg hover:border-blue-400 focus:border-blue-500'
+                                className='w-full h-[38px] rounded-lg hover:border-blue-400 focus:border-blue-500 flex items-center'
                                 min={0}
+                                controls={false}
                             />
                         ),
                     },
@@ -375,8 +403,9 @@ export default function CreateProduct() {
                         rules: [{ required: true, message: 'Vui lòng nhập độ chống nước!' }],
                         input: (
                             <InputNumber
-                                className='w-full h-[38px] rounded-lg hover:border-blue-400 focus:border-blue-500'
+                                className='w-full h-[38px] rounded-lg hover:border-blue-400 focus:border-blue-500 flex items-center'
                                 min={0}
+                                controls={false}
                             />
                         ),
                     },
@@ -405,6 +434,7 @@ export default function CreateProduct() {
     );
 
     const ColorVariantCard = ({ color, onDelete, onSave }) => {
+        const [isEditing, setIsEditing] = useState(false);
         const [localValues, setLocalValues] = useState({
             price: color.price,
             amount: color.amount,
@@ -416,6 +446,11 @@ export default function CreateProduct() {
                 ...prev,
                 [field]: value,
             }));
+        };
+
+        const handleSave = () => {
+            onSave(localValues);
+            setIsEditing(false);
         };
 
         return (
@@ -445,28 +480,33 @@ export default function CreateProduct() {
                 </div>
 
                 <div className='grid grid-cols-3 gap-6'>
-                    <div className='space-y-2'>
+                    <div className='space-y-3'>
                         <label className='text-sm font-medium text-gray-600'>Giá bán</label>
                         <InputNumber
                             className='w-full !rounded-lg'
                             value={localValues.price}
-                            onChange={(val) => handleLocalChange('price', val)}
-                            formatter={(value) =>
-                                `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' ₫'
-                            }
+                            onChange={(val) => {
+                                handleLocalChange('price', val);
+                                setIsEditing(true);
+                            }}
+                            formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                             parser={(value) => value.replace(/[^\d]/g, '')}
                             min={0}
                             size='large'
+                            addonAfter='đ'
                             controls={false}
                         />
                     </div>
 
-                    <div className='space-y-2'>
+                    <div className='space-y-3'>
                         <label className='text-sm font-medium text-gray-600'>Số lượng</label>
                         <InputNumber
                             className='w-full !rounded-lg'
                             value={localValues.amount}
-                            onChange={(val) => handleLocalChange('amount', val)}
+                            onChange={(val) => {
+                                handleLocalChange('amount', val);
+                                setIsEditing(true);
+                            }}
                             min={0}
                             size='large'
                             addonAfter='cái'
@@ -474,39 +514,50 @@ export default function CreateProduct() {
                         />
                     </div>
 
-                    <div className='space-y-2'>
-                        <label className='text-sm font-medium text-gray-600'>Giảm giá</label>
+                    <div className='space-y-3'>
+                        <label className='text-sm font-medium text-gray-600'>Giá giảm</label>
                         <InputNumber
                             className='w-full !rounded-lg'
                             value={localValues.discount}
-                            onChange={(val) => handleLocalChange('discount', val)}
+                            onChange={(val) => {
+                                handleLocalChange('discount', val);
+                                setIsEditing(true);
+                            }}
+                            formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                            parser={(value) => value.replace(/[^\d]/g, '')}
                             min={0}
-                            max={100}
                             size='large'
-                            addonAfter='%'
+                            addonAfter='đ'
                             controls={false}
                         />
+                        {localValues.discount > 0 && (
+                            <div className='flex items-center gap-2 mt-4'>
+                                {localValues.price <= localValues.discount ? (
+                                    <span className='text-red-500 font-semibold'>
+                                        Giá tiền bán không thể nhỏ hơn giá tiền giảm!
+                                    </span>
+                                ) : (
+                                    <>
+                                        <span className='text-sm text-gray-500'>Giá sau giảm:</span>
+                                        <span className='text-base font-bold text-green-600'>
+                                            {new Intl.NumberFormat('vi-VN').format(
+                                                localValues.price - localValues.discount
+                                            )}
+                                            đ
+                                        </span>
+                                    </>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                <div className=' flex items-center justify-between mt-4'>
-                    {localValues.discount > 0 &&
-                        localValues.price > 0 &&
-                        localValues.discount < 100 && (
-                            <div className='flex items-center gap-2 text-sm font-bold text-gray-500'>
-                                <span>Giá bán sau khi giảm:</span>
-                                <span className='font-medium text-green-600'>
-                                    {new Intl.NumberFormat('vi-VN').format(
-                                        localValues.price * (1 - localValues.discount / 100)
-                                    )}{' '}
-                                    đ
-                                </span>
-                            </div>
-                        )}
-
-                    <Button type='primary' onClick={() => onSave(localValues)}>
-                        Lưu thông tin
-                    </Button>
+                <div className='mt-4 flex justify-end'>
+                    {isEditing && localValues.price > localValues.discount && (
+                        <Button type='primary' onClick={handleSave}>
+                            Lưu thông tin
+                        </Button>
+                    )}
                 </div>
             </Card>
         );
@@ -621,6 +672,7 @@ export default function CreateProduct() {
                     </p>
                 </div>
             </div>
+
             <Spin spinning={loading}>
                 <Form
                     form={form}
@@ -663,6 +715,7 @@ export default function CreateProduct() {
                         ))}
                     </div>
 
+                    {/* describe */}
                     <Card
                         className='mt-8'
                         title={
@@ -680,6 +733,7 @@ export default function CreateProduct() {
                         </Form.Item>
                     </Card>
 
+                    {/* image */}
                     <Card
                         size='small'
                         className='mt-8 shadow-sm'
@@ -718,6 +772,7 @@ export default function CreateProduct() {
                         </Form.Item>
                     </Card>
 
+                    {/* color */}
                     <Card
                         className='mt-8'
                         title={
@@ -750,6 +805,7 @@ export default function CreateProduct() {
 
                     <ColorSelectionModal />
 
+                    {/* button */}
                     <div className='flex justify-end gap-4 mt-8'>
                         <Button
                             size='large'
