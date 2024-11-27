@@ -271,9 +271,11 @@ export default function ListVouchers() {
                     size='large'
                     icon={<FaPlusCircle className='text-lg' />}
                     onClick={() => navigate('/voucher/create')}
-                    className='flex items-center gap-2 h-11 px-6 bg-blue-500 hover:bg-blue-600 shadow-sm'
+                    className='flex items-center gap-2.5 h-12 px-7 bg-gradient-to-r from-blue-500 to-blue-600 
+                    hover:from-blue-600 hover:to-blue-700 transition-all duration-300 
+                    transform hover:scale-[1.02]'
                 >
-                    <span className='font-medium'>Tạo Voucher mới</span>
+                    <span className='font-semibold tracking-wide'>Tạo Voucher mới</span>
                 </Button>
             </div>
 

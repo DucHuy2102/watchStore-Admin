@@ -12,6 +12,7 @@ import dayjs from 'dayjs';
 
 export default function VoucherDetailModal({ voucher, open, onClose }) {
     if (!voucher) return null;
+    console.log(voucher);
 
     const isExpired = dayjs(voucher.expiryDate).isBefore(dayjs());
     const isActive = voucher.state === 'active';

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
 import {
@@ -15,7 +15,6 @@ import {
     Alert,
 } from 'antd';
 import {
-    ArrowLeftOutlined,
     SaveOutlined,
     TagOutlined,
     EnvironmentOutlined,
@@ -27,6 +26,8 @@ import {
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
 import { defaultImages } from './defaultImages';
+import { FaArrowLeftLong, FaEye } from 'react-icons/fa6';
+import VoucherDetailModal from './VoucherDetailModal';
 
 const handleUploadToCloudinary = async (file) => {
     if (!file) return null;
@@ -56,11 +57,11 @@ const handleUploadToCloudinary = async (file) => {
 
 const useVoucherSubmit = (navigate) => {
     const { access_token: tokenUser } = useSelector((state) => state.user);
-    const [submitting, setSubmitting] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleSubmit = async (values, provinceSelected, imageUrl) => {
         try {
-            setSubmitting(true);
+            setIsLoading(true);
             const submitData = {
                 ...values,
                 img: imageUrl,
@@ -79,7 +80,6 @@ const useVoucherSubmit = (navigate) => {
             );
 
             if (res.status === 200) {
-                console.log('Voucher created:', res);
                 toast.success('Tạo voucher thành công!');
                 setTimeout(() => {
                     navigate('/vouchers');
@@ -89,12 +89,12 @@ const useVoucherSubmit = (navigate) => {
             console.error(error);
             toast.error('Có lỗi xảy ra khi tạo voucher!');
         } finally {
-            setSubmitting(false);
+            setIsLoading(false);
         }
     };
 
     return {
-        submitting,
+        isLoading,
         handleSubmit,
     };
 };
@@ -131,12 +131,14 @@ export default function CreateVoucher() {
     const navigate = useNavigate();
     const [form] = Form.useForm();
     const { provinces, getProvinces } = useProvinces();
-    const { submitting, handleSubmit } = useVoucherSubmit(navigate);
+    const { isLoading, handleSubmit } = useVoucherSubmit(navigate);
     const [provinceSelected, setProvinceSelected] = useState({ value: '', label: '' });
     const [imageType, setImageType] = useState('default');
     const [imageUrl, setImageUrl] = useState(defaultImages[0].url);
     const [fileList, setFileList] = useState([]);
     const memoizedDefaultImages = useMemo(() => defaultImages, []);
+    const [previewModalOpen, setPreviewModalOpen] = useState(false);
+    const [previewVoucher, setPreviewVoucher] = useState(null);
 
     useEffect(() => {
         getProvinces();
@@ -195,8 +197,22 @@ export default function CreateVoucher() {
         [fileList, handleSubmit, provinceSelected, imageUrl]
     );
 
+    const handlePreview = () => {
+        const formValues = form.getFieldsValue();
+        const previewData = {
+            ...formValues,
+            img: imageUrl,
+            province: provinceSelected,
+            state: 'active',
+            expiryDate: formValues.expiryDate?.toISOString(),
+            createdDate: formValues.createdDate?.toISOString(),
+        };
+        setPreviewVoucher(previewData);
+        setPreviewModalOpen(true);
+    };
+
     return (
-        <div className='p-6 max-w-4xl mx-auto'>
+        <div className='p-8 max-w-5xl mx-auto'>
             <div className='flex items-center justify-between mb-6'>
                 <div>
                     <h1 className='text-3xl font-extrabold text-gray-800 dark:text-[#fbfcfc] tracking-tight'>
@@ -206,13 +222,19 @@ export default function CreateVoucher() {
                         Tạo voucher mới với các thông tin chi tiết bên dưới
                     </p>
                 </div>
-                <Button
-                    icon={<ArrowLeftOutlined />}
-                    onClick={() => navigate('/vouchers')}
-                    className='flex items-center'
+                <Link
+                    to='/orders'
+                    className='inline-flex items-center gap-2 px-6 py-2.5 rounded-full
+                        bg-white border border-gray-200 shadow-sm hover:shadow-md
+                        text-gray-700 hover:text-primary hover:border-primary/20
+                        transition-all duration-300 ease-in-out transform hover:-translate-x-1
+                        font-medium group'
                 >
-                    Quay lại
-                </Button>
+                    <FaArrowLeftLong className='w-4 h-4 transition-transform duration-300 group-hover:animate-pulse' />
+                    <span className='bg-gradient-to-r from-gray-800 to-gray-600 hover:from-primary hover:to-primary/80 bg-clip-text text-transparent'>
+                        Quay lại danh sách
+                    </span>
+                </Link>
             </div>
 
             <Card className='shadow-sm'>
@@ -222,6 +244,7 @@ export default function CreateVoucher() {
                     onFinish={onFinish}
                     className='max-w-4xl mx-auto'
                 >
+                    {/* basic info */}
                     <div className='mb-8'>
                         <h2 className='text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2'>
                             <TagOutlined className='text-blue-500' />
@@ -275,6 +298,7 @@ export default function CreateVoucher() {
                         </div>
                     </div>
 
+                    {/* discount info */}
                     <div className='mb-8'>
                         <h2 className='text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2'>
                             <TagOutlined className='text-blue-500' />
@@ -288,6 +312,7 @@ export default function CreateVoucher() {
                                     formatter={(value) => `${value}%`}
                                     parser={(value) => value.replace('%', '')}
                                     className='w-full h-11 flex items-center'
+                                    controls={false}
                                 />
                             </Form.Item>
 
@@ -299,12 +324,14 @@ export default function CreateVoucher() {
                                         `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                                     }
                                     parser={(value) => value.replace(/\$\s?|(,*)/g, '')}
-                                    placeholder='Nhập giá tối thiểu để áp dụng voucher'
+                                    placeholder='Nhập giá tối thiểu'
+                                    controls={false}
                                 />
                             </Form.Item>
                         </div>
                     </div>
 
+                    {/* scope & limit */}
                     <div className='mb-8'>
                         <h2 className='text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2'>
                             <EnvironmentOutlined className='text-blue-500' />
@@ -335,11 +362,13 @@ export default function CreateVoucher() {
                                     max={99999}
                                     className='w-full h-11 flex items-center'
                                     placeholder='Nhập số lượt sử dụng tối đa'
+                                    controls={false}
                                 />
                             </Form.Item>
                         </div>
                     </div>
 
+                    {/* time info */}
                     <div className='mb-8'>
                         <h2 className='text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2'>
                             <ClockCircleOutlined className='text-blue-500' />
@@ -377,55 +406,76 @@ export default function CreateVoucher() {
                         </div>
                     </div>
 
-                    <div className='mb-8'>
-                        <h2 className='text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2'>
+                    {/* image info */}
+                    <div className='rounded-xl p-6'>
+                        <h2 className='text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-6 flex items-center gap-3'>
                             <PictureOutlined className='text-blue-500' />
                             Hình ảnh voucher
                         </h2>
 
-                        <Form.Item name='imageType' label='Loại hình ảnh'>
-                            <Radio.Group onChange={handleImageTypeChange} value={imageType}>
-                                <Radio value='default'>Sử dụng mẫu có sẵn</Radio>
-                                <Radio value='custom'>Tải lên hình ảnh mới</Radio>
+                        <Form.Item name='imageType' label='Loại hình ảnh' className='mb-6'>
+                            <Radio.Group
+                                onChange={handleImageTypeChange}
+                                value={imageType}
+                                className='flex gap-6'
+                            >
+                                <Radio value='default' className='image-radio-button'>
+                                    <span className='flex items-center gap-2'>
+                                        <TagOutlined className='text-blue-500' />
+                                        Sử dụng mẫu có sẵn
+                                    </span>
+                                </Radio>
+                                <Radio value='custom' className='image-radio-button'>
+                                    <span className='flex items-center gap-2'>
+                                        <PictureOutlined className='text-purple-500' />
+                                        Tải lên hình ảnh mới
+                                    </span>
+                                </Radio>
                             </Radio.Group>
                         </Form.Item>
 
                         {imageType === 'default' ? (
-                            <div className='grid grid-cols-4 gap-4 mt-4'>
+                            <div className='grid grid-cols-4 gap-6 mt-6'>
                                 {memoizedDefaultImages.map((image, index) => (
                                     <div
                                         key={index}
-                                        className={`border-2 rounded-lg p-2 cursor-pointer ${
+                                        className={`group relative overflow-hidden rounded-xl transition-all duration-300 hover:shadow-lg cursor-pointer transform hover:-translate-y-1 ${
                                             imageUrl === image.url
-                                                ? 'border-blue-500'
-                                                : 'border-gray-200'
+                                                ? 'ring-2 ring-blue-500 shadow-blue-100'
+                                                : 'border border-gray-200'
                                         }`}
                                         onClick={() => {
                                             setImageUrl(image.url);
                                             form.setFieldValue('image', image.url);
                                         }}
                                     >
-                                        <img
-                                            src={image.url}
-                                            alt={image.title}
-                                            className='w-full h-40 object-cover rounded'
-                                        />
-                                        <p className='text-center mt-2'>{image.title}</p>
+                                        <div className='aspect-[4/3] overflow-hidden'>
+                                            <img
+                                                src={image.url}
+                                                alt={image.title}
+                                                className='w-full h-full object-cover transition-transform duration-300 group-hover:scale-110'
+                                            />
+                                        </div>
+                                        <div className='absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4'>
+                                            <p className='text-white text-sm font-medium text-center'>
+                                                {image.title}
+                                            </p>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
                         ) : (
-                            <Form.Item name='image'>
+                            <Form.Item name='image' className='m-0'>
                                 {imageUrl ? (
-                                    <div className='relative inline-block'>
+                                    <div className='relative inline-block group'>
                                         <img
                                             src={imageUrl}
                                             alt='Uploaded preview'
-                                            className='max-w-[300px] rounded-lg shadow-sm'
+                                            className='max-w-[300px] rounded-xl shadow-md transition-all duration-300 group-hover:shadow-lg'
                                         />
                                         <Button
                                             icon={<DeleteOutlined />}
-                                            className='absolute top-2 right-2 bg-white/80 hover:bg-white shadow-sm'
+                                            className='absolute top-3 right-3 bg-white/90 hover:bg-white/100 shadow-sm rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300'
                                             onClick={() => {
                                                 setImageUrl('');
                                                 form.setFieldValue('image', null);
@@ -441,6 +491,7 @@ export default function CreateVoucher() {
                                         listType='picture'
                                         accept='image/*'
                                         fileList={fileList}
+                                        className='bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 transition-all duration-300'
                                         beforeUpload={(file) => {
                                             const isImage = file.type.startsWith('image/');
                                             if (!isImage) {
@@ -470,21 +521,27 @@ export default function CreateVoucher() {
                                             return false;
                                         }}
                                     >
-                                        <p className='ant-upload-drag-icon'>
-                                            <InboxOutlined />
-                                        </p>
-                                        <p className='ant-upload-text'>
-                                            Kéo thả hoặc click để tải ảnh lên
-                                        </p>
-                                        <p className='ant-upload-hint'>
-                                            Hỗ trợ định dạng: JPG, PNG. Dung lượng tối đa: 2MB
-                                        </p>
+                                        <div className='p-8 space-y-4'>
+                                            <div className='text-blue-500 text-4xl'>
+                                                <InboxOutlined />
+                                            </div>
+                                            <div>
+                                                <p className='text-lg font-medium text-gray-700 dark:text-gray-300'>
+                                                    Kéo thả hoặc click để tải ảnh lên
+                                                </p>
+                                                <p className='text-sm text-gray-500 dark:text-gray-400 mt-2'>
+                                                    Hỗ trợ định dạng: JPG, PNG. Dung lượng tối đa:
+                                                    2MB
+                                                </p>
+                                            </div>
+                                        </div>
                                     </Upload.Dragger>
                                 )}
                             </Form.Item>
                         )}
                     </div>
 
+                    {/* expired date alert */}
                     {dayjs().isAfter(form.getFieldValue('expiryDate')) && (
                         <Alert
                             message='Voucher đã hết hạn'
@@ -495,23 +552,43 @@ export default function CreateVoucher() {
                         />
                     )}
 
-                    <div className='flex justify-end gap-4 mt-8'>
-                        <Button onClick={() => navigate('/vouchers')} className='h-11 px-6'>
+                    <div className='flex items-center justify-between'>
+                        <Button
+                            onClick={() => navigate('/vouchers')}
+                            className='h-12 px-8 rounded-lg hover:scale-105 transition-all duration-200'
+                            disabled={isLoading}
+                        >
                             Hủy
                         </Button>
-                        <Button
-                            type='primary'
-                            htmlType='submit'
-                            loading={submitting}
-                            className='h-11 px-8 bg-blue-500 hover:bg-blue-600'
-                            icon={<SaveOutlined />}
-                            disabled={submitting}
-                        >
-                            Tạo Voucher
-                        </Button>
+                        <div className='flex items-center gap-5'>
+                            <Button
+                                onClick={handlePreview}
+                                className='h-12 px-8 rounded-lg hover:scale-105 transition-all duration-200 bg-purple-50 text-purple-600 border-purple-200 hover:border-purple-300 hover:text-purple-700 hover:bg-purple-100'
+                                icon={<FaEye className='mr-2' />}
+                                disabled={isLoading}
+                            >
+                                Xem trước
+                            </Button>
+                            <Button
+                                type='primary'
+                                htmlType='submit'
+                                loading={isLoading}
+                                className='h-12 px-10 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 border-none hover:scale-105 transition-all duration-200'
+                                icon={<SaveOutlined />}
+                                disabled={isLoading}
+                            >
+                                Tạo Voucher
+                            </Button>
+                        </div>
                     </div>
                 </Form>
             </Card>
+
+            <VoucherDetailModal
+                voucher={previewVoucher}
+                open={previewModalOpen}
+                onClose={() => setPreviewModalOpen(false)}
+            />
         </div>
     );
 }

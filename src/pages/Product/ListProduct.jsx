@@ -3,7 +3,16 @@ import { useEffect } from 'react';
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Table, Button, Space, Popconfirm, Tooltip, Image, Skeleton, Badge } from 'antd';
-import { FaEdit, FaTrash, FaPlus, FaCircle, FaImage, FaFilter, FaEye } from 'react-icons/fa';
+import {
+    FaEdit,
+    FaTrash,
+    FaPlus,
+    FaCircle,
+    FaImage,
+    FaFilter,
+    FaEye,
+    FaPlusCircle,
+} from 'react-icons/fa';
 import { useSelector } from 'react-redux';
 import { FilterModal_Component } from '../../components/exportComponent';
 import { toast } from 'react-toastify';
@@ -354,12 +363,15 @@ export default function ListProduct() {
             <div className='mb-4 flex justify-between items-center'>
                 <h1 className='text-2xl font-bold'>Quản lý sản phẩm</h1>
                 <Button
-                    className='w-44'
                     type='primary'
-                    icon={<FaPlus />}
+                    size='large'
+                    icon={<FaPlusCircle className='text-lg' />}
                     onClick={() => navigate('/product/create')}
+                    className='flex items-center gap-2.5 h-12 px-7 bg-gradient-to-r from-blue-500 to-blue-600 
+                    hover:from-blue-600 hover:to-blue-700 transition-all duration-300 
+                    transform hover:scale-[1.02]'
                 >
-                    Thêm sản phẩm
+                    <span className='font-semibold tracking-wide'>Tạo sản phẩm mới</span>
                 </Button>
             </div>
 
