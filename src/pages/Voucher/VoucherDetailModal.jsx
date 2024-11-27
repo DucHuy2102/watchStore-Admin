@@ -7,12 +7,12 @@ import {
     FaClock,
     FaInfoCircle,
     FaGift,
+    FaMoneyBillWave,
 } from 'react-icons/fa';
 import dayjs from 'dayjs';
 
 export default function VoucherDetailModal({ voucher, open, onClose }) {
     if (!voucher) return null;
-    console.log(voucher);
 
     const isExpired = dayjs(voucher.expiryDate).isBefore(dayjs());
     const isActive = voucher.state === 'active';
@@ -72,6 +72,21 @@ export default function VoucherDetailModal({ voucher, open, onClose }) {
                                 </span>
                             </div>
                         </div>
+
+                        {voucher.minPrice && (
+                            <div className='bg-emerald-50 p-4 rounded-lg'>
+                                <div className='flex items-center gap-2 text-emerald-600 mb-2'>
+                                    <FaMoneyBillWave />
+                                    <h3 className='font-semibold'>Giá trị đơn tối thiểu</h3>
+                                </div>
+                                <p className='text-2xl font-bold text-emerald-600'>
+                                    {new Intl.NumberFormat('vi-VN', {
+                                        style: 'currency',
+                                        currency: 'VND',
+                                    }).format(voucher.minPrice)}
+                                </p>
+                            </div>
+                        )}
 
                         <div className='bg-orange-50 p-4 rounded-lg'>
                             <div className='flex items-center gap-2 text-orange-600 mb-2'>

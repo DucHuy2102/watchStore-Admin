@@ -2,7 +2,7 @@ import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
-import { Table, Tag, Tooltip, Skeleton, Button, Space, Switch, Modal } from 'antd';
+import { Table, Tag, Tooltip, Skeleton, Button, Space, Switch, Modal, Popconfirm } from 'antd';
 import {
     FaMapMarkerAlt,
     FaTags,
@@ -10,6 +10,8 @@ import {
     FaCheckCircle,
     FaTimesCircle,
     FaCalendarTimes,
+    FaEdit,
+    FaTrash,
 } from 'react-icons/fa';
 import dayjs from 'dayjs';
 import { CiWarning } from 'react-icons/ci';
@@ -58,7 +60,11 @@ export default function ListVouchers() {
             align: 'center',
             key: 'couponCode',
             render: (text) => (
-                <Tag color='blue' className='px-3 py-1 text-sm font-medium uppercase'>
+                <Tag
+                    color='blue'
+                    title={text}
+                    className='w-[120px] py-1 text-sm text-center font-medium uppercase truncate cursor-pointer'
+                >
                     {text}
                 </Tag>
             ),
@@ -69,15 +75,17 @@ export default function ListVouchers() {
             dataIndex: 'couponName',
             key: 'couponName',
             render: (text, record) => (
-                <div className='flex flex-col'>
-                    <span
-                        onClick={() => showVoucherDetails(record)}
-                        className='font-medium cursor-pointer'
-                    >
-                        {text}
-                    </span>
-                    <span className='text-gray-500 text-sm'>{record.description}</span>
-                </div>
+                <Tooltip title='Nhấp vào tên để xem chi tiết'>
+                    <div className='flex flex-col'>
+                        <span
+                            onClick={() => showVoucherDetails(record)}
+                            className='font-medium cursor-pointer hover:text-blue-500'
+                        >
+                            {text}
+                        </span>
+                        <span className='text-gray-500 text-sm'>{record.description}</span>
+                    </div>
+                </Tooltip>
             ),
         },
         {
@@ -163,25 +171,41 @@ export default function ListVouchers() {
             align: 'center',
             render: (_, record) => {
                 const isExpired = dayjs(record.expiryDate).isBefore(dayjs());
+                const isActive = record.state === 'active';
 
                 return (
                     <Space size='middle'>
-                        <Tooltip title={isExpired ? 'Voucher đã hết hạn' : 'Kích hoạt/Dừng'}>
+                        <Tooltip
+                            title={
+                                isExpired
+                                    ? 'Voucher đã hết hạn'
+                                    : isActive
+                                    ? 'Đang Kích Hoạt'
+                                    : 'Đang Dừng'
+                            }
+                        >
                             <Switch
-                                checked={record.state === 'active'}
+                                checked={isActive}
                                 onChange={() => handleToggleStatus(record.id, record.state)}
-                                className={`${record.state === 'active' ? 'bg-blue-600' : ''}`}
+                                className={isActive && 'bg-green-500'}
                             />
                         </Tooltip>
 
                         <Tooltip title='Chỉnh sửa'>
                             <Button
-                                type='primary'
-                                className='bg-blue-500'
+                                type='text'
+                                icon={<FaEdit className='text-gray-600' />}
                                 onClick={() => navigate(`/voucher/edit/${record.id}`)}
+                            />
+                        </Tooltip>
+
+                        <Tooltip title='Xóa'>
+                            <Popconfirm
+                                title='Bạn có chắc muốn xóa voucher này?'
+                                onConfirm={() => handleDeleteVoucher(record.id)}
                             >
-                                Sửa
-                            </Button>
+                                <Button type='text' icon={<FaTrash className='text-red-600' />} />
+                            </Popconfirm>
                         </Tooltip>
                     </Space>
                 );
@@ -254,8 +278,32 @@ export default function ListVouchers() {
         setVoucherDetailsModalOpen(true);
     };
 
+    const handleDeleteVoucher = async (id) => {
+        try {
+            setLoading(true);
+            const res = await axios.delete(`${import.meta.env.VITE_API_URL}/api/coupon/delete`, {
+                params: {
+                    couponId: id,
+                },
+                headers: {
+                    Authorization: `Bearer ${tokenUser}`,
+                },
+            });
+            if (res.status === 200) {
+                toast.success('Xóa voucher thành công!');
+                getAllVouchers();
+            }
+        } catch (error) {
+            console.log(error);
+            toast.error('Có lỗi xảy ra khi xóa voucher!');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className='p-6'>
+            {/* header */}
             <div className='mb-6 flex justify-between items-center'>
                 <div>
                     <h1 className='text-2xl font-bold text-gray-800 dark:text-[#fbfcfc]'>
@@ -279,6 +327,7 @@ export default function ListVouchers() {
                 </Button>
             </div>
 
+            {/* content */}
             {loading ? (
                 <Skeleton active />
             ) : (
@@ -296,6 +345,7 @@ export default function ListVouchers() {
                 </div>
             )}
 
+            {/* voucher details modal */}
             <VoucherDetailModal
                 voucher={selectedVoucher}
                 open={voucherDetailsModalOpen}
@@ -305,6 +355,7 @@ export default function ListVouchers() {
                 }}
             />
 
+            {/* confirm deactivate modal */}
             <Modal
                 open={confirmModalOpen}
                 onOk={handleConfirmDeactivate}

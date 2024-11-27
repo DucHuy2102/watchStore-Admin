@@ -16,6 +16,7 @@ export { default as CreateProduct } from './Product/CreateProduct';
 export { default as EditProduct } from './Product/EditProduct';
 export { default as ListProduct } from './Product/ListProduct';
 export { default as ProductDetail } from './Product/ProductDetail';
+export { default as ProductPreview } from './Product/ProductPreview';
 
 // user
 export { default as ListUser } from './User/ListUser';

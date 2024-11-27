@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Button, Card, Form, Input, InputNumber, Select, Upload, Spin, Modal, Radio } from 'antd';
+import { useEffect, useMemo, useState } from 'react';
+import { Button, Card, Form, Input, InputNumber, Select, Upload, Spin, Modal } from 'antd';
 import {
     InboxOutlined,
     InfoCircleOutlined,
@@ -11,93 +11,82 @@ import {
     PlusOutlined,
     FileTextOutlined,
     BgColorsOutlined,
+    SaveOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { ColorPicker } from 'antd';
 import { toast } from 'react-toastify';
+import { FaArrowLeftLong, FaEye } from 'react-icons/fa6';
 
 const { TextArea } = Input;
 
 export default function CreateProduct() {
     const [form] = Form.useForm();
     const navigate = useNavigate();
-    const [category, setCategory] = useState([]);
     const [loading, setLoading] = useState(false);
     const [fileList, setFileList] = useState([]);
+    const { category } = useSelector((state) => state.product);
     const { access_token: token } = useSelector((state) => state.user);
     const [productOptions, setProductOptions] = useState([]);
     const [isColorModalVisible, setColorModalVisible] = useState(false);
 
-    useEffect(() => {
-        if (category.length === 0) {
-            getAllCategory();
-        }
-    }, []);
-
-    const getAllCategory = async () => {
-        try {
-            setLoading(true);
-            const res = await axios.get(
-                `${import.meta.env.VITE_API_URL}/api/category/get-all-category`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            );
-            setCategory(res?.data?.map((item) => item?.categoryName) || []);
-        } catch (error) {
-            console.log('Lỗi khi lấy danh mục sản phẩm:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    console.log('fileList -->', fileList);
 
     const handleUploadToCloudinary = async () => {
-        const uploadedFiles = await Promise.all(
-            fileList.map(async (file) => {
-                if (file.originFileObj) {
-                    const formData = new FormData();
-                    formData.append('file', file.originFileObj);
-                    formData.append(
-                        'upload_preset',
-                        `${import.meta.env.VITE_CLOUDINARY_PRESETS_NAME}`
-                    );
-
-                    try {
-                        const response = await fetch(
-                            `https://api.cloudinary.com/v1_1/${
-                                import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
-                            }/image/upload`,
-                            {
-                                method: 'POST',
-                                body: formData,
-                            }
-                        );
-                        const data = await response.json();
-
-                        return {
-                            ...file,
-                            url: data.secure_url,
-                        };
-                    } catch (error) {
-                        console.error('Lỗi khi upload:', error);
-                    }
+        try {
+            const uploadPromises = fileList.map(async (file) => {
+                if (!file.originFileObj) {
+                    return file;
                 }
-                return file;
-            })
-        );
 
-        return uploadedFiles;
+                const formData = new FormData();
+                formData.append('file', file.originFileObj);
+                formData.append('upload_preset', `${import.meta.env.VITE_CLOUDINARY_PRESETS_NAME}`);
+
+                const response = await fetch(
+                    `https://api.cloudinary.com/v1_1/${
+                        import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
+                    }/image/upload`,
+                    {
+                        method: 'POST',
+                        body: formData,
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error(`Upload failed for ${file.name}`);
+                }
+
+                const data = await response.json();
+                return {
+                    ...file,
+                    url: data.secure_url,
+                };
+            });
+
+            return await Promise.all(uploadPromises);
+        } catch (error) {
+            console.error('Error uploading to Cloudinary:', error);
+            throw new Error('Failed to upload images to Cloudinary');
+        }
     };
 
     const onFinish = async (values) => {
+        if (!fileList.length) {
+            toast.error('Vui lòng upload ảnh sản phẩm!');
+            return;
+        }
+
+        if (!productOptions.length) {
+            toast.error('Vui lòng thêm ít nhất một màu sản phẩm!');
+            return;
+        }
+
         try {
             setLoading(true);
             const uploadedFiles = await handleUploadToCloudinary();
-
             const formattedOptions = productOptions.map((opt) => ({
                 key: opt.key,
                 value: {
@@ -115,7 +104,7 @@ export default function CreateProduct() {
                 option: formattedOptions,
                 state: 'waiting',
             };
-            console.log('Data:', productData);
+            console.log('Create product -->:', productData);
 
             const res = await axios.post(
                 `${import.meta.env.VITE_API_URL}/api/product/create`,
@@ -127,8 +116,8 @@ export default function CreateProduct() {
                 }
             );
 
-            console.log('Tạo sản phẩm thành công:', res);
             toast.success('Tạo sản phẩm thành công!');
+            console.log('Tạo sản phẩm thành công:', res);
             setTimeout(() => {
                 navigate('/products');
             }, 2000);
@@ -158,31 +147,7 @@ export default function CreateProduct() {
                             />
                         ),
                     },
-                    {
-                        name: 'category',
-                        label: 'Hãng đồng hồ',
-                        rules: [{ required: true, message: 'Vui lòng chọn hãng đồng hồ!' }],
-                        input: (
-                            <Select
-                                placeholder='Chọn hãng đồng hồ'
-                                loading={loading}
-                                notFoundContent={
-                                    loading ? (
-                                        <Spin size='small' />
-                                    ) : (
-                                        'Không tìm thấy hãng đồng hồ nào'
-                                    )
-                                }
-                                className='w-full h-[38px] rounded-lg hover:border-blue-400 focus:border-blue-500 transition-colors duration-300'
-                            >
-                                {category.map((item, index) => (
-                                    <Select.Option key={index} value={item}>
-                                        {item}
-                                    </Select.Option>
-                                ))}
-                            </Select>
-                        ),
-                    },
+
                     {
                         name: 'brand',
                         label: 'Danh mục sản phẩm',
@@ -191,6 +156,47 @@ export default function CreateProduct() {
                             <Input
                                 placeholder='G-Shock, Quartz, Eco-Drive...'
                                 className='rounded-lg border-gray-300 hover:border-blue-400 focus:border-blue-500 transition-colors duration-300 h-[38px]'
+                            />
+                        ),
+                    },
+                    {
+                        name: 'type',
+                        label: 'Loại sản phẩm',
+                        rules: [{ required: true, message: 'Vui lòng chọn loại sản phẩm!' }],
+                        input: (
+                            <Select
+                                className='w-full h-[38px] rounded-lg hover:border-blue-400 focus:border-blue-500 transition-colors duration-300'
+                                placeholder='Chọn loại sản phẩm'
+                                options={[
+                                    { label: 'Đồng hồ cơ tự động', value: 'Đồng hồ cơ tự động' },
+                                    {
+                                        label: 'Đồng hồ cơ lên dây cót',
+                                        value: 'Đồng hồ cơ lên dây cót',
+                                    },
+                                    { label: 'Đồng hồ thạch anh', value: 'Đồng hồ thạch anh' },
+                                    { label: 'Đồng hồ điện tử', value: 'Đồng hồ điện tử' },
+                                    { label: 'Đồng hồ thông minh', value: 'Đồng hồ thông minh' },
+                                    { label: 'Đồng hồ chronograph', value: 'Đồng hồ chronograph' },
+                                    { label: 'Đồ hồ solar', value: 'Đồ hồ solar' },
+                                    { label: 'Đồng hồ hybrid', value: 'Đồng hồ hybrid' },
+                                ]}
+                            />
+                        ),
+                    },
+                    {
+                        name: 'genderUser',
+                        label: 'Đối tượng sử dụng',
+                        rules: [{ required: true, message: 'Vui lòng chọn đối tượng sử dụng!' }],
+                        input: (
+                            <Select
+                                className='w-full h-[38px] rounded-lg hover:border-blue-400 focus:border-blue-500 transition-colors duration-300'
+                                placeholder='Chọn đối tượng sử dụng'
+                                options={[
+                                    { label: 'Nam', value: 'Nam' },
+                                    { label: 'Nữ', value: 'Nữ' },
+                                    { label: 'Thiếu nhi', value: 'Thiếu nhi' },
+                                    { label: 'Tất cả', value: 'Tất cả' },
+                                ]}
                             />
                         ),
                     },
@@ -206,51 +212,19 @@ export default function CreateProduct() {
                         ),
                     },
                     {
-                        name: 'genderUser',
-                        label: 'Đối tượng sử dụng',
-                        rules: [{ required: true, message: 'Vui lòng chọn đối tượng sử dụng!' }],
+                        name: 'category',
+                        label: 'Hãng đồng hồ',
+                        rules: [{ required: true, message: 'Vui lòng chọn hãng đồng hồ!' }],
                         input: (
                             <Select
+                                placeholder='Chọn hãng đồng hồ'
+                                options={category?.map((item) => ({
+                                    label: item.categoryName,
+                                    value: item.categoryName,
+                                }))}
+                                notFoundContent='Không tìm thấy hãng nào'
                                 className='w-full h-[38px] rounded-lg hover:border-blue-400 focus:border-blue-500 transition-colors duration-300'
-                                placeholder='Chọn đối tượng sử dụng'
-                            >
-                                <Select.Option value='Nam'>Nam</Select.Option>
-                                <Select.Option value='Nữ'>Nữ</Select.Option>
-                                <Select.Option value='Thiếu nhi'>Thiếu nhi</Select.Option>
-                                <Select.Option value='Người lớn tuổi'>Người lớn tuổi</Select.Option>
-                            </Select>
-                        ),
-                    },
-                    {
-                        name: 'type',
-                        label: 'Loại sản phẩm',
-                        rules: [{ required: true, message: 'Vui lòng chọn loại sản phẩm!' }],
-                        input: (
-                            <Select
-                                className='w-full h-[38px] rounded-lg hover:border-blue-400 focus:border-blue-500 transition-colors duration-300'
-                                placeholder='Chọn loại sản phẩm'
-                            >
-                                <Select.Option value='Đồng hồ cơ tự động'>
-                                    Đồng hồ cơ tự động
-                                </Select.Option>
-                                <Select.Option value='Đồng hồ cơ lên dây cót'>
-                                    Đồng hồ cơ lên dây cót
-                                </Select.Option>
-                                <Select.Option value='Đồng hồ thạch anh'>
-                                    Đồng hồ thạch anh
-                                </Select.Option>
-                                <Select.Option value='Đồng hồ điện tử'>
-                                    Đồng hồ điện tử
-                                </Select.Option>
-                                <Select.Option value=' Đồng hồ thông minh'>
-                                    Đồng hồ thông minh
-                                </Select.Option>
-                                <Select.Option value='Đồng hồ chronograph'>
-                                    Đồng hồ chronograph
-                                </Select.Option>
-                                <Select.Option value='Đồ hồ solar'>Đồ hồ solar</Select.Option>
-                                <Select.Option value='Đồng hồ hybrid'>Đồng hồ hybrid</Select.Option>
-                            </Select>
+                            />
                         ),
                     },
                 ],
@@ -301,35 +275,27 @@ export default function CreateProduct() {
                             <Select
                                 className='w-full h-[38px] rounded-lg hover:border-blue-400 focus:border-blue-500 transition-colors duration-300'
                                 placeholder='Chọn hình dáng mặt đồng hồ'
-                            >
-                                <Select.Option value='Đồng hồ mặt tròn (Round Watches)'>
-                                    Đồng hồ mặt tròn (Round Watches)
-                                </Select.Option>
-                                <Select.Option value='Đồng hồ mặt vuông (Square Watches)'>
-                                    Đồng hồ mặt vuông (Square Watches){' '}
-                                </Select.Option>
-                                <Select.Option value='Đồng hồ mặt chữ nhật (Rectangular Watches)'>
-                                    Đồng hồ mặt chữ nhật (Rectangular Watches){' '}
-                                </Select.Option>
-                                <Select.Option value='Đồng hồ mặt tam giác (Triangle Watches)'>
-                                    Đồng hồ mặt tam giác (Triangle Watches){' '}
-                                </Select.Option>
-                                <Select.Option value='Đồng hồ mặt bầu dục (Oval Watches)'>
-                                    Đồng hồ mặt bầu dục (Oval Watches){' '}
-                                </Select.Option>
-                                <Select.Option value='Đồng hồ mặt Tonneau (Tonneau Watches)'>
-                                    Đồng hồ mặt Tonneau (Tonneau Watches){' '}
-                                </Select.Option>
-                                <Select.Option value='Đồng hồ mặt Carage (Carage Watches)'>
-                                    Đồng hồ mặt Carage (Carage Watches){' '}
-                                </Select.Option>
-                                <Select.Option value='Đồng hồ mặt Cushion (Cushion Watches)'>
-                                    Đồng hồ mặt Cushion (Cushion Watches){' '}
-                                </Select.Option>
-                                <Select.Option value='Đồng hồ mặt bát giác (Octagonal Watches)'>
-                                    Đồng hồ mặt bát giác (Octagonal Watches){' '}
-                                </Select.Option>
-                            </Select>
+                                options={[
+                                    { label: 'Đồng hồ mặt tròn', value: 'Đồng hồ mặt tròn' },
+                                    { label: 'Đồng hồ mặt vuông', value: 'Đồng hồ mặt vuông' },
+                                    {
+                                        label: 'Đồng hồ mặt chữ nhật',
+                                        value: 'Đồng hồ mặt chữ nhật',
+                                    },
+                                    {
+                                        label: 'Đồng hồ mặt tam giác',
+                                        value: 'Đồng hồ mặt tam giác',
+                                    },
+                                    { label: 'Đồng hồ mặt bầu dục', value: 'Đồng hồ mặt bầu dục' },
+                                    { label: 'Đồng hồ mặt Tonneau', value: 'Đồng hồ mặt Tonneau' },
+                                    { label: 'Đồng hồ mặt Carage', value: 'Đồng hồ mặt Carage' },
+                                    { label: 'Đồng hồ mặt Cushion', value: 'Đồng hồ mặt Cushion' },
+                                    {
+                                        label: 'Đồng hồ mặt bát giác',
+                                        value: 'Đồng hồ mặt bát giác',
+                                    },
+                                ]}
+                            />
                         ),
                     },
                     {
@@ -604,47 +570,6 @@ export default function CreateProduct() {
         toast.success('Đã thêm màu sắc mới!');
     };
 
-    const ColorSelectionModal = () => (
-        <Modal
-            title='Chọn màu sắc sản phẩm'
-            open={isColorModalVisible}
-            onCancel={() => setColorModalVisible(false)}
-            footer={null}
-            width={600}
-        >
-            <div className='grid grid-cols-3 gap-4 p-4'>
-                {colorOptions.map((color) => (
-                    <div
-                        key={color.key}
-                        className='flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 rounded-lg transition-colors duration-200'
-                        onClick={() => handleAddColor(color)}
-                    >
-                        <div
-                            className='w-8 h-8 rounded-full border shadow-sm'
-                            style={{ backgroundColor: color.key }}
-                        />
-                        <span className='font-medium'>{color.value}</span>
-                    </div>
-                ))}
-
-                <div className='col-span-3 mt-4 pt-4 border-t'>
-                    <ColorPicker
-                        onChangeComplete={(color) => {
-                            handleAddColor({
-                                key: color.toHexString(),
-                                value: 'Màu tùy chỉnh',
-                            });
-                        }}
-                    >
-                        <Button icon={<PlusOutlined />} block>
-                            Thêm màu tùy chỉnh
-                        </Button>
-                    </ColorPicker>
-                </div>
-            </div>
-        </Modal>
-    );
-
     const getIconForSection = (title) => {
         switch (title) {
             case 'Thông tin cơ bản':
@@ -660,19 +585,45 @@ export default function CreateProduct() {
         }
     };
 
+    const handlePreview = () => {
+        const values = form.getFieldsValue();
+        const previewData = {
+            ...values,
+            img: fileList.map((file) => file.url || URL.createObjectURL(file.originFileObj)),
+            option: productOptions,
+            state: 'preview',
+        };
+        navigate('/product/product-preview', { state: { product: previewData } });
+    };
+
     return (
-        <Card loading={loading} className='m-4 mt-24 rounded-xl border-none relative'>
-            <div className='flex items-center justify-between py-4 absolute z-10 -top-24'>
+        <Card loading={loading} className='rounded-xl border-none '>
+            {/* header */}
+            <div className='flex items-center justify-between mb-5'>
                 <div>
-                    <h1 className='text-2xl dark:text-[#fbfcfc] font-bold mb-2'>
+                    <h1 className='text-2xl dark:text-[#141a21] font-bold mb-2'>
                         Thêm sản phẩm mới
                     </h1>
-                    <p className='text-gray-500 dark:text-gray-400 text-sm'>
+                    <p className='text-gray-500 dark:text-gray-600 text-sm'>
                         Điền đầy đủ thông tin để tạo sản phẩm mới
                     </p>
                 </div>
+                <Link
+                    to='/products'
+                    className='inline-flex items-center gap-2 px-6 py-2.5 rounded-full
+                        bg-white border border-gray-200 shadow-sm hover:shadow-md
+                        text-gray-700 hover:text-primary hover:border-primary/20
+                        transition-all duration-300 ease-in-out transform hover:-translate-x-1
+                        font-medium group'
+                >
+                    <FaArrowLeftLong className='w-4 h-4 transition-transform duration-300 group-hover:animate-pulse' />
+                    <span className='bg-gradient-to-r from-gray-800 to-gray-600 hover:from-primary hover:to-primary/80 bg-clip-text text-transparent'>
+                        Quay lại danh sách
+                    </span>
+                </Link>
             </div>
 
+            {/* form */}
             <Spin spinning={loading}>
                 <Form
                     form={form}
@@ -689,6 +640,7 @@ export default function CreateProduct() {
                         state: 'active',
                     }}
                 >
+                    {/* 3 sections basic info */}
                     <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
                         {formSections.map((section, idx) => (
                             <Card
@@ -803,26 +755,75 @@ export default function CreateProduct() {
                         ))}
                     </Card>
 
-                    <ColorSelectionModal />
+                    {/* color modal */}
+                    <Modal
+                        title='Chọn màu sắc sản phẩm'
+                        open={isColorModalVisible}
+                        onCancel={() => setColorModalVisible(false)}
+                        footer={null}
+                        width={600}
+                    >
+                        <div className='grid grid-cols-3 gap-4 p-4'>
+                            {colorOptions.map((color) => (
+                                <div
+                                    key={color.key}
+                                    className='flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 rounded-lg transition-colors duration-200'
+                                    onClick={() => handleAddColor(color)}
+                                >
+                                    <div
+                                        className='w-8 h-8 rounded-full border shadow-sm'
+                                        style={{ backgroundColor: color.key }}
+                                    />
+                                    <span className='font-medium'>{color.value}</span>
+                                </div>
+                            ))}
 
-                    {/* button */}
-                    <div className='flex justify-end gap-4 mt-8'>
+                            <div className='col-span-3 mt-4 pt-4 border-t'>
+                                <ColorPicker
+                                    onChangeComplete={(color) => {
+                                        handleAddColor({
+                                            key: color.toHexString(),
+                                            value: 'Màu tùy chỉnh',
+                                        });
+                                    }}
+                                >
+                                    <Button icon={<PlusOutlined />} block>
+                                        Thêm màu tùy chỉnh
+                                    </Button>
+                                </ColorPicker>
+                            </div>
+                        </div>
+                    </Modal>
+
+                    {/* buttons */}
+                    <div className='flex items-center justify-between mt-10'>
                         <Button
-                            size='large'
-                            className='min-w-[120px] rounded-lg border-gray-300 hover:border-gray-400'
                             onClick={() => navigate('/products')}
+                            className='h-12 px-8 rounded-lg hover:scale-105 transition-all duration-200'
+                            disabled={loading}
                         >
                             Hủy
                         </Button>
-                        <Button
-                            type='primary'
-                            size='large'
-                            className='min-w-[120px] rounded-lg shadow-md hover:shadow-lg'
-                            htmlType='submit'
-                            loading={loading}
-                        >
-                            Tạo sản phẩm
-                        </Button>
+                        <div className='flex items-center gap-5'>
+                            <Button
+                                onClick={handlePreview}
+                                className='h-12 px-8 rounded-lg hover:scale-105 transition-all duration-200 bg-purple-50 text-purple-600 border-purple-200 hover:border-purple-300 hover:text-purple-700 hover:bg-purple-100'
+                                icon={<FaEye className='mr-2' />}
+                                disabled={loading}
+                            >
+                                Xem trước
+                            </Button>
+                            <Button
+                                type='primary'
+                                htmlType='submit'
+                                loading={loading}
+                                className='h-12 px-10 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 border-none hover:scale-105 transition-all duration-200'
+                                icon={<SaveOutlined />}
+                                disabled={loading}
+                            >
+                                Tạo Sản Phẩm
+                            </Button>
+                        </div>
                     </div>
                 </Form>
             </Spin>

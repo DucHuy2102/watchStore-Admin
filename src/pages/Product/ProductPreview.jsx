@@ -1,7 +1,4 @@
-import axios from 'axios';
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useSelector } from 'react-redux';
-import { Link, useParams } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import { Card, Tabs, Breadcrumb, Descriptions, Tag } from 'antd';
 import {
     BoxPlotOutlined,
@@ -12,45 +9,15 @@ import {
     UserOutlined,
 } from '@ant-design/icons';
 import { IoMdWatch } from 'react-icons/io';
-import { Gallery } from './components/exportComponentProduct';
 import { FaArrowLeftLong } from 'react-icons/fa6';
+import { Gallery } from './components/exportComponentProduct';
+import { useState, useMemo, useCallback } from 'react';
 
-export default function ProductDetail() {
-    const { id } = useParams();
-    const { access_token: tokenUser } = useSelector((state) => state.user);
-    const [product, setProduct] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [selectedOption, setSelectedOption] = useState(null);
+export default function ProductPreview() {
+    const location = useLocation();
+    const product = location.state?.product;
+    const [selectedOption, setSelectedOption] = useState(product?.option?.[0]);
     const [isExpandDescription, setIsExpandDescription] = useState(false);
-
-    useEffect(() => {
-        const getProductDetail = async () => {
-            try {
-                setLoading(true);
-                const res = await axios.get(`${import.meta.env.VITE_API_URL}/client/product`, {
-                    params: {
-                        productId: id,
-                    },
-                    headers: {
-                        Authorization: `Bearer ${tokenUser}`,
-                    },
-                });
-                if (res?.status === 200) {
-                    const { data } = res;
-                    setProduct(data);
-                    if (data?.option?.length > 0) {
-                        setSelectedOption(data.option[0]);
-                    }
-                }
-            } catch (error) {
-                console.error('Error fetching product:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        getProductDetail();
-    }, [id]);
 
     const formattedPrices = useMemo(() => {
         if (!selectedOption)
@@ -64,20 +31,20 @@ export default function ProductDetail() {
             originalPrice: new Intl.NumberFormat('vi-VN', {
                 style: 'currency',
                 currency: 'VND',
-            }).format(selectedOption.value.price),
+            }).format(selectedOption.price),
 
             discount:
-                selectedOption.value.discount > 0
+                selectedOption.discount > 0
                     ? new Intl.NumberFormat('vi-VN', {
                           style: 'currency',
                           currency: 'VND',
-                      }).format(selectedOption.value.discount)
+                      }).format(selectedOption.discount)
                     : 'Không giảm giá',
 
             finalPrice: new Intl.NumberFormat('vi-VN', {
                 style: 'currency',
                 currency: 'VND',
-            }).format(selectedOption.value.price - selectedOption.value.discount),
+            }).format(selectedOption.price - selectedOption.discount),
         };
     }, [selectedOption]);
 
@@ -94,15 +61,7 @@ export default function ProductDetail() {
         return product.feature.trim() === '' ? [] : product.feature.split(',').map((f) => f.trim());
     }, [product?.feature]);
 
-    if (loading) {
-        return (
-            <div className='flex items-center justify-center min-h-screen'>
-                <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900'></div>
-            </div>
-        );
-    }
-
-    if (!product) return null;
+    if (!product) return <div>No preview data available</div>;
 
     return (
         <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-gray-50 rounded-lg'>
@@ -113,7 +72,7 @@ export default function ProductDetail() {
                         items={[
                             { href: '/dashboard', title: 'Trang chủ' },
                             { href: '/products', title: 'Danh sách sản phẩm' },
-                            { title: product.productName },
+                            { title: 'Xem trước sản phẩm' },
                         ]}
                     />
                     <Tag color='blue' icon={<SyncOutlined spin />} className='absolute z-10 top-7'>
@@ -121,7 +80,7 @@ export default function ProductDetail() {
                     </Tag>
                 </div>
                 <Link
-                    to='/products'
+                    to='/product/create'
                     className='inline-flex items-center gap-2 px-6 py-2.5 rounded-full
                         bg-white border border-gray-200 shadow-sm hover:shadow-md
                         text-gray-700 hover:text-primary hover:border-primary/20
@@ -130,7 +89,7 @@ export default function ProductDetail() {
                 >
                     <FaArrowLeftLong className='w-4 h-4 transition-transform duration-300 group-hover:animate-pulse' />
                     <span className='bg-gradient-to-r from-gray-800 to-gray-600 hover:from-primary hover:to-primary/80 bg-clip-text text-transparent'>
-                        Quay lại danh sách
+                        Quay lại tạo sản phẩm
                     </span>
                 </Link>
             </div>
@@ -166,7 +125,7 @@ export default function ProductDetail() {
                                     </span>
                                 }
                             >
-                                <span className='font-mono'>{product.id}</span>
+                                <span className='font-mono'>{product.id || 'Preview'}</span>
                             </Descriptions.Item>
                             <Descriptions.Item
                                 label={
@@ -208,7 +167,7 @@ export default function ProductDetail() {
                                             className='w-6 h-6 rounded-full shadow-inner'
                                             style={{ backgroundColor: `${opt.key}` }}
                                         />
-                                        <span className='font-medium'>{opt.value.color}</span>
+                                        <span className='font-medium'>{opt.color}</span>
                                     </button>
                                 ))}
                             </div>
@@ -218,19 +177,13 @@ export default function ProductDetail() {
                                     <div className='space-y-6'>
                                         <div className='flex items-center justify-between'>
                                             <h3 className='text-xl font-semibold text-gray-800'>
-                                                Chi tiết phiên bản {selectedOption.value.color}
+                                                Chi tiết phiên bản {selectedOption.color}
                                             </h3>
                                             <Tag
-                                                color={
-                                                    selectedOption.value.state === 'saling'
-                                                        ? 'green'
-                                                        : 'red'
-                                                }
+                                                color='green'
                                                 className='text-base px-4 py-1.5 rounded-full'
                                             >
-                                                {selectedOption.value.state === 'saling'
-                                                    ? 'Đang bán'
-                                                    : 'Ngừng bán'}
+                                                Xem trước
                                             </Tag>
                                         </div>
                                         <div className='grid grid-cols-2 gap-6'>
@@ -248,7 +201,7 @@ export default function ProductDetail() {
                                                     Số lượng còn
                                                 </div>
                                                 <div className='text-2xl font-bold text-blue-600 group-hover:text-blue-700 transition-colors duration-300'>
-                                                    {selectedOption.value.quantity} chiếc
+                                                    {selectedOption.amount} chiếc
                                                 </div>
                                             </div>
 
@@ -271,10 +224,10 @@ export default function ProductDetail() {
                                             </div>
                                         </div>
 
-                                        {selectedOption.value.quantity < 10 && (
+                                        {selectedOption.amount < 10 && (
                                             <div className='bg-yellow-50 border border-yellow-200 p-3 rounded-lg'>
                                                 <span className='text-yellow-600 font-medium'>
-                                                    Chỉ còn {selectedOption.value.quantity} sản phẩm
+                                                    Chỉ còn {selectedOption.amount} sản phẩm
                                                 </span>
                                             </div>
                                         )}
@@ -389,7 +342,8 @@ export default function ProductDetail() {
                                                     {product.style}
                                                 </Descriptions.Item>
                                                 <Descriptions.Item label='Kích thước'>
-                                                    {product.width}mm
+                                                    {product.width}mm x {product.length}mm x{' '}
+                                                    {product.height}mm
                                                 </Descriptions.Item>
                                                 <Descriptions.Item label='Khối lượng'>
                                                     {product.weight}g

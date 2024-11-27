@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
 import {
@@ -8,28 +8,29 @@ import {
     InputNumber,
     DatePicker,
     Select,
-    Button,
     Card,
     Spin,
     Alert,
-    Radio,
     Upload,
-    Modal,
+    Button,
+    Image,
 } from 'antd';
 import {
-    ArrowLeftOutlined,
     ClockCircleOutlined,
     DeleteOutlined,
-    EditOutlined,
     EnvironmentOutlined,
     InboxOutlined,
     PictureOutlined,
     TagOutlined,
+    EditOutlined,
+    SaveOutlined,
+    CloseOutlined,
 } from '@ant-design/icons';
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
-import { CiWarning } from 'react-icons/ci';
-import { defaultImages } from './defaultImages';
+import { FaArrowLeftLong } from 'react-icons/fa6';
+import { FaEye } from 'react-icons/fa';
+import VoucherDetailModal from './VoucherDetailModal';
 
 const handleUploadToCloudinary = async (file) => {
     if (!file) return null;
@@ -91,6 +92,8 @@ export default function EditVoucher() {
     const [form] = Form.useForm();
     const { access_token: tokenUser } = useSelector((state) => state.user);
     const [loading, setLoading] = useState(false);
+    const [previewModalOpen, setPreviewModalOpen] = useState(false);
+    const [previewVoucher, setPreviewVoucher] = useState(null);
     const [submitting, setSubmitting] = useState(false);
     const { provinces, getProvinces } = useProvinces();
     const [provinceSelected, setProvinceSelected] = useState({
@@ -98,9 +101,8 @@ export default function EditVoucher() {
         label: '',
     });
     const [fileList, setFileList] = useState([]);
-    const [imageType, setImageType] = useState('default');
     const [imageUrl, setImageUrl] = useState('');
-    const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+    const [isEditImg, setIsEditImg] = useState(false);
 
     useEffect(() => {
         getVoucherDetail();
@@ -132,19 +134,6 @@ export default function EditVoucher() {
         [form]
     );
 
-    const handleImageTypeChange = useCallback(
-        (e) => {
-            const newType = e.target.value;
-            setImageType(newType);
-
-            if (newType === 'custom') {
-                setImageUrl('');
-                form.setFieldValue('image', null);
-            }
-        },
-        [form]
-    );
-
     const getVoucherDetail = async () => {
         try {
             const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/coupon/get-by-id`, {
@@ -167,7 +156,6 @@ export default function EditVoucher() {
                     province: data?.province?.label ?? null,
                     times: data?.times ?? 100,
                     state: data?.state ?? 'active',
-                    imageType: data?.imageType ?? 'default',
                     img: data?.img ?? '',
                     expiryDate: data?.expiryDate ? dayjs(data.expiryDate) : null,
                     createdDate: data?.expiryDate ? dayjs(data.createdDate) : dayjs(),
@@ -183,15 +171,6 @@ export default function EditVoucher() {
                         value: '',
                         label: '',
                     });
-                }
-
-                if (data?.img) {
-                    setImageUrl(data.img);
-                    const matchedDefault = defaultImages.some((image) => image.url === data.img);
-                    setImageType(matchedDefault ? 'default' : 'custom');
-                } else {
-                    setImageUrl('');
-                    setImageType('default');
                 }
 
                 form.setFieldsValue(formData);
@@ -251,49 +230,51 @@ export default function EditVoucher() {
         );
     }
 
-    const handleDelete = async () => {
-        try {
-            setSubmitting(true);
-            const res = await axios.delete(`${import.meta.env.VITE_API_URL}/api/coupon/delete/`, {
-                params: {
-                    couponId: id,
-                },
-                headers: {
-                    Authorization: `Bearer ${tokenUser}`,
-                },
-            });
-            if (res.status === 200) {
-                toast.success('Xóa voucher thành công!');
-                setTimeout(() => {
-                    navigate('/voucher');
-                }, 2000);
-            }
-        } catch (error) {
-            console.error(error);
-            toast.error('Có lỗi xảy ra khi xóa voucher!');
-        } finally {
-            setSubmitting(false);
-            setDeleteModalVisible(false);
-        }
+    const handlePreview = () => {
+        const formValues = form.getFieldsValue();
+        const previewData = {
+            ...formValues,
+            img: imageUrl,
+            province: provinceSelected,
+            state: 'active',
+            expiryDate: formValues.expiryDate?.toISOString(),
+            createdDate: formValues.createdDate?.toISOString(),
+        };
+        setPreviewVoucher(previewData);
+        setPreviewModalOpen(true);
+    };
+
+    const handleCancelEditImage = () => {
+        setIsEditImg(false);
+        setImageUrl(form.getFieldValue('img'));
+        setFileList([]);
     };
 
     return (
         <div className='p-6 max-w-4xl mx-auto'>
+            {/* header */}
             <div className='flex items-center justify-between mb-6'>
                 <div>
                     <h1 className='text-3xl font-extrabold text-gray-800 dark:text-[#fbfcfc] tracking-tight'>
                         Chỉnh sửa Voucher
                     </h1>
                 </div>
-                <Button
-                    icon={<ArrowLeftOutlined />}
-                    onClick={() => navigate('/vouchers')}
-                    className='flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 hover:text-blue-500 hover:border-blue-500 hover:bg-gray-50 rounded-lg shadow-sm'
+                <Link
+                    to='/vouchers'
+                    className='inline-flex items-center gap-2 px-6 py-2.5 rounded-full
+                        bg-white border border-gray-200 shadow-sm hover:shadow-md
+                        text-gray-700 hover:text-primary hover:border-primary/20
+                        transition-all duration-300 ease-in-out transform hover:-translate-x-1
+                        font-medium group'
                 >
-                    Quay lại
-                </Button>
+                    <FaArrowLeftLong className='w-4 h-4 transition-transform duration-300 group-hover:animate-pulse' />
+                    <span className='bg-gradient-to-r from-gray-800 to-gray-600 hover:from-primary hover:to-primary/80 bg-clip-text text-transparent'>
+                        Quay lại danh sách
+                    </span>
+                </Link>
             </div>
 
+            {/* form */}
             <div className='max-w-6xl mx-auto'>
                 <Card className='shadow-sm border border-gray-100'>
                     <Form
@@ -302,6 +283,7 @@ export default function EditVoucher() {
                         onFinish={onFinish}
                         className='max-w-4xl mx-auto'
                     >
+                        {/* basic info */}
                         <div className='mb-8'>
                             <h2 className='text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2'>
                                 <TagOutlined className='text-blue-500' />
@@ -355,6 +337,7 @@ export default function EditVoucher() {
                             </div>
                         </div>
 
+                        {/* discount info */}
                         <div className='mb-8'>
                             <h2 className='text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2'>
                                 <TagOutlined className='text-blue-500' />
@@ -368,6 +351,7 @@ export default function EditVoucher() {
                                         formatter={(value) => `${value}%`}
                                         parser={(value) => value.replace('%', '')}
                                         className='w-full h-11 flex items-center'
+                                        controls={false}
                                     />
                                 </Form.Item>
 
@@ -380,11 +364,13 @@ export default function EditVoucher() {
                                         }
                                         parser={(value) => value.replace(/\$\s?|(,*)/g, '')}
                                         placeholder='Nhập giá tối thiểu để áp dụng voucher'
+                                        controls={false}
                                     />
                                 </Form.Item>
                             </div>
                         </div>
 
+                        {/* scope & limit */}
                         <div className='mb-8'>
                             <h2 className='text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2'>
                                 <EnvironmentOutlined className='text-blue-500' />
@@ -415,11 +401,13 @@ export default function EditVoucher() {
                                         max={99999}
                                         className='w-full h-11 flex items-center'
                                         placeholder='Nhập số lượt sử dụng tối đa'
+                                        controls={false}
                                     />
                                 </Form.Item>
                             </div>
                         </div>
 
+                        {/* time info */}
                         <div className='mb-8'>
                             <h2 className='text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2'>
                                 <ClockCircleOutlined className='text-blue-500' />
@@ -459,51 +447,50 @@ export default function EditVoucher() {
                             </div>
                         </div>
 
+                        {/* image info */}
                         <div className='mb-8'>
-                            <h2 className='text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2'>
-                                <PictureOutlined className='text-blue-500' />
-                                Hình ảnh voucher
-                            </h2>
+                            <div className='flex items-center justify-between mb-4'>
+                                <h2 className='text-lg font-semibold text-gray-700 flex items-center gap-2'>
+                                    <PictureOutlined className='text-blue-500' />
+                                    Hình ảnh voucher
+                                </h2>
+                                {!isEditImg ? (
+                                    <Button
+                                        onClick={() => {
+                                            setIsEditImg(true);
+                                            setImageUrl('');
+                                        }}
+                                        className='flex items-center gap-2 px-4 py-2 rounded-lg text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100 hover:border-blue-300 transition-all duration-200'
+                                        icon={<EditOutlined />}
+                                    >
+                                        Chỉnh sửa ảnh
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        onClick={handleCancelEditImage}
+                                        className='flex items-center gap-2 px-4 py-2 rounded-lg text-red-600 border-red-200 bg-red-50 hover:bg-red-100 hover:border-red-300 transition-all duration-200'
+                                        icon={<CloseOutlined />}
+                                    >
+                                        Hủy chỉnh sửa
+                                    </Button>
+                                )}
+                            </div>
 
-                            <Form.Item name='imageType' label='Loại hình ảnh'>
-                                <Radio.Group onChange={handleImageTypeChange} value={imageType}>
-                                    <Radio value='default'>Sử dụng mẫu có sẵn</Radio>
-                                    <Radio value='custom'>Tải lên hình ảnh mới</Radio>
-                                </Radio.Group>
-                            </Form.Item>
-
-                            {imageType === 'default' ? (
-                                <div className='grid grid-cols-4 gap-4 mt-4'>
-                                    {defaultImages.map((image, index) => (
-                                        <div
-                                            key={index}
-                                            className={`border-2 rounded-lg p-2 cursor-pointer ${
-                                                imageUrl === image.url
-                                                    ? 'border-blue-500'
-                                                    : 'border-gray-200'
-                                            }`}
-                                            onClick={() => {
-                                                setImageUrl(image.url);
-                                                form.setFieldValue('image', image.url);
-                                            }}
-                                        >
-                                            <img
-                                                src={image.url}
-                                                alt={image.title}
-                                                className='w-full h-40 object-cover rounded'
-                                            />
-                                            <p className='text-center mt-2'>{image.title}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
+                            {isEditImg ? (
                                 <Form.Item name='image'>
                                     {imageUrl ? (
-                                        <div className='relative inline-block'>
-                                            <img
+                                        <div className='relative flex items-center justify-center'>
+                                            <Image
                                                 src={imageUrl}
                                                 alt='Uploaded preview'
-                                                className='max-w-[300px] rounded-lg shadow-sm'
+                                                className='rounded-lg shadow-sm'
+                                                preview={{
+                                                    mask: (
+                                                        <div className='text-xs font-medium'>
+                                                            Xem ảnh
+                                                        </div>
+                                                    ),
+                                                }}
                                             />
                                             <Button
                                                 icon={<DeleteOutlined />}
@@ -564,31 +551,22 @@ export default function EditVoucher() {
                                         </Upload.Dragger>
                                     )}
                                 </Form.Item>
+                            ) : (
+                                <div className='flex justify-center items-center'>
+                                    <Image
+                                        src={imageUrl}
+                                        alt='Voucher image'
+                                        preview={{
+                                            mask: (
+                                                <div className='text-xs font-medium'>Xem ảnh</div>
+                                            ),
+                                        }}
+                                    />
+                                </div>
                             )}
                         </div>
 
-                        <Form.Item label='Trạng thái hoạt động' name='state'>
-                            <Select
-                                className='h-11'
-                                options={[
-                                    {
-                                        value: 'active',
-                                        label: (
-                                            <span className='text-green-600'>
-                                                Kích hoạt voucher
-                                            </span>
-                                        ),
-                                    },
-                                    {
-                                        value: 'inactive',
-                                        label: (
-                                            <span className='text-red-600'>Ngừng kích hoạt</span>
-                                        ),
-                                    },
-                                ]}
-                            />
-                        </Form.Item>
-
+                        {/* expired date alert */}
                         {dayjs().isAfter(form.getFieldValue('expiryDate')) && (
                             <Alert
                                 message='Voucher đã hết hạn'
@@ -599,53 +577,42 @@ export default function EditVoucher() {
                             />
                         )}
 
-                        <div className='flex justify-between items-center gap-4'>
+                        {/* buttons */}
+                        <div className='flex items-center justify-between'>
                             <Button
-                                danger
-                                icon={<DeleteOutlined />}
-                                onClick={() => setDeleteModalVisible(true)}
-                                className='h-11 px-6'
-                                loading={submitting}
+                                onClick={() => navigate('/vouchers')}
+                                className='h-12 px-8 rounded-lg hover:scale-105 transition-all duration-200'
+                                disabled={submitting}
                             >
-                                Xóa Voucher
+                                Hủy
                             </Button>
-                            <div className='flex gap-4'>
-                                <Button onClick={() => navigate('/voucher')} className='h-11 px-6'>
-                                    Hủy thay đổi
+                            <div className='flex items-center gap-5'>
+                                <Button
+                                    onClick={handlePreview}
+                                    className='h-12 px-8 rounded-lg hover:scale-105 transition-all duration-200 bg-purple-50 text-purple-600 border-purple-200 hover:border-purple-300 hover:text-purple-700 hover:bg-purple-100'
+                                    icon={<FaEye className='mr-2' />}
+                                    disabled={submitting}
+                                >
+                                    Xem trước
                                 </Button>
                                 <Button
                                     type='primary'
                                     htmlType='submit'
                                     loading={submitting}
-                                    className='h-11 px-8 bg-blue-500 hover:bg-blue-600 flex items-center gap-2'
-                                    icon={<EditOutlined />}
+                                    className='h-12 px-10 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 border-none hover:scale-105 transition-all duration-200'
+                                    icon={<SaveOutlined />}
+                                    disabled={submitting}
                                 >
-                                    Cập nhật Voucher
+                                    Lưu thay đổi
                                 </Button>
                             </div>
                         </div>
 
-                        <Modal
-                            open={deleteModalVisible}
-                            onOk={handleDelete}
-                            onCancel={() => setDeleteModalVisible(false)}
-                            okText='Xóa'
-                            cancelText='Hủy'
-                            okButtonProps={{
-                                danger: true,
-                                loading: submitting,
-                            }}
-                        >
-                            <div className='text-center'>
-                                <CiWarning className='text-yellow-400 mx-auto w-20 h-20 mb-2' />
-                                <p className='font-medium text-lg'>
-                                    Bạn có chắc chắn muốn dừng xóa voucher này?
-                                </p>
-                                <p className='text-gray-500 mt-2'>
-                                    Hành động này sẽ không thể hoàn tác.
-                                </p>
-                            </div>
-                        </Modal>
+                        <VoucherDetailModal
+                            voucher={previewVoucher}
+                            open={previewModalOpen}
+                            onClose={() => setPreviewModalOpen(false)}
+                        />
                     </Form>
                 </Card>
             </div>

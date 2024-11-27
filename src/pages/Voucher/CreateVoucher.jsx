@@ -213,6 +213,7 @@ export default function CreateVoucher() {
 
     return (
         <div className='p-8 max-w-5xl mx-auto'>
+            {/* header */}
             <div className='flex items-center justify-between mb-6'>
                 <div>
                     <h1 className='text-3xl font-extrabold text-gray-800 dark:text-[#fbfcfc] tracking-tight'>
@@ -223,7 +224,7 @@ export default function CreateVoucher() {
                     </p>
                 </div>
                 <Link
-                    to='/orders'
+                    to='/vouchers'
                     className='inline-flex items-center gap-2 px-6 py-2.5 rounded-full
                         bg-white border border-gray-200 shadow-sm hover:shadow-md
                         text-gray-700 hover:text-primary hover:border-primary/20
@@ -237,6 +238,7 @@ export default function CreateVoucher() {
                 </Link>
             </div>
 
+            {/* form */}
             <Card className='shadow-sm'>
                 <Form
                     form={form}
@@ -552,6 +554,7 @@ export default function CreateVoucher() {
                         />
                     )}
 
+                    {/* buttons */}
                     <div className='flex items-center justify-between'>
                         <Button
                             onClick={() => navigate('/vouchers')}

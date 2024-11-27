@@ -3,16 +3,7 @@ import { useEffect } from 'react';
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Table, Button, Space, Popconfirm, Tooltip, Image, Skeleton, Badge } from 'antd';
-import {
-    FaEdit,
-    FaTrash,
-    FaPlus,
-    FaCircle,
-    FaImage,
-    FaFilter,
-    FaEye,
-    FaPlusCircle,
-} from 'react-icons/fa';
+import { FaEdit, FaTrash, FaCircle, FaImage, FaFilter, FaEye, FaPlusCircle } from 'react-icons/fa';
 import { useSelector } from 'react-redux';
 import { FilterModal_Component } from '../../components/exportComponent';
 import { toast } from 'react-toastify';
@@ -64,19 +55,12 @@ export default function ListProduct() {
     const [products, setProducts] = useState([]);
     console.log(products);
     const [isLoading, setIsLoading] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
     const [totalProducts, setTotalProducts] = useState(0);
     const [searchParams, setSearchParams] = useSearchParams();
     const [showModalFilter, setShowModalFilter] = useState(false);
     const [searchFilterOption, setSearchFilterOption] = useState('');
     const [selectedFilters, setSelectedFilters] = useState([]);
-
-    useEffect(() => {
-        getAllProducts();
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth',
-        });
-    }, [searchParams]);
 
     const getAllProducts = async () => {
         try {
@@ -99,7 +83,11 @@ export default function ListProduct() {
                 }
             );
             if (res.status === 200) {
-                setProducts(res.data.productResponses);
+                const productsWithIndex = res.data.productResponses.map((product, index) => ({
+                    ...product,
+                    index: (parseInt(pageNum) - 1) * 12 + index + 1,
+                }));
+                setProducts(productsWithIndex);
                 setTotalProducts(res.data.totalProducts);
             }
         } catch (error) {
@@ -108,6 +96,16 @@ export default function ListProduct() {
             setIsLoading(false);
         }
     };
+
+    useEffect(() => {
+        getAllProducts();
+        const pageNum = parseInt(searchParams.get('pageNum')) || 1;
+        setCurrentPage(pageNum);
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth',
+        });
+    }, [searchParams]);
 
     const filteredOptions = options.map((option) => ({
         ...option,
@@ -207,84 +205,102 @@ export default function ListProduct() {
             title: 'Sản phẩm',
             dataIndex: 'product',
             key: 'product',
-            width: '40%',
+            width: '20%',
+            onCell: (record) => ({
+                rowSpan: record.isFirstOption ? record.totalOptions : 0,
+            }),
+            render: (_, record) => {
+                if (!record.isFirstOption) return null;
+                return (
+                    <div className='flex items-center gap-4'>
+                        <div className='relative w-20 h-20'>
+                            {record?.img && record.img.length > 0 ? (
+                                <Image
+                                    src={record.img[0]}
+                                    alt={record.productName}
+                                    className='rounded-lg object-cover w-full h-full'
+                                    loading='lazy'
+                                    preview={{
+                                        mask: <div className='text-xs'>Xem</div>,
+                                    }}
+                                />
+                            ) : (
+                                <div className='w-full h-full bg-gray-100 rounded-lg flex items-center justify-center'>
+                                    <FaImage className='w-6 h-6 text-gray-400' />
+                                </div>
+                            )}
+                        </div>
+                        <div className='flex flex-col'>
+                            <Link
+                                to={`/product-detail/${record.id}`}
+                                className='font-medium text-gray-900 hover:text-blue-600 mb-1'
+                            >
+                                {record.productName}
+                            </Link>
+                        </div>
+                    </div>
+                );
+            },
+        },
+        {
+            title: 'Màu sắc',
+            dataIndex: 'color',
+            key: 'color',
+            width: '10%',
+            align: 'center',
             render: (_, record) => (
-                <div className='flex items-center gap-4'>
-                    <div className='relative w-20 h-20'>
-                        {record?.img && record.img.length > 0 ? (
-                            <Image
-                                src={record.img[0]}
-                                alt={record.productName}
-                                className='rounded-lg object-cover w-full h-full'
-                                loading='lazy'
-                                preview={{
-                                    mask: <div className='text-xs'>Xem</div>,
-                                }}
-                            />
-                        ) : (
-                            <div className='w-full h-full bg-gray-100 rounded-lg flex items-center justify-center'>
-                                <FaImage className='w-6 h-6 text-gray-400' />
-                            </div>
-                        )}
-                    </div>
-                    <div className='flex flex-col'>
-                        <Link
-                            to={`/product-detail/${record.id}`}
-                            className='font-medium text-gray-900 hover:text-blue-600 mb-1'
-                        >
-                            {record.productName}
-                        </Link>
-                        <span className='text-sm text-gray-500'>
-                            {record.origin} · {record.type}
-                        </span>
-                    </div>
+                <div className='flex items-center justify-center gap-2'>
+                    <div
+                        className='w-4 h-4 rounded-full border shadow-sm'
+                        style={{ backgroundColor: record.colorKey }}
+                    />
+                    <span>{record.value.color}</span>
                 </div>
             ),
         },
         {
-            title: 'Màu sắc',
-            dataIndex: 'variants',
-            key: 'variants',
+            title: 'Giá bán',
+            dataIndex: 'price',
+            key: 'price',
+            width: '10%',
             align: 'center',
-            width: '35%',
             render: (_, record) => (
-                <div className='flex flex-wrap justify-center items-center gap-2'>
-                    {record.option?.map((opt, index) => (
-                        <Tooltip
-                            key={opt.key || index}
-                            title={
-                                <div className='space-y-1'>
-                                    <div>
-                                        Giá:{' '}
-                                        {(opt.value.price - opt.value.discount).toLocaleString()}đ
-                                    </div>
-                                    <div>Kho: {opt.value.quantity}</div>
-                                    {opt.value.discount > 0 && (
-                                        <div className='text-red-400'>
-                                            Giảm:{' '}
-                                            {((opt.value.discount / opt.value.price) * 100).toFixed(
-                                                0
-                                            )}
-                                            %
-                                        </div>
-                                    )}
-                                </div>
-                            }
-                        >
-                            <div className='flex items-center cursor-pointer gap-2 px-3 py-1.5 bg-gray-50 rounded-full'>
-                                <div
-                                    className='w-4 h-4 rounded-full border shadow-sm'
-                                    style={{ backgroundColor: opt.key }}
-                                />
-                                <span className='text-sm font-medium text-gray-700'>
-                                    {opt.value.color}
-                                </span>
-                                {opt.value.quantity === 0 && (
-                                    <Badge status='error' text='Hết' className='text-xs' />
-                                )}
-                            </div>
-                        </Tooltip>
-                    ))}
+                <div>{record.value.price.toLocaleString()}đ</div>
+            ),
+        },
+        {
+            title: 'Số lượng',
+            dataIndex: 'quantity',
+            key: 'quantity',
+            width: '10%',
+            align: 'center',
+            render: (_, record) => (
+                <div>{record.value.quantity}</div>
+            ),
+        },
+        {
+            title: 'Giảm giá',
+            dataIndex: 'discount',
+            key: 'discount',
+            width: '10%',
+            align: 'center',
+            render: (_, record) => (
+                <div className='text-red-500'>
+                    {record.value.discount > 0
+                        ? `${record.value.discount.toLocaleString()}đ`
+                        : '-'}
+                </div>
+            ),
+        },
+        {
+            title: 'Thành tiền',
+            dataIndex: 'finalPrice',
+            key: 'finalPrice',
+            width: '10%',
+            align: 'center',
+            render: (_, record) => (
+                <div className='font-medium'>
+                    {(record.value.price - record.value.discount).toLocaleString()}đ
                 </div>
             ),
         },
@@ -293,70 +309,72 @@ export default function ListProduct() {
             key: 'status',
             width: '15%',
             align: 'center',
-            render: (_, record) => {
-                const totalQuantity =
-                    record.option?.reduce((sum, opt) => sum + opt.value.quantity, 0) || 0;
-                const hasDiscount = record.option?.some((opt) => opt.value.discount > 0);
-
-                return (
-                    <div className='space-y-2'>
-                        <div
-                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full ${
-                                totalQuantity > 0
-                                    ? 'bg-green-50 text-green-700'
-                                    : 'bg-red-50 text-red-700'
-                            }`}
-                        >
-                            <FaCircle
-                                onClick={() => navigate(`/product-detail/${record.id}`)}
-                                className={`w-2 h-2 ${
-                                    totalQuantity > 0 ? 'text-green-500' : 'text-red-500'
-                                }`}
-                            />
-                            <span className='font-medium'>
-                                {totalQuantity > 0 ? 'Còn hàng' : 'Hết hàng'}
-                            </span>
-                        </div>
-                        {hasDiscount && (
-                            <div className='text-xs px-2 py-1 bg-red-50 text-red-600 rounded-full inline-block'>
-                                Đang giảm giá
-                            </div>
-                        )}
-                    </div>
-                );
-            },
+            render: (_, record) => (
+                <div
+                    className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full ${
+                        record.value.quantity > 0
+                            ? 'bg-green-50 text-green-700'
+                            : 'bg-red-50 text-red-700'
+                    }`}
+                >
+                    <FaCircle
+                        className={`w-2 h-2 ${
+                            record.value.quantity > 0 ? 'text-green-500' : 'text-red-500'
+                        }`}
+                    />
+                    <span className='font-medium'>
+                        {record.value.quantity > 0 ? 'Còn hàng' : 'Hết hàng'}
+                    </span>
+                </div>
+            ),
         },
         {
             title: 'Thao tác',
             key: 'action',
             width: '10%',
             align: 'center',
-            render: (_, record) => (
-                <div className='flex items-center justify-center gap-2'>
-                    <Tooltip title='Xem chi tiết'>
-                        <Link to={`/product-detail/${record.id}`}>
-                            <Button type='text' icon={<FaEye className='text-blue-600' />} />
-                        </Link>
-                    </Tooltip>
-                    <Tooltip title='Chỉnh sửa'>
-                        <Button
-                            type='text'
-                            icon={<FaEdit className='text-gray-600' />}
-                            onClick={() => handleEdit(record.id)}
-                        />
-                    </Tooltip>
-                    <Tooltip title='Xóa'>
-                        <Popconfirm
-                            title='Bạn có chắc muốn xóa sản phẩm này?'
-                            onConfirm={() => handleDelete(record.id)}
-                        >
-                            <Button type='text' icon={<FaTrash className='text-red-600' />} />
-                        </Popconfirm>
-                    </Tooltip>
-                </div>
-            ),
+            onCell: (record) => ({
+                rowSpan: record.isFirstOption ? record.totalOptions : 0,
+            }),
+            render: (_, record) => {
+                if (!record.isFirstOption) return null;
+                return (
+                    <div className='flex flex-col items-center justify-center gap-2'>
+                        <Tooltip title='Xem chi tiết'>
+                            <Link to={`/product-detail/${record.id}`}>
+                                <Button type='text' icon={<FaEye className='text-blue-600' />} />
+                            </Link>
+                        </Tooltip>
+                        <Tooltip title='Chỉnh sửa'>
+                            <Button
+                                type='text'
+                                icon={<FaEdit className='text-gray-600' />}
+                                onClick={() => handleEdit(record.id)}
+                            />
+                        </Tooltip>
+                        <Tooltip title='Xóa'>
+                            <Popconfirm
+                                title='Bạn có chắc muốn xóa sản phẩm này?'
+                                onConfirm={() => handleDelete(record.id)}
+                            >
+                                <Button type='text' icon={<FaTrash className='text-red-600' />} />
+                            </Popconfirm>
+                        </Tooltip>
+                    </div>
+                );
+            },
         },
     ];
+
+    const transformedData = products.flatMap(product => 
+        product.option.map((opt, index) => ({
+            ...product,
+            isFirstOption: index === 0,
+            totalOptions: product.option.length,
+            colorKey: opt.key,
+            value: opt.value,
+        }))
+    );
 
     return (
         <div className='p-4'>
@@ -371,7 +389,7 @@ export default function ListProduct() {
                     hover:from-blue-600 hover:to-blue-700 transition-all duration-300 
                     transform hover:scale-[1.02]'
                 >
-                    <span className='font-semibold tracking-wide'>Tạo sản phẩm mới</span>
+                    <span className='font-semibold tracking-wide'>Thêm sản phẩm mới</span>
                 </Button>
             </div>
 
@@ -431,9 +449,10 @@ export default function ListProduct() {
                     {products.length > 0 ? (
                         <Table
                             columns={columns}
-                            dataSource={products}
-                            rowKey='id'
+                            dataSource={transformedData}
+                            rowKey={(record) => `${record.id}-${record.value.color}`}
                             pagination={{
+                                current: currentPage,
                                 total: totalProducts,
                                 pageSize: 12,
                                 showSizeChanger: false,
@@ -441,6 +460,7 @@ export default function ListProduct() {
                                 showTotal: (total) => `Tổng số ${total} sản phẩm`,
                             }}
                             onChange={handleTableChange}
+                            bordered
                         />
                     ) : (
                         <Empty description='Không có sản phẩm nào' />

@@ -18,6 +18,7 @@ import { Button, Modal } from 'flowbite-react';
 import { Tooltip } from 'antd';
 import { IoIosSunny } from 'react-icons/io';
 import { toggleTheme } from '../redux/slices/themeSlice';
+import { resetCategory } from '../redux/slices/productSlice';
 
 const SidebarItem = ({ to, icon: Icon, active, showSidebar, children }) => {
     return (
@@ -137,6 +138,7 @@ export default function Sidebar_Component() {
 
     const handleSignOutAccount = useCallback(async () => {
         dispatch(user_SignOut());
+        dispatch(resetCategory());
     }, [dispatch]);
 
     const toggleSidebar = useCallback(() => {

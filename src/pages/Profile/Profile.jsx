@@ -17,6 +17,7 @@ import { PiHouseLineLight } from 'react-icons/pi';
 import { Select } from 'antd';
 import { FaBan } from 'react-icons/fa';
 import { PasswordStrengthMeter } from '../../Utils/exportUtil';
+import { resetCategory } from '../../redux/slices/productSlice';
 
 export default function Profile() {
     // get token user from redux store
@@ -333,6 +334,7 @@ export default function Profile() {
                 toast.success('Đặt lại mật khẩu thành công!');
                 setTimeout(() => {
                     dispatch(user_SignOut());
+                    dispatch(resetCategory());
                     navigate('/login');
                 }, 2000);
             }
@@ -345,6 +347,7 @@ export default function Profile() {
     // navigate to login page
     const handleNavigateUser = () => {
         dispatch(user_SignOut());
+        dispatch(resetCategory());
         navigate('/login');
     };
 
