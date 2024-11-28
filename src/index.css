@@ -36,7 +36,7 @@
     animation: fadeIn 0.2s ease-out;
 }
 
-.custom-table .ant-table-thead > tr > th {
+/* .custom-table .ant-table-thead > tr > th {
     background-color: #f8fafc;
     font-weight: 600;
 }
@@ -53,7 +53,7 @@
     .ant-table-tbody > tr:hover > td {
         background: #f1f5f9;
     }
-}
+} */
 
 .image-radio-button .ant-radio-wrapper {
     padding: 8px 16px;

@@ -1,8 +1,20 @@
 import axios from 'axios';
-import { useEffect } from 'react';
+import { Children, useEffect, useMemo } from 'react';
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Table, Button, Space, Popconfirm, Tooltip, Image, Skeleton, Badge } from 'antd';
+import {
+    Table,
+    Button,
+    Space,
+    Popconfirm,
+    Tooltip,
+    Image,
+    Skeleton,
+    Badge,
+    Select,
+    Card,
+    Tabs,
+} from 'antd';
 import { FaEdit, FaTrash, FaCircle, FaImage, FaFilter, FaEye, FaPlusCircle } from 'react-icons/fa';
 import { useSelector } from 'react-redux';
 import { FilterModal_Component } from '../../components/exportComponent';
@@ -49,11 +61,12 @@ const options = [
     },
 ];
 
+const PAGE_SIZE = 12;
+
 export default function ListProduct() {
     const { access_token: tokenUser } = useSelector((state) => state.user);
     const navigate = useNavigate();
     const [products, setProducts] = useState([]);
-    console.log(products);
     const [isLoading, setIsLoading] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalProducts, setTotalProducts] = useState(0);
@@ -61,6 +74,7 @@ export default function ListProduct() {
     const [showModalFilter, setShowModalFilter] = useState(false);
     const [searchFilterOption, setSearchFilterOption] = useState('');
     const [selectedFilters, setSelectedFilters] = useState([]);
+    const [currentTab, setCurrentTab] = useState('all');
 
     const getAllProducts = async () => {
         try {
@@ -200,7 +214,126 @@ export default function ListProduct() {
         }
     };
 
+    const transformedData = products.flatMap((product, productIndex) => {
+        const options = Array.isArray(product.option) ? product.option : [];
+
+        // console.log(
+        //     `currentPage : ${currentPage}`,
+        //     options.map((opt, optIndex) => ({
+        //         index: (currentPage - 1) * PAGE_SIZE + productIndex + 1,
+        //         id: product.id,
+        //         productName: product.productName,
+        //         img: product.img,
+        //         isFirstOption: optIndex === 0,
+        //         totalOptions: options.length,
+        //         colorKey: opt.key,
+        //         value: {
+        //             quantity: opt.value?.quantity || 0,
+        //             price: opt.value?.price || 0,
+        //             discount: opt.value?.discount || 0,
+        //             finalPrice: (opt.value?.price || 0) - (opt.value?.discount || 0),
+        //             state: opt.value?.state || product.stateProduct || 'pause',
+        //             color: opt.value?.color || opt.key,
+        //         },
+        //         uniqueKey: `${product.id}-${opt.key}-${optIndex}`,
+        //     }))
+        // );
+        return options.map((opt, optIndex) => ({
+            index: (currentPage - 1) * PAGE_SIZE + productIndex + 1,
+            id: product.id,
+            productName: product.productName,
+            img: product.img,
+            isFirstOption: optIndex === 0,
+            totalOptions: options.length,
+            colorKey: opt.key,
+            value: {
+                quantity: opt.value?.quantity || 0,
+                price: opt.value?.price || 0,
+                discount: opt.value?.discount || 0,
+                finalPrice: (opt.value?.price || 0) - (opt.value?.discount || 0),
+                state: opt.value?.state || product.stateProduct || 'pause',
+                color: opt.value?.color || opt.key,
+            },
+            uniqueKey: `${product.id}-${opt.key}-${optIndex}`,
+        }));
+    });
+
+    const handleChangeTab = (key) => {
+        setCurrentTab(key);
+    };
+
+    const itemTabs = useMemo(() => {
+        return [
+            {
+                key: 'all',
+                label: (
+                    <Badge count={totalProducts} style={{ backgroundColor: '#36cfc9' }}>
+                        <span style={{ padding: '0 4px', fontWeight: 500 }}>Tất cả</span>
+                    </Badge>
+                ),
+            },
+            {
+                key: 'selling',
+                label: (
+                    <Badge
+                        count={
+                            products.filter((product) =>
+                                product.option.some((opt) => opt.value?.state === 'selling')
+                            ).length
+                        }
+                        style={{ backgroundColor: '#4096ff' }}
+                    >
+                        <span style={{ padding: '0 4px', fontWeight: 500 }}>Đang bán</span>
+                    </Badge>
+                ),
+            },
+            {
+                key: 'pause',
+                label: (
+                    <Badge
+                        count={
+                            products.filter((product) =>
+                                product.option.some((opt) => opt.value?.state === 'pause')
+                            ).length
+                        }
+                        size='small'
+                    >
+                        <span style={{ padding: '0 4px', fontWeight: 500 }}>Tạm ngừng</span>
+                    </Badge>
+                ),
+            },
+            {
+                key: 'deleted',
+                label: (
+                    <Badge
+                        count={
+                            products.filter((product) =>
+                                product.option.some((opt) => opt.value?.state === 'deleted')
+                            ).length
+                        }
+                        size='small'
+                    >
+                        <span style={{ padding: '0 4px', fontWeight: 500 }}>Đã xóa</span>
+                    </Badge>
+                ),
+            },
+        ];
+    }, [products, totalProducts]);
+
     const columns = [
+        {
+            title: 'STT',
+            key: 'index',
+            width: '5%',
+            align: 'center',
+            onCell: (record) => ({
+                rowSpan: record.isFirstOption ? record.totalOptions : 0,
+            }),
+            render: (_, record) => {
+                if (!record.isFirstOption) return null;
+                return <span>{record.index}</span>;
+            },
+        },
         {
             title: 'Sản phẩm',
             dataIndex: 'product',
@@ -230,13 +363,15 @@ export default function ListProduct() {
                                 </div>
                             )}
                         </div>
-                        <div className='flex flex-col'>
-                            <Link
-                                to={`/product-detail/${record.id}`}
-                                className='font-medium text-gray-900 hover:text-blue-600 mb-1'
-                            >
-                                {record.productName}
-                            </Link>
+                        <div className='flex flex-col max-w-[200px]'>
+                            <Tooltip title={record.productName}>
+                                <Link
+                                    to={`/product-detail/${record.id}`}
+                                    className='font-medium text-gray-900 hover:text-blue-600 mb-1 truncate'
+                                >
+                                    {record.productName}
+                                </Link>
+                            </Tooltip>
                         </div>
                     </div>
                 );
@@ -251,21 +386,10 @@ export default function ListProduct() {
             render: (_, record) => (
                 <div className='flex items-center justify-center gap-2'>
                     <div
-                        className='w-4 h-4 rounded-full border shadow-sm'
+                        className='w-10 h-10 rounded-full border shadow-sm'
                         style={{ backgroundColor: record.colorKey }}
                     />
-                    <span>{record.value.color}</span>
                 </div>
-            ),
-        },
-        {
-            title: 'Giá bán',
-            dataIndex: 'price',
-            key: 'price',
-            width: '10%',
-            align: 'center',
-            render: (_, record) => (
-                <div>{record.value.price.toLocaleString()}đ</div>
             ),
         },
         {
@@ -274,9 +398,17 @@ export default function ListProduct() {
             key: 'quantity',
             width: '10%',
             align: 'center',
-            render: (_, record) => (
-                <div>{record.value.quantity}</div>
-            ),
+            sorter: (a, b) => a.value.quantity - b.value.quantity,
+            render: (_, record) => <div>{record.value.quantity}</div>,
+        },
+        {
+            title: 'Giá bán',
+            dataIndex: 'price',
+            key: 'price',
+            width: '10%',
+            align: 'center',
+            sorter: (a, b) => a.value.price - b.value.price,
+            render: (_, record) => <div>{record.value.price.toLocaleString()}đ</div>,
         },
         {
             title: 'Giảm giá',
@@ -284,11 +416,10 @@ export default function ListProduct() {
             key: 'discount',
             width: '10%',
             align: 'center',
+            sorter: (a, b) => a.value.discount - b.value.discount,
             render: (_, record) => (
                 <div className='text-red-500'>
-                    {record.value.discount > 0
-                        ? `${record.value.discount.toLocaleString()}đ`
-                        : '-'}
+                    {record.value.discount > 0 ? `${record.value.discount.toLocaleString()}đ` : '-'}
                 </div>
             ),
         },
@@ -298,6 +429,7 @@ export default function ListProduct() {
             key: 'finalPrice',
             width: '10%',
             align: 'center',
+            sorter: (a, b) => a.value.finalPrice - b.value.finalPrice,
             render: (_, record) => (
                 <div className='font-medium'>
                     {(record.value.price - record.value.discount).toLocaleString()}đ
@@ -309,24 +441,39 @@ export default function ListProduct() {
             key: 'status',
             width: '15%',
             align: 'center',
-            render: (_, record) => (
-                <div
-                    className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full ${
-                        record.value.quantity > 0
-                            ? 'bg-green-50 text-green-700'
-                            : 'bg-red-50 text-red-700'
-                    }`}
-                >
-                    <FaCircle
-                        className={`w-2 h-2 ${
-                            record.value.quantity > 0 ? 'text-green-500' : 'text-red-500'
-                        }`}
-                    />
-                    <span className='font-medium'>
-                        {record.value.quantity > 0 ? 'Còn hàng' : 'Hết hàng'}
-                    </span>
-                </div>
-            ),
+            render: (_, record) => {
+                const statusConfig = {
+                    selling: {
+                        color: 'bg-green-50',
+                        textColor: 'text-green-700',
+                        dotColor: 'text-green-500',
+                        label: 'Đang bán',
+                    },
+                    pause: {
+                        color: 'bg-yellow-50',
+                        textColor: 'text-yellow-700',
+                        dotColor: 'text-yellow-500',
+                        label: 'Tạm ngừng',
+                    },
+                    deleted: {
+                        color: 'bg-red-50',
+                        textColor: 'text-red-700',
+                        dotColor: 'text-red-500',
+                        label: 'Đã xóa',
+                    },
+                };
+
+                const status = statusConfig[record.value.state] || statusConfig.pause;
+
+                return (
+                    <div
+                        className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full ${status.color} ${status.textColor}`}
+                    >
+                        <FaCircle className={`w-2 h-2 ${status.dotColor}`} />
+                        <span className='font-medium'>{status.label}</span>
+                    </div>
+                );
+            },
         },
         {
             title: 'Thao tác',
@@ -366,16 +513,6 @@ export default function ListProduct() {
         },
     ];
 
-    const transformedData = products.flatMap(product => 
-        product.option.map((opt, index) => ({
-            ...product,
-            isFirstOption: index === 0,
-            totalOptions: product.option.length,
-            colorKey: opt.key,
-            value: opt.value,
-        }))
-    );
-
     return (
         <div className='p-4'>
             <div className='mb-4 flex justify-between items-center'>
@@ -393,80 +530,99 @@ export default function ListProduct() {
                 </Button>
             </div>
 
-            <div className='mb-6 space-y-4 sm:space-y-0 sm:flex sm:gap-x-3 sm:items-center'>
-                <SearchInput
-                    onSearch={(text) => {
-                        const search = new URLSearchParams(searchParams);
-                        search.set('pageNum', '1');
-                        if (text.trim() !== '') {
-                            search.set('q', text.trim());
-                        } else {
-                            search.delete('q');
-                        }
-                        setSearchParams(search);
-                    }}
-                    placeholder='Tìm kiếm theo tên sản phẩm, mã sản phẩm...'
+            <Card
+                bordered={false}
+                style={{
+                    borderRadius: '12px',
+                    boxShadow:
+                        'rgba(145, 158, 171, 0.2) 0px 0px 2px 0px, rgba(145, 158, 171, 0.12) 0px 12px 24px -4px',
+                    background: '#ffffff',
+                    marginBottom: '24px',
+                }}
+            >
+                <Tabs
+                    onChange={handleChangeTab}
+                    defaultActiveKey='all'
+                    items={itemTabs}
+                    className='custom-tabs'
                 />
 
-                <Space size='middle' className='flex-shrink-0'>
-                    <Tooltip
-                        title={selectedFilters.length ? `${selectedFilters.length} bộ lọc` : 'Lọc'}
-                    >
-                        <Button
-                            onClick={() => setShowModalFilter(true)}
-                            className={`h-11 px-5 flex items-center gap-2 border-2 ${
-                                selectedFilters.length ? 'border-blue-500 text-blue-500' : ''
-                            }`}
+                <div className='mb-6 space-y-4 sm:space-y-0 sm:flex sm:gap-x-3 sm:items-center justify-between items-center'>
+                    <SearchInput
+                        onSearch={(text) => {
+                            const search = new URLSearchParams(searchParams);
+                            search.set('pageNum', '1');
+                            if (text.trim() !== '') {
+                                search.set('q', text.trim());
+                            } else {
+                                search.delete('q');
+                            }
+                            setSearchParams(search);
+                        }}
+                        placeholder='Tìm kiếm sản phẩm theo tên, mã...'
+                    />
+                    <Space size='middle' className='flex-shrink-0'>
+                        <Tooltip
+                            title={
+                                selectedFilters.length ? `${selectedFilters.length} bộ lọc` : 'Lọc'
+                            }
                         >
-                            <FaFilter />
-                            <span className='hidden sm:inline'>Bộ lọc</span>
-                            {selectedFilters.length > 0 && (
-                                <span className='flex items-center justify-center w-5 h-5 text-xs font-medium bg-blue-500 text-white rounded-full'>
-                                    {selectedFilters.length}
-                                </span>
-                            )}
-                        </Button>
-                    </Tooltip>
-                </Space>
-            </div>
-
-            <FilterModal_Component
-                show={showModalFilter}
-                onClose={() => setShowModalFilter(false)}
-                searchFilterOption={searchFilterOption}
-                onSearchChange={(value) => setSearchFilterOption(value)}
-                selectedFilters={selectedFilters}
-                onRemoveFilter={handleRemoveOptionFilter}
-                filteredOptions={filteredOptions}
-                onSelect={handleSelect}
-                onSubmit={handleSubmitFilter}
-            />
-
-            {isLoading ? (
-                <Skeleton active />
-            ) : (
-                <div className='bg-white rounded-lg shadow'>
-                    {products.length > 0 ? (
-                        <Table
-                            columns={columns}
-                            dataSource={transformedData}
-                            rowKey={(record) => `${record.id}-${record.value.color}`}
-                            pagination={{
-                                current: currentPage,
-                                total: totalProducts,
-                                pageSize: 12,
-                                showSizeChanger: false,
-                                showQuickJumper: false,
-                                showTotal: (total) => `Tổng số ${total} sản phẩm`,
-                            }}
-                            onChange={handleTableChange}
-                            bordered
-                        />
-                    ) : (
-                        <Empty description='Không có sản phẩm nào' />
-                    )}
+                            <Button
+                                onClick={() => setShowModalFilter(true)}
+                                className={`h-11 px-5 flex items-center gap-2 border-2 ${
+                                    selectedFilters.length ? 'border-blue-500 text-blue-500' : ''
+                                }`}
+                            >
+                                <FaFilter />
+                                <span className='hidden sm:inline'>Bộ lọc</span>
+                                {selectedFilters.length > 0 && (
+                                    <span className='flex items-center justify-center w-5 h-5 text-xs font-medium bg-blue-500 text-white rounded-full'>
+                                        {selectedFilters.length}
+                                    </span>
+                                )}
+                            </Button>
+                        </Tooltip>
+                    </Space>
                 </div>
-            )}
+
+                <FilterModal_Component
+                    show={showModalFilter}
+                    onClose={() => setShowModalFilter(false)}
+                    searchFilterOption={searchFilterOption}
+                    onSearchChange={(value) => setSearchFilterOption(value)}
+                    selectedFilters={selectedFilters}
+                    onRemoveFilter={handleRemoveOptionFilter}
+                    filteredOptions={filteredOptions}
+                    onSelect={handleSelect}
+                    onSubmit={handleSubmitFilter}
+                />
+
+                {isLoading ? (
+                    <Skeleton active />
+                ) : (
+                    <div className='bg-white rounded-lg shadow'>
+                        {products.length > 0 ? (
+                            <Table
+                                columns={columns}
+                                dataSource={transformedData}
+                                rowKey={(record) => record.uniqueKey}
+                                pagination={{
+                                    current: currentPage,
+                                    total: totalProducts,
+                                    pageSize: PAGE_SIZE,
+                                    showSizeChanger: false,
+                                    showQuickJumper: false,
+                                    showTotal: (total) => `Tổng số ${total} sản phẩm`,
+                                }}
+                                onChange={handleTableChange}
+                                bordered
+                            />
+                        ) : (
+                            <Empty description='Không có sản phẩm nào' />
+                        )}
+                    </div>
+                )}
+            </Card>
         </div>
     );
 }
