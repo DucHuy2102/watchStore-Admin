@@ -32,8 +32,6 @@ export default function CreateProduct() {
     const [productOptions, setProductOptions] = useState([]);
     const [isColorModalVisible, setColorModalVisible] = useState(false);
 
-    console.log('fileList -->', fileList);
-
     const handleUploadToCloudinary = async () => {
         try {
             const uploadPromises = fileList.map(async (file) => {
@@ -176,9 +174,9 @@ export default function CreateProduct() {
                                     { label: 'Đồng hồ thạch anh', value: 'Đồng hồ thạch anh' },
                                     { label: 'Đồng hồ điện tử', value: 'Đồng hồ điện tử' },
                                     { label: 'Đồng hồ thông minh', value: 'Đồng hồ thông minh' },
-                                    { label: 'Đồng hồ chronograph', value: 'Đồng hồ chronograph' },
-                                    { label: 'Đồ hồ solar', value: 'Đồ hồ solar' },
-                                    { label: 'Đồng hồ hybrid', value: 'Đồng hồ hybrid' },
+                                    { label: 'Đồng hồ Chronograph', value: 'Đồng hồ Chronograph' },
+                                    { label: 'Đồ hồ Solar', value: 'Đồ hồ Solar' },
+                                    { label: 'Đồng hồ Hybrid', value: 'Đồng hồ Hybrid' },
                                 ]}
                             />
                         ),

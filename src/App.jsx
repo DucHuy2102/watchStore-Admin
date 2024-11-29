@@ -63,6 +63,7 @@ export default function App() {
         <>
             <Router>
                 <Routes>
+                    {/* public route */}
                     <Route path='/login' element={<Login />} />
                     <Route path='/forgot-password' element={<ForgotPassword />} />
                     <Route path='/verify-email' element={<VerifyEmail />} />
@@ -71,16 +72,27 @@ export default function App() {
                     {/* private route */}
                     <Route element={<PrivateRoute />}>
                         <Route element={<DefaultLayout_Page />}>
+                            {/* dashboard */}
                             <Route path='/' element={<Dashboard />} />
                             <Route path='/dashboard' element={<Dashboard />} />
+
+                            {/* profile */}
                             <Route path='/profile' element={<Profile_Page />} />
+
+                            {/* user */}
                             <Route path='/users' element={<ListUser />} />
+
+                            {/* product */}
                             <Route path='/products' element={<ListProduct />} />
                             <Route path='/product/create' element={<CreateProduct />} />
                             <Route path='/product/edit/:id' element={<EditProduct />} />
                             <Route path='/product-detail/:id' element={<ProductDetail />} />
+
+                            {/* order */}
                             <Route path='/orders' element={<ListOrder />} />
                             <Route path='/order/detail/:id' element={<DetailOrder />} />
+
+                            {/* voucher */}
                             <Route path='/vouchers' element={<ListVouchers />} />
                             <Route path='/voucher/edit/:id' element={<EditVoucher />} />
                             <Route path='/voucher/create' element={<CreateVoucher />} />

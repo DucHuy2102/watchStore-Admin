@@ -15,19 +15,15 @@ import {
     Typography,
     Avatar,
     Badge,
-    Dropdown,
-    Menu,
     Tooltip,
 } from 'antd';
 import {
     SearchOutlined,
-    MoreOutlined,
     CheckCircleOutlined,
     CloseCircleOutlined,
     SyncOutlined,
     CarOutlined,
 } from '@ant-design/icons';
-import { MdDelete } from 'react-icons/md';
 import { FaEye } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
@@ -75,14 +71,6 @@ export default function ListOrder() {
         } finally {
             setLoading(false);
         }
-    };
-
-    const handleView = (record) => {
-        navigate(`/order/detail/${record.id}`);
-    };
-
-    const handleDelete = (record) => {
-        console.log('Deleting record:', record.id);
     };
 
     const columns = [
@@ -137,11 +125,23 @@ export default function ListOrder() {
                         {user.name.charAt(0)}
                     </Avatar>
                     <div>
-                        <div style={{ fontWeight: 600, color: '#262626' }}>{user.name}</div>
-                        <div style={{ color: '#8c8c8c', fontSize: '12px' }}>{user.email}</div>
+                        <div
+                            className='text-gray-700 font-semibold cursor-pointer'
+                            onClick={() => navigate('/users')}
+                        >
+                            {user.name}
+                        </div>
+                        <div className='text-gray-500 text-sm'>{user.email}</div>
                     </div>
                 </Space>
             ),
+        },
+        {
+            title: 'SĐT liên hệ',
+            align: 'center',
+            dataIndex: 'phone',
+            key: 'phone',
+            render: (_, record) => <span>{record.user.phone}</span>,
         },
         {
             title: 'Ngày đặt',
@@ -157,22 +157,6 @@ export default function ListOrder() {
                         {new Date(date).toLocaleTimeString('vi-VN')}
                     </div>
                 </div>
-            ),
-        },
-        {
-            title: 'Số SP',
-            align: 'center',
-            dataIndex: 'products',
-            key: 'products',
-            sorter: (a, b) => a.products.length - b.products.length,
-            render: (products) => (
-                <Badge
-                    count={products.length}
-                    style={{
-                        backgroundColor: '#1890ff',
-                        fontWeight: 600,
-                    }}
-                />
             ),
         },
         {
@@ -200,7 +184,7 @@ export default function ListOrder() {
                     processing: {
                         color: 'processing',
                         icon: <SyncOutlined spin />,
-                        text: 'Đang chờ giao',
+                        text: 'Đang chờ xử lý',
                     },
                     delivery: {
                         color: 'warning',
@@ -210,12 +194,12 @@ export default function ListOrder() {
                     complete: {
                         color: 'success',
                         icon: <CheckCircleOutlined />,
-                        text: 'Thành công',
+                        text: 'Đã giao thành công',
                     },
                     cancel: {
                         color: 'error',
                         icon: <CloseCircleOutlined />,
-                        text: 'Đơn bị hủy',
+                        text: 'Đơn hàng bị hủy',
                     },
                 };
 
@@ -245,7 +229,7 @@ export default function ListOrder() {
             key: 'action',
             render: (_, record) => (
                 <Button
-                    onClick={() => handleView(record)}
+                    onClick={() => navigate(`/order/detail/${record.id}`)}
                     type='primary'
                     size='middle'
                     icon={<FaEye />}
@@ -322,11 +306,20 @@ export default function ListOrder() {
         });
     };
 
+    const handleRangePickerChange = (dates) => {
+        if (dates) {
+            setStartDate(dates[0].toDate());
+            setEndDate(dates[1].toDate());
+        } else {
+            setStartDate(null);
+            setEndDate(null);
+        }
+    };
+
     const filterOrders = (orders, tab, startDate, endDate) => {
         let filteredOrders = [...orders];
-
         if (tab !== 'all') {
-            filteredOrders = filteredOrders.filter((order) => order.state.trim() === tab.trim());
+            filteredOrders = filteredOrders.filter((order) => order.state === tab);
         }
 
         if (startDate && endDate) {
@@ -339,20 +332,6 @@ export default function ListOrder() {
         return filteredOrders;
     };
 
-    const handleChangeTab = (key) => {
-        setCurrentTab(key);
-    };
-
-    const handleRangePickerChange = (dates) => {
-        if (dates) {
-            setStartDate(dates[0].toDate());
-            setEndDate(dates[1].toDate());
-        } else {
-            setStartDate(null);
-            setEndDate(null);
-        }
-    };
-
     const filteredOrders = useMemo(() => {
         return filterOrders(orders, currentTab, startDate, endDate);
     }, [orders, currentTab, startDate, endDate]);
@@ -360,6 +339,7 @@ export default function ListOrder() {
     const handleSearch = useCallback(
         (e) => {
             const value = e.target.value;
+            console.log(value, orders[0].user.name);
             if (value) {
                 const searchOrders = orders.filter(
                     (order) =>
@@ -377,26 +357,19 @@ export default function ListOrder() {
 
     return (
         <div className='p-6 min-h-screen'>
-            <Title level={3} style={{ marginBottom: '24px' }} className='dark:text-[#fbfcfc]'>
+            <Title
+                level={3}
+                style={{ marginBottom: '24px' }}
+                className='dark:text-[#fbfcfc] !font-bold'
+            >
                 Danh sách đơn hàng
             </Title>
 
-            <Card
-                bordered={false}
-                style={{
-                    borderRadius: '12px',
-                    boxShadow:
-                        'rgba(145, 158, 171, 0.2) 0px 0px 2px 0px, rgba(145, 158, 171, 0.12) 0px 12px 24px -4px',
-                    background: '#ffffff',
-                }}
-            >
+            <Card bordered={false}>
                 <Tabs
-                    onChange={handleChangeTab}
+                    onChange={(key) => setCurrentTab(key)}
                     defaultActiveKey='all'
                     items={itemTabs}
-                    style={{ marginBottom: '24px' }}
-                    tabBarStyle={{ marginBottom: '16px' }}
-                    tabBarGutter={8}
                     className='custom-tabs'
                 />
 

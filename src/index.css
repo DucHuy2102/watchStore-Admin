@@ -36,25 +36,6 @@
     animation: fadeIn 0.2s ease-out;
 }
 
-/* .custom-table .ant-table-thead > tr > th {
-    background-color: #f8fafc;
-    font-weight: 600;
-}
-
-.custom-table .ant-table-tbody > tr:hover > td {
-    background-color: #f1f5f9;
-}
-.custom-table {
-    .ant-table-thead > tr > th {
-        background: #f8fafc;
-        font-weight: 600;
-    }
-
-    .ant-table-tbody > tr:hover > td {
-        background: #f1f5f9;
-    }
-} */
-
 .image-radio-button .ant-radio-wrapper {
     padding: 8px 16px;
     border-radius: 8px;
@@ -67,4 +48,20 @@
 
 .image-radio-button .ant-radio-wrapper-checked {
     background: rgba(59, 130, 246, 0.1);
+}
+
+@keyframes highlight {
+    0% {
+        background-color: transparent;
+    }
+    30% {
+        background-color: rgba(59, 130, 246, 0.1);
+    }
+    100% {
+        background-color: transparent;
+    }
+}
+
+.animate-highlight {
+    animation: highlight 2s ease-in-out;
 }

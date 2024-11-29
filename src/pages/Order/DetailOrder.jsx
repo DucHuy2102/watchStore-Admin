@@ -19,7 +19,6 @@ export default function DetailOrder() {
     const { id } = useParams();
     const { access_token: tokenUser } = useSelector((state) => state.user);
     const [order, setOrder] = useState(null);
-    console.log(order);
     const [isLoading, setIsLoading] = useState(false);
     const [modalConfirmCancel, setModalConfirmCancel] = useState(false);
     const [cancelReason, setCancelReason] = useState('');
@@ -126,7 +125,7 @@ export default function DetailOrder() {
         } finally {
             setIsLoading(false);
         }
-    }, [cancelReason, order.id, tokenUser, getOrderById, id]);
+    }, [cancelReason, order?.id, tokenUser, getOrderById, id]);
 
     if (isLoading) {
         return (
@@ -265,113 +264,161 @@ export default function DetailOrder() {
                         <FaBan className='w-12 h-12 text-red-500 mx-auto mb-4' />
                         <h3 className='text-xl font-bold text-gray-900 mb-2'>Đơn hàng đã bị hủy</h3>
                         <p className='text-gray-600 font-medium'>
-                            Lý do: {order.cancelMessage ? order.cancelMessage : 'Admin hủy'}
+                            Lý do:{' '}
+                            {order.cancelMessage ? order.cancelMessage : 'Admin hủy đơn hàng'}
                         </p>
                     </div>
                 ) : (
                     <Steps
                         current={getOrderStatus()}
-                        progressDot={(dot, { status, index }) => (
-                            <span
-                                className={`
-                                w-7 h-7 rounded-full flex items-center justify-center
-                                transition-all duration-500 ease-in-out
-                                ${
-                                    status === 'finish'
-                                        ? 'bg-gradient-to-r from-emerald-400 to-teal-500 shadow-xl shadow-teal-500/30 scale-110'
-                                        : status === 'process'
-                                        ? 'bg-gradient-to-r from-violet-400 to-purple-500 animate-pulse shadow-lg shadow-purple-500/40 ring-4 ring-purple-500/20'
-                                        : status === 'error'
-                                        ? 'bg-gradient-to-r from-rose-400 to-red-500 shadow-lg shadow-red-500/30'
-                                        : 'bg-gray-200 hover:bg-gray-300 hover:scale-105'
-                                }
-                            `}
-                            >
-                                {status === 'finish' && (
-                                    <FaCheckCircle className='w-4 h-4 text-white animate-fadeIn' />
-                                )}
-                                {status === 'process' && (
-                                    <span className='w-3 h-3 bg-white rounded-full animate-ping' />
-                                )}
-                                {status === 'error' && (
-                                    <FaBan className='w-4 h-4 text-white animate-fadeIn' />
-                                )}
-                            </span>
-                        )}
                         className='px-20'
                         items={[
                             {
                                 title: (
-                                    <div className='flex items-center gap-2 font-semibold text-gray-800 mt-2'>
-                                        <FaClock className='text-amber-500' />
-                                        <span>Đang xử lý</span>
-                                    </div>
+                                    <span
+                                        className={`font-semibold ${
+                                            order?.state === 'cancel'
+                                                ? 'text-red-500'
+                                                : order?.state === 'processing'
+                                                ? 'text-blue-500 animate-pulse'
+                                                : 'text-gray-500'
+                                        }`}
+                                    >
+                                        {order?.state === 'cancel'
+                                            ? 'Đã hủy đơn hàng'
+                                            : order?.state === 'processing'
+                                            ? 'Đang xử lý'
+                                            : 'Đã tiến hành giao'}
+                                    </span>
                                 ),
+                                icon: <FaClock className='mt-1' />,
                                 description: (
-                                    <div className='flex flex-col mt-1'>
+                                    <div className='flex flex-col mt-1 w-40 gap-y-1'>
                                         <span
-                                            className={`font-medium ${
-                                                order?.state === 'processing'
-                                                    ? 'text-purple-600'
-                                                    : 'text-gray-600'
+                                            className={`font-semibold ${
+                                                order?.state === 'cancel'
+                                                    ? 'text-red-500'
+                                                    : order?.state === 'processing'
+                                                    ? 'text-blue-500 animate-pulse'
+                                                    : 'text-gray-500'
                                             }`}
                                         >
-                                            {order?.cancel ? 'Đã hủy' : 'Đơn hàng đang được xử lý'}
+                                            {order?.state === 'cancel'
+                                                ? 'Đã hủy đơn hàng'
+                                                : 'Thời gian tạo đơn'}
                                         </span>
+                                        {order?.createdAt && order?.state !== 'cancel' && (
+                                            <span
+                                                className={`text-xs ${
+                                                    order?.state === 'processing'
+                                                        ? 'text-blue-500 animate-pulse'
+                                                        : 'text-gray-500'
+                                                } mt-1 font-medium`}
+                                            >
+                                                {new Date(order.createdAt).toLocaleDateString(
+                                                    'vi-VN'
+                                                )}
+                                            </span>
+                                        )}
                                     </div>
                                 ),
-                                status: order?.cancel ? 'error' : undefined,
+                                status: order?.state === 'cancel' ? 'error' : undefined,
                             },
                             {
                                 title: (
-                                    <div className='flex items-center gap-2 font-semibold text-gray-800 mt-2'>
-                                        <FaTruck className='text-blue-500' />
-                                        <span>Đang giao hàng</span>
-                                    </div>
-                                ),
-                                description: (
-                                    <div className='flex flex-col mt-1'>
-                                        <span
-                                            className={`font-medium ${
-                                                order?.state === 'delivery'
-                                                    ? 'text-purple-600'
-                                                    : 'text-gray-600'
-                                            }`}
-                                        >
-                                            {order?.cancel
-                                                ? 'Đã hủy'
+                                    <span
+                                        className={`font-semibold ${
+                                            order?.state === 'cancel'
+                                                ? 'text-red-500'
                                                 : order?.state === 'delivery'
-                                                ? 'Đang vận chuyển'
-                                                : ''}
+                                                ? 'text-blue-500 animate-pulse'
+                                                : 'text-gray-500'
+                                        }`}
+                                    >
+                                        Đang giao hàng
+                                    </span>
+                                ),
+                                icon: <FaTruck className='mt-1' />,
+                                description: (
+                                    <div className='flex flex-col mt-1 w-40'>
+                                        <span
+                                            className={`font-medium ${
+                                                order?.state === 'cancel'
+                                                    ? 'text-red-500'
+                                                    : order?.state === 'delivery'
+                                                    ? 'text-blue-500 animate-pulse'
+                                                    : 'text-gray-500'
+                                            }`}
+                                        >
+                                            {order?.state === 'delivery'
+                                                ? 'Đang giao hàng'
+                                                : order?.state === 'complete'
+                                                ? 'Đã giao hàng'
+                                                : order?.state === 'cancel'
+                                                ? 'Đã hủy đơn hàng'
+                                                : 'Chờ xử lý'}
                                         </span>
+                                        {order?.shippingDate && (
+                                            <span className='text-xs text-gray-500 mt-1'>
+                                                {new Date(order.shippingDate).toLocaleDateString(
+                                                    'vi-VN'
+                                                )}
+                                            </span>
+                                        )}
                                     </div>
                                 ),
-                                status: order?.cancel ? 'error' : undefined,
+                                status: order?.state === 'cancel' ? 'error' : undefined,
                             },
                             {
                                 title: (
-                                    <div className='flex items-center gap-2 font-semibold text-gray-800 mt-2'>
-                                        <FaBox className='text-emerald-500' />
-                                        <span>Hoàn thành</span>
-                                    </div>
+                                    <span
+                                        className={`font-semibold ${
+                                            order?.state === 'cancel'
+                                                ? 'text-red-500'
+                                                : order?.state === 'complete'
+                                                ? 'text-blue-500 animate-pulse'
+                                                : 'text-gray-500'
+                                        }`}
+                                    >
+                                        Hoàn thành
+                                    </span>
                                 ),
-                                description: order?.deliveredAt ? (
+                                icon: <FaBox className='mt-1' />,
+                                description: (
                                     <div className='flex flex-col mt-1'>
-                                        <span className='text-emerald-600 font-medium'>
-                                            Giao hàng thành công
+                                        <span
+                                            className={`font-medium ${
+                                                order?.state === 'cancel'
+                                                    ? 'text-red-500'
+                                                    : order?.state === 'complete'
+                                                    ? 'text-blue-500 animate-pulse'
+                                                    : 'text-gray-500'
+                                            }`}
+                                        >
+                                            {order?.state === 'delivery'
+                                                ? 'Đang giao hàng'
+                                                : order?.state === 'complete'
+                                                ? 'Đơn hàng đã đến người dùng'
+                                                : order?.state === 'cancel'
+                                                ? 'Đã hủy đơn hàng'
+                                                : 'Chờ xử lý'}
                                         </span>
-                                        <span className='text-xs text-gray-400 mt-0.5'>
-                                            {new Date(order.deliveredAt).toLocaleDateString(
-                                                'vi-VN'
-                                            )}
-                                        </span>
+                                        {order?.deliveredAt && (
+                                            <span
+                                                className={`text-xs ${
+                                                    order?.state === 'complete'
+                                                        ? 'text-blue-500 animate-pulse'
+                                                        : 'text-gray-500'
+                                                } mt-1 font-medium`}
+                                            >
+                                                {new Date(order.deliveredAt).toLocaleDateString(
+                                                    'vi-VN'
+                                                )}
+                                            </span>
+                                        )}
                                     </div>
-                                ) : order?.cancel ? (
-                                    <span className='text-red-500 text-sm mt-2'>Đã hủy</span>
-                                ) : (
-                                    ''
                                 ),
-                                status: order?.cancel ? 'error' : undefined,
+                                status: order?.state === 'cancel' ? 'error' : undefined,
                             },
                         ]}
                     />

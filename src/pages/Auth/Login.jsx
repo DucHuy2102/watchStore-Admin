@@ -35,17 +35,20 @@ export default function Login() {
             return;
         }
 
+        const username = formData.username.trim();
+        const password = formData.password.trim();
+
         try {
             setIsLoading(true);
-            const credentials = btoa(`${formData.username}:${formData.password}`);
+            const credentials = btoa(`${username}:${password}`);
             const res = await axios.post(`${import.meta.env.VITE_API_URL}/sign-in`, null, {
                 headers: {
                     Authorization: `Basic ${credentials}`,
                     'Content-Type': 'application/json',
                 },
             });
-            if (res?.status === 200) {
-                const { data } = res;
+            const { data } = res;
+            if (data?.admin) {
                 dispatch(user_SignIn({ access_token: data.access_token, user: data }));
                 toast.success('Đăng nhập thành công!');
                 setTimeout(() => {
@@ -55,6 +58,10 @@ export default function Login() {
                         navigate('/');
                     }
                 }, 2000);
+            } else {
+                setErrorMessage('Tài khoản không được truy cập!');
+                toast.error(errorMessage);
+                setFormData({ username: '', password: '' });
             }
         } catch (error) {
             if (error.response.status === 401) {
@@ -84,8 +91,8 @@ export default function Login() {
     const sendTokenToServer = async (token) => {
         try {
             const res = await axios.post(`${import.meta.env.VITE_API_URL}/google?token=${token}`);
-            if (res.status === 200) {
-                const { data } = res;
+            const { data } = res;
+            if (data?.admin) {
                 dispatch(user_SignIn({ access_token: data.access_token, user: data }));
                 toast.success('Đăng nhập thành công!');
                 setTimeout(() => {
@@ -95,6 +102,9 @@ export default function Login() {
                         navigate('/');
                     }
                 }, 2000);
+            } else {
+                setErrorMessage('Tài khoản không được truy cập!');
+                toast.error(errorMessage);
             }
         } catch (error) {
             console.log(error);

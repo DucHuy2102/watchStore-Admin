@@ -14,7 +14,7 @@ import {
     SaveOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { ColorPicker } from 'antd';
 import { toast } from 'react-toastify';
@@ -22,18 +22,11 @@ import { FaArrowLeftLong, FaEye } from 'react-icons/fa6';
 
 const { TextArea } = Input;
 
-const discountPrice = (price, discount) => {
-    return (price * discount) / 100;
-};
-
-const calPercent = (price, discount) => {
-    return (discount * 100) / price;
-};
-
 export default function EditProduct() {
     const { id } = useParams();
     const [form] = Form.useForm();
     const navigate = useNavigate();
+    const location = useLocation();
     const [loading, setLoading] = useState(false);
     const [fileList, setFileList] = useState([]);
     const { category } = useSelector((state) => state.product);
@@ -107,6 +100,21 @@ export default function EditProduct() {
 
         fetchProduct();
     }, [category, form, id]);
+
+    useEffect(() => {
+        if (location.state?.scrollTo === 'colorSection') {
+            setTimeout(() => {
+                const colorSection = document.getElementById('colorSection');
+                if (colorSection) {
+                    colorSection.scrollIntoView({ behavior: 'smooth' });
+                    colorSection.classList.add('animate-highlight');
+                    setTimeout(() => {
+                        colorSection.classList.remove('animate-highlight');
+                    }, 1000);
+                }
+            }, 1000);
+        }
+    }, [location.state]);
 
     const handleUploadToCloudinary = async () => {
         try {
@@ -699,7 +707,7 @@ export default function EditProduct() {
                     </p>
                 </div>
                 <Link
-                    to={`/product/edit/${id}`}
+                    to={'/products'}
                     className='inline-flex items-center gap-2 px-6 py-2.5 rounded-full
                         bg-white border border-gray-200 shadow-sm hover:shadow-md
                         text-gray-700 hover:text-primary hover:border-primary/20
@@ -810,7 +818,8 @@ export default function EditProduct() {
 
                     {/* color */}
                     <Card
-                        className='mt-8'
+                        id='colorSection'
+                        className='mt-8 scroll-mt-6'
                         title={
                             <div className='flex justify-between items-center'>
                                 <span className='font-semibold flex items-center gap-2'>
