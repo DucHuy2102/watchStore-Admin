@@ -3,6 +3,7 @@ import { createSlice } from '@reduxjs/toolkit';
 const initialState = {
     access_token: null,
     user: null,
+    isAdmin: false,
 };
 
 export const userSlice = createSlice({
@@ -13,10 +14,12 @@ export const userSlice = createSlice({
             const { access_token, user } = action.payload;
             state.access_token = access_token;
             state.user = user;
+            state.isAdmin = user?.admin;
         },
         user_SignOut: (state) => {
             state.access_token = null;
             state.user = null;
+            state.isAdmin = false;
         },
         user_UpdateProfile: (state, action) => {
             const { user } = action.payload;

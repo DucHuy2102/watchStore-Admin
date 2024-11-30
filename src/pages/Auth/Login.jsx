@@ -50,14 +50,8 @@ export default function Login() {
             const { data } = res;
             if (data?.admin) {
                 dispatch(user_SignIn({ access_token: data.access_token, user: data }));
-                toast.success('Đăng nhập thành công!');
-                setTimeout(() => {
-                    if (state?.from) {
-                        navigate(state.from);
-                    } else {
-                        navigate('/');
-                    }
-                }, 2000);
+                navigate(state?.from || '/dashboard');
+                toast.success('Tài khoản đăng nhập thành công!');
             } else {
                 setErrorMessage('Tài khoản không được truy cập!');
                 toast.error(errorMessage);
@@ -95,13 +89,7 @@ export default function Login() {
             if (data?.admin) {
                 dispatch(user_SignIn({ access_token: data.access_token, user: data }));
                 toast.success('Đăng nhập thành công!');
-                setTimeout(() => {
-                    if (state?.from) {
-                        navigate(state.from);
-                    } else {
-                        navigate('/');
-                    }
-                }, 2000);
+                navigate(state?.from || '/dashboard');
             } else {
                 setErrorMessage('Tài khoản không được truy cập!');
                 toast.error(errorMessage);
@@ -173,6 +161,7 @@ export default function Login() {
                                         <input
                                             id='username'
                                             type='text'
+                                            autoFocus
                                             className={`w-full px-4 py-3 rounded-lg border border-gray-300 transition-colors 
                                                 ${
                                                     theme === 'light'

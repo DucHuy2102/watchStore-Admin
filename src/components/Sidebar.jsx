@@ -1,17 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useLocation } from 'react-router-dom';
-import {
-    HiChartPie,
-    HiOutlineCog,
-    HiOutlineExclamationCircle,
-    HiOutlineUserGroup,
-    HiShoppingBag,
-    HiUser,
-} from 'react-icons/hi';
-import { FaMoon, FaShippingFast } from 'react-icons/fa';
+import { HiOutlineExclamationCircle } from 'react-icons/hi';
+import { FaChartPie, FaMoon, FaReceipt, FaStar, FaTags, FaUser } from 'react-icons/fa';
 import { TbLogout2 } from 'react-icons/tb';
-import { MdDiscount } from 'react-icons/md';
 import { SlArrowLeft, SlArrowRight } from 'react-icons/sl';
 import { user_SignOut } from '../redux/slices/userSlice';
 import { Button, Modal } from 'flowbite-react';
@@ -19,6 +11,8 @@ import { Tooltip } from 'antd';
 import { IoIosSunny } from 'react-icons/io';
 import { toggleTheme } from '../redux/slices/themeSlice';
 import { resetCategory } from '../redux/slices/productSlice';
+import { FaPeopleGroup } from 'react-icons/fa6';
+import { GiWatch } from 'react-icons/gi';
 
 const SidebarItem = ({ to, icon: Icon, active, showSidebar, children }) => {
     return (
@@ -123,23 +117,16 @@ const DropdownMenuItem = ({ icon: Icon, label, items, isActive, showSidebar }) =
 
 export default function Sidebar_Component() {
     const dispatch = useDispatch();
-    const [showModal, setShowModal] = useState(false);
+    const location = useLocation();
     const { theme } = useSelector((state) => state.theme);
-    const currentUser = useSelector((state) => state.user.user);
+    const { user: currentUser } = useSelector((state) => state.user);
+    const [showModal, setShowModal] = useState(false);
     const [showSidebar, setShowSidebar] = useState(true);
 
-    const location = useLocation();
-    const [tab, setTab] = useState('');
-    useEffect(() => {
-        const urlParams = new URLSearchParams(location.search);
-        const tabURL = urlParams.get('tab');
-        setTab(tabURL);
-    }, [location.search]);
-
-    const handleSignOutAccount = useCallback(async () => {
+    const handleSignOutAccount = () => {
         dispatch(user_SignOut());
         dispatch(resetCategory());
-    }, [dispatch]);
+    };
 
     const toggleSidebar = useCallback(() => {
         setShowSidebar((prev) => !prev);
@@ -147,14 +134,22 @@ export default function Sidebar_Component() {
 
     return (
         <div
-            className={`relative min-h-screen transition-all duration-300
+            className={`relative min-h-screen transition-all duration-300 
             ${
                 theme === 'light'
                     ? 'bg-white border-r border-gray-100'
                     : 'bg-gray-900 border-r border-gray-800'
-            } ${showSidebar ? 'w-64' : 'w-20'}`}
+            } 
+            ${showSidebar ? 'w-64' : 'w-20'}
+            fixed md:relative z-50`}
         >
-            <div className='flex flex-col h-screen'>
+            {showSidebar && (
+                <div className='fixed inset-0 bg-black/50 md:hidden' onClick={toggleSidebar} />
+            )}
+
+            {/* sidebar */}
+            <div className='flex flex-col justify-between h-screen'>
+                {/* header */}
                 <div className='relative p-4'>
                     <div
                         className={`flex items-center ${
@@ -206,6 +201,7 @@ export default function Sidebar_Component() {
                     </div>
                 </div>
 
+                {/* avatar */}
                 <div
                     className={`px-5 ${
                         !showSidebar
@@ -265,61 +261,36 @@ export default function Sidebar_Component() {
                         </div>
                     )}
                 </div>
+
+                {/* sidebar item */}
                 <nav className='flex-1 flex flex-col items-center px-5 mt-2 space-y-2'>
                     <SidebarItem
                         to='/dashboard'
-                        icon={HiChartPie}
-                        active={tab === 'dashboard'}
+                        icon={FaChartPie}
+                        active={location.pathname === '/dashboard'}
                         showSidebar={showSidebar}
                     >
                         Trang chủ
                     </SidebarItem>
                     <SidebarItem
                         to='/profile'
-                        icon={HiUser}
-                        active={tab === 'profile'}
+                        icon={FaUser}
+                        active={location.pathname === '/profile'}
                         showSidebar={showSidebar}
                     >
                         Trang cá nhân
                     </SidebarItem>
-                    {showSidebar && (
-                        <div className='relative py-4'>
-                            <div className='absolute inset-0 flex items-center px-3'>
-                                <div
-                                    className={`w-full h-[1px] ${
-                                        theme === 'light'
-                                            ? 'bg-gradient-to-r from-transparent via-gray-300 to-transparent'
-                                            : 'bg-gradient-to-r from-transparent via-gray-700 to-transparent'
-                                    }`}
-                                ></div>
-                            </div>
-                            <div className='relative flex justify-center'>
-                                <span
-                                    className={`px-4 py-1 rounded-full text-xs font-semibold tracking-wider uppercase ${
-                                        theme === 'light'
-                                            ? 'bg-gray-100 text-gray-600 shadow-sm border border-gray-200'
-                                            : 'bg-gray-800 text-gray-300 shadow-md border border-gray-700'
-                                    } transition-all duration-300 hover:scale-105`}
-                                >
-                                    <div className='flex items-center gap-2'>
-                                        <HiOutlineCog className='w-4 h-4' />
-                                        Quản lý
-                                    </div>
-                                </span>
-                            </div>
-                        </div>
-                    )}
                     <SidebarItem
                         to='/users'
-                        icon={HiOutlineUserGroup}
-                        active={tab === 'users'}
+                        icon={FaPeopleGroup}
+                        active={location.pathname === '/users'}
                         theme={theme}
                         showSidebar={showSidebar}
                     >
                         Người dùng
                     </SidebarItem>
                     <DropdownMenuItem
-                        icon={HiShoppingBag}
+                        icon={GiWatch}
                         label='Sản phẩm'
                         isActive={location.pathname.includes('/product')}
                         showSidebar={showSidebar}
@@ -330,8 +301,8 @@ export default function Sidebar_Component() {
                     />
                     <SidebarItem
                         to='/orders'
-                        icon={FaShippingFast}
-                        active={tab === 'orders'}
+                        icon={FaReceipt}
+                        active={location.pathname === '/orders'}
                         theme={theme}
                         showSidebar={showSidebar}
                     >
@@ -339,20 +310,32 @@ export default function Sidebar_Component() {
                     </SidebarItem>
                     <SidebarItem
                         to='/vouchers'
-                        icon={MdDiscount}
-                        active={tab === 'vouchers'}
+                        icon={FaTags}
+                        active={location.pathname === '/vouchers'}
                         theme={theme}
                         showSidebar={showSidebar}
                     >
                         Giảm giá
                     </SidebarItem>
+                    <SidebarItem
+                        to='/reviews'
+                        icon={FaStar}
+                        active={location.pathname === '/reviews'}
+                        theme={theme}
+                        showSidebar={showSidebar}
+                    >
+                        Đánh giá
+                    </SidebarItem>
                 </nav>
+
+                {/* buttonlogout */}
                 <div className='p-5'>
                     <Tooltip title='Đăng xuất' placement='right'>
                         <button
                             onClick={() => setShowModal(true)}
-                            className='w-full p-3 rounded-xl text-white bg-gradient-to-r from-red-600 to-red-400
-                                hover:from-red-700 hover:to-red-500 transition-all duration-300 shadow-lg shadow-red-500/30'
+                            className='w-full py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl 
+                        shadow-lg transform transition-all duration-200 hover:scale-105 hover:shadow-xl
+                        disabled:opacity-50 disabled:cursor-not-allowed'
                         >
                             <div
                                 className={`flex items-center justify-center ${
@@ -367,25 +350,42 @@ export default function Sidebar_Component() {
                 </div>
             </div>
 
+            {/* modal logout */}
             <Modal show={showModal} onClose={() => setShowModal(false)} size='md' popup>
                 <Modal.Header />
                 <Modal.Body>
-                    <div className='text-center'>
-                        <HiOutlineExclamationCircle className='text-yellow-300 text-5xl mx-auto' />
+                    <div className='flex flex-col items-center gap-y-4'>
+                        <HiOutlineExclamationCircle className='text-yellow-300 text-6xl mx-auto' />
                         <span className='text-lg font-medium text-black'>
                             Bạn có chắc chắn muốn đăng xuất?
                         </span>
-                        <div className='flex justify-between items-center mt-5'>
-                            <Button color='gray' onClick={() => setShowModal(false)}>
+                        <div className='w-full flex justify-between items-center gap-4'>
+                            <Button
+                                color='gray'
+                                onClick={() => setShowModal(false)}
+                                className='w-full hover:shadow-sm hover:scale-105 transition-all duration-300 rounded-xl !text-black !ring-0'
+                            >
                                 Hủy
                             </Button>
-                            <Button color='warning' onClick={handleSignOutAccount}>
+                            <Button
+                                color='blue'
+                                onClick={handleSignOutAccount}
+                                className='w-full hover:shadow-lg hover:scale-105 transition-all duration-300 rounded-xl !ring-0'
+                            >
                                 Xác nhận
                             </Button>
                         </div>
                     </div>
                 </Modal.Body>
             </Modal>
+
+            {/* button toggle sidebar */}
+            <button
+                onClick={toggleSidebar}
+                className='fixed bottom-4 right-4 p-3 rounded-full bg-blue-600 text-white shadow-lg md:hidden'
+            >
+                {showSidebar ? <SlArrowLeft size={20} /> : <SlArrowRight size={20} />}
+            </button>
         </div>
     );
 }

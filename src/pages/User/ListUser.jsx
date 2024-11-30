@@ -29,7 +29,6 @@ export default function ListUser() {
     const navigate = useNavigate();
     const { access_token: tokenUser } = useSelector((state) => state.user);
     const [users, setUsers] = useState([]);
-    console.log('-->', users);
     const [searchText, setSearchText] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
     const [selectedUser, setSelectedUser] = useState(null);
@@ -269,7 +268,7 @@ export default function ListUser() {
                         <div className='flex gap-4'>
                             <Select
                                 defaultValue='all'
-                                className='min-w-[140px]'
+                                className='w-[300px]'
                                 onChange={setFilterStatus}
                             >
                                 <Select.Option value='all'>Tất cả tài khoản</Select.Option>
@@ -281,7 +280,7 @@ export default function ListUser() {
                                 allowClear
                                 enterButton={<AiOutlineSearch />}
                                 onChange={(e) => setSearchText(e.target.value)}
-                                className='w-full md:w-[300px]'
+                                className='w-full'
                             />
                         </div>
                     </div>

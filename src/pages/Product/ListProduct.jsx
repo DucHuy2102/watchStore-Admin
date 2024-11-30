@@ -26,7 +26,7 @@ import { Empty } from 'antd';
 const STATE_OPTIONS = [
     { value: 'all', label: 'Tất cả trạng thái' },
     { value: 'selling', label: 'Đang bán' },
-    { value: 'pause', label: 'Tạm ngừng' },
+    { value: 'pause', label: 'Ngừng bán' },
     { value: 'deleted', label: 'Đã xóa' },
 ];
 
@@ -41,15 +41,15 @@ export default function ListProduct() {
     const [totalProducts, setTotalProducts] = useState(0);
     const [searchParams, setSearchParams] = useSearchParams();
     const [showModalFilter, setShowModalFilter] = useState(false);
-    const [searchFilterOption, setSearchFilterOption] = useState('');
     const [selectedFilters, setSelectedFilters] = useState([]);
     const [selectedState, setSelectedState] = useState('all');
     const [isModalVisible, setIsModalVisible] = useState(false);
+    const [isToggling, setIsToggling] = useState(false);
     const [selectedOptions, setSelectedOptions] = useState(null);
     const [waterProof, setWaterProof] = useState([]);
     const [wireMaterial, setWireMaterial] = useState([]);
 
-    const getAllProducts = async () => {
+    const getAllProducts = useCallback(async () => {
         try {
             setIsLoading(true);
             const filterParams = Array.from(searchParams.entries())
@@ -85,7 +85,7 @@ export default function ListProduct() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [tokenUser, searchParams]);
 
     useEffect(() => {
         getAllProducts();
@@ -98,142 +98,147 @@ export default function ListProduct() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchParams]);
 
-    const FILTER_OPTIONS = [
-        {
-            title: 'Đối tượng',
-            choices: [
-                { key: 'gender', value: 'Nữ', label: 'Đồng hồ nữ' },
-                { key: 'gender', value: 'Nam', label: 'Đồng hồ nam' },
-                { key: 'gender', value: 'Thiếu nhi', label: 'Đồng hồ thiếu nhi' },
-                { key: 'gender', value: 'Tất cả', label: 'Tất cả đối tượng' },
-            ],
+    const FILTER_OPTIONS = useMemo(
+        () => [
+            {
+                title: 'Đối tượng',
+                choices: [
+                    { key: 'gender', value: 'Nữ', label: 'Đồng hồ nữ' },
+                    { key: 'gender', value: 'Nam', label: 'Đồng hồ nam' },
+                    { key: 'gender', value: 'Thiếu nhi', label: 'Đồng hồ thiếu nhi' },
+                    { key: 'gender', value: 'Tất cả', label: 'Tất cả đối tượng' },
+                ],
+            },
+            {
+                title: 'Chất liệu dây',
+                choices: wireMaterial.map((wireMaterial) => ({
+                    key: 'wireMaterial',
+                    value: wireMaterial,
+                    label: wireMaterial,
+                })),
+            },
+            {
+                title: 'Hình dáng mặt đồng hồ',
+                choices: [
+                    { key: 'shape', value: 'Đồng hồ mặt tròn', label: 'Đồng hồ mặt tròn' },
+                    { key: 'shape', value: 'Đồng hồ mặt vuông', label: 'Đồng hồ mặt vuông' },
+                    {
+                        key: 'shape',
+                        value: 'Đồng hồ mặt chữ nhật',
+                        label: 'Đồng hồ mặt chữ nhật',
+                    },
+                    {
+                        key: 'shape ',
+                        value: 'Đồng hồ mặt tam giác',
+                        label: 'Đồng hồ mặt tam giác',
+                    },
+                    {
+                        key: 'shape',
+                        value: 'Đồng hồ mặt bầu dục',
+                        label: 'Đồng hồ mặt bầu dục',
+                    },
+                    {
+                        key: 'shape',
+                        value: 'Đồng hồ mặt Tonneau',
+                        label: 'Đồng hồ mặt Tonneau',
+                    },
+                    {
+                        key: 'shape',
+                        value: 'Đồng hồ mặt Carage',
+                        label: 'Đồng hồ mặt Carage',
+                    },
+                    {
+                        key: 'shape',
+                        value: 'Đồng hồ mặt Cushion',
+                        label: 'Đồng hồ mặt Cushion',
+                    },
+                    {
+                        key: 'shape',
+                        value: 'Đồng hồ mặt bát giác',
+                        label: 'Đồng hồ mặt bát giác',
+                    },
+                ],
+            },
+            {
+                title: 'Kháng nước',
+                choices: waterProof.map((waterProof) => ({
+                    key: 'waterProof',
+                    value: waterProof,
+                    label: `${waterProof} ATM`,
+                })),
+            },
+        ],
+        [waterProof, wireMaterial]
+    );
+
+    const handleStateChange = useCallback(
+        (value) => {
+            setSelectedState(value);
+            const newSearchParams = new URLSearchParams(searchParams);
+            newSearchParams.set('pageNum', '1');
+            if (value === 'all') {
+                newSearchParams.delete('state');
+            } else {
+                newSearchParams.set('state', value);
+            }
+            setSearchParams(newSearchParams);
         },
-        {
-            title: 'Chất liệu dây',
-            choices: wireMaterial.map((wireMaterial) => ({
-                key: 'wireMaterial',
-                value: wireMaterial,
-                label: wireMaterial,
-            })),
+        [searchParams, setSearchParams]
+    );
+
+    const handleSelect = useCallback(
+        (choice) => {
+            const isChoiceExist = selectedFilters.some(
+                (item) => item.key === choice.key && item.value === choice.value
+            );
+            if (!isChoiceExist) {
+                setSelectedFilters([...selectedFilters, choice]);
+            }
         },
-        {
-            title: 'Hình dáng mặt đồng hồ',
-            choices: [
-                { key: 'shape', value: 'Đồng hồ mặt tròn', label: 'Đồng hồ mặt tròn' },
-                { key: 'shape', value: 'Đồng hồ mặt vuông', label: 'Đồng hồ mặt vuông' },
-                {
-                    key: 'shape',
-                    value: 'Đồng hồ mặt chữ nhật',
-                    label: 'Đồng hồ mặt chữ nhật',
-                },
-                {
-                    key: 'shape ',
-                    value: 'Đồng hồ mặt tam giác',
-                    label: 'Đồng hồ mặt tam giác',
-                },
-                {
-                    key: 'shape',
-                    value: 'Đồng hồ mặt bầu dục',
-                    label: 'Đồng hồ mặt bầu dục',
-                },
-                {
-                    key: 'shape',
-                    value: 'Đồng hồ mặt Tonneau',
-                    label: 'Đồng hồ mặt Tonneau',
-                },
-                {
-                    key: 'shape',
-                    value: 'Đồng hồ mặt Carage',
-                    label: 'Đồng hồ mặt Carage',
-                },
-                {
-                    key: 'shape',
-                    value: 'Đồng hồ mặt Cushion',
-                    label: 'Đồng hồ mặt Cushion',
-                },
-                {
-                    key: 'shape',
-                    value: 'Đồng hồ mặt bát giác',
-                    label: 'Đồng hồ mặt bát giác',
-                },
-            ],
-        },
-        {
-            title: 'Kháng nước',
-            choices: waterProof.map((waterProof) => ({
-                key: 'waterProof',
-                value: waterProof,
-                label: `${waterProof} ATM`,
-            })),
-        },
-    ];
+        [selectedFilters]
+    );
 
-    const handleStateChange = (value) => {
-        setSelectedState(value);
-        const newSearchParams = new URLSearchParams(searchParams);
-        newSearchParams.set('pageNum', '1');
-        if (value === 'all') {
-            newSearchParams.delete('state');
-        } else {
-            newSearchParams.set('state', value);
-        }
-        setSearchParams(newSearchParams);
-    };
+    const updateSearchParams = useCallback(
+        (filters) => {
+            const newSearchParams = new URLSearchParams();
+            newSearchParams.set('pageNum', '1');
 
-    const filteredOptions = FILTER_OPTIONS.map((option) => ({
-        ...option,
-        choices: option.choices.filter((choice) =>
-            choice.label.toLowerCase().includes(searchFilterOption.toLowerCase())
-        ),
-    }));
-
-    const handleSelect = (choice) => {
-        const isChoiceExist = selectedFilters.some(
-            (item) => item.key === choice.key && item.value === choice.value
-        );
-        if (!isChoiceExist) {
-            setSelectedFilters([...selectedFilters, choice]);
-        }
-    };
-
-    const updateSearchParams = (filters) => {
-        const newSearchParams = new URLSearchParams();
-        newSearchParams.set('pageNum', '1');
-
-        const filterGroups = {};
-        filters.forEach((filter) => {
-            if (filter?.value.trim()) {
-                if (!filterGroups[filter.key]) {
-                    filterGroups[filter.key] = new Set();
+            const filterGroups = {};
+            filters.forEach((filter) => {
+                if (filter?.value.trim()) {
+                    if (!filterGroups[filter.key]) {
+                        filterGroups[filter.key] = new Set();
+                    }
+                    filterGroups[filter.key].add(filter.value.trim());
                 }
-                filterGroups[filter.key].add(filter.value.trim());
-            }
-        });
+            });
 
-        Object.entries(filterGroups).forEach(([key, values]) => {
-            const valuesArray = Array.from(values);
-            if (valuesArray.length > 0) {
-                newSearchParams.set(key, valuesArray.join(','));
-            }
-        });
+            Object.entries(filterGroups).forEach(([key, values]) => {
+                const valuesArray = Array.from(values);
+                if (valuesArray.length > 0) {
+                    newSearchParams.set(key, valuesArray.join(','));
+                }
+            });
 
-        searchParams.forEach((value, key) => {
-            if (
-                key !== 'pageNum' &&
-                !FILTER_OPTIONS.some((option) => option.choices[0].key === key)
-            ) {
-                newSearchParams.set(key, value);
-            }
-        });
+            searchParams.forEach((value, key) => {
+                if (
+                    key !== 'pageNum' &&
+                    !FILTER_OPTIONS.some((option) => option.choices[0].key === key)
+                ) {
+                    newSearchParams.set(key, value);
+                }
+            });
 
-        searchParams.forEach((value, key) => {
-            if (key === 'q' && value.trim()) {
-                newSearchParams.set(key, value);
-            }
-        });
+            searchParams.forEach((value, key) => {
+                if (key === 'q' && value.trim()) {
+                    newSearchParams.set(key, value);
+                }
+            });
 
-        setSearchParams(newSearchParams);
-    };
+            setSearchParams(newSearchParams);
+        },
+        [FILTER_OPTIONS, searchParams, setSearchParams]
+    );
 
     const handleSubmitFilter = (e) => {
         e.preventDefault();
@@ -247,26 +252,32 @@ export default function ListProduct() {
         setSearchParams(newSearchParams);
     };
 
-    const handleEdit = (id) => {
-        navigate(`/product/edit/${id}`);
-    };
+    const handleEdit = useCallback(
+        (id) => {
+            navigate(`/product/edit/${id}`);
+        },
+        [navigate]
+    );
 
-    const handleDeleteProduct = async (id) => {
-        try {
-            await axios.delete(`${import.meta.env.VITE_API_URL}/api/product/delete`, {
-                params: {
-                    productId: id,
-                },
-                headers: {
-                    Authorization: `Bearer ${tokenUser}`,
-                },
-            });
-            toast.success('Xóa sản phẩm thành công');
-            await getAllProducts();
-        } catch (error) {
-            toast.error('Có lỗi xảy ra khi xóa sản phẩm');
-        }
-    };
+    const handleDeleteProduct = useCallback(
+        async (id) => {
+            try {
+                await axios.delete(`${import.meta.env.VITE_API_URL}/api/product/delete`, {
+                    params: {
+                        productId: id,
+                    },
+                    headers: {
+                        Authorization: `Bearer ${tokenUser}`,
+                    },
+                });
+                toast.success('Xóa sản phẩm thành công');
+                await getAllProducts();
+            } catch (error) {
+                toast.error('Có lỗi xảy ra khi xóa sản phẩm');
+            }
+        },
+        [getAllProducts, tokenUser]
+    );
 
     const showOptionModal = (options, productId) => {
         setSelectedOptions(options.map((opt) => ({ ...opt, productId })));
@@ -278,205 +289,214 @@ export default function ListProduct() {
         setSelectedOptions(null);
     };
 
-    const handleToggleProductState = async (productId, currentState) => {
-        try {
-            const newState = currentState === 'selling' ? 'pause' : 'selling';
+    const handleToggleProductState = useCallback(
+        async (productId, currentState) => {
+            try {
+                const newState = currentState === 'selling' ? 'pause' : 'selling';
 
-            await axios.put(
-                `${import.meta.env.VITE_API_URL}/api/product/toggle-state`,
-                { productId, state: newState },
-                {
-                    headers: {
-                        Authorization: `Bearer ${tokenUser}`,
-                    },
-                }
-            );
+                await axios.put(
+                    `${import.meta.env.VITE_API_URL}/api/product/toggle-state`,
+                    { productId, state: newState },
+                    {
+                        headers: {
+                            Authorization: `Bearer ${tokenUser}`,
+                        },
+                    }
+                );
 
-            toast.success(`Đã ${newState === 'selling' ? 'mở bán' : 'tạm ngừng'} sản phẩm`);
-            await getAllProducts();
-        } catch (error) {
-            console.error('Error toggling product state:', error);
-            toast.error('Có lỗi xảy ra khi thay đổi trạng thái sản phẩm');
-        }
-    };
-
-    const columns = [
-        {
-            title: 'STT',
-            key: 'index',
-            width: '5%',
-            align: 'center',
-            render: (_, record) => <span>{record.index}</span>,
+                toast.success(`Đã ${newState === 'selling' ? 'mở bán' : 'tạm ngừng'} sản phẩm`);
+                await getAllProducts();
+            } catch (error) {
+                console.error('Error toggling product state:', error);
+                toast.error('Có lỗi xảy ra khi thay đổi trạng thái sản phẩm');
+            }
         },
-        {
-            title: 'Sản phẩm',
-            dataIndex: 'product',
-            key: 'product',
-            width: '25%',
-            render: (_, record) => (
-                <div className='flex items-center gap-4'>
-                    <div className='relative w-20 h-20'>
-                        {record?.img && record.img.length > 0 ? (
-                            <Image
-                                src={record.img[0]}
-                                alt={record.productName}
-                                className='rounded-lg object-cover w-full h-full'
-                                loading='lazy'
-                                preview={{
-                                    mask: <div className='text-xs'>Xem</div>,
-                                }}
-                            />
-                        ) : (
-                            <div className='w-full h-full bg-gray-100 rounded-lg flex items-center justify-center'>
-                                <FaImage className='w-6 h-6 text-gray-400' />
-                            </div>
-                        )}
+        [getAllProducts, tokenUser]
+    );
+
+    const columns = useMemo(
+        () => [
+            {
+                title: 'STT',
+                key: 'index',
+                width: '5%',
+                align: 'center',
+                render: (_, record) => <span>{record.index}</span>,
+            },
+            {
+                title: 'Sản phẩm',
+                dataIndex: 'product',
+                key: 'product',
+                width: '25%',
+                render: (_, record) => (
+                    <div className='flex items-center gap-4'>
+                        <div className='relative w-20 h-20'>
+                            {record?.img && record.img.length > 0 ? (
+                                <Image
+                                    src={record.img[0]}
+                                    alt={record.productName}
+                                    className='rounded-lg object-cover w-full h-full'
+                                    loading='lazy'
+                                    preview={{
+                                        mask: <div className='text-xs'>Xem</div>,
+                                    }}
+                                />
+                            ) : (
+                                <div className='w-full h-full bg-gray-100 rounded-lg flex items-center justify-center'>
+                                    <FaImage className='w-6 h-6 text-gray-400' />
+                                </div>
+                            )}
+                        </div>
+                        <div className='flex flex-col max-w-[200px]'>
+                            <Tooltip title={record.productName}>
+                                <Link
+                                    to={`/product-detail/${record.id}`}
+                                    className='font-medium text-gray-900 hover:text-blue-600 mb-1 truncate'
+                                >
+                                    {record.productName}
+                                </Link>
+                            </Tooltip>
+                            <span className='text-sm font-medium text-gray-500'>
+                                Hãng: {record.brand}
+                            </span>
+                            <span className='text-sm text-gray-400'>
+                                Đồng hồ {record.genderUser.toLowerCase()}
+                            </span>
+                        </div>
                     </div>
-                    <div className='flex flex-col max-w-[200px]'>
-                        <Tooltip title={record.productName}>
-                            <Link
-                                to={`/product-detail/${record.id}`}
-                                className='font-medium text-gray-900 hover:text-blue-600 mb-1 truncate'
-                            >
-                                {record.productName}
-                            </Link>
-                        </Tooltip>
-                        <span className='text-sm font-medium text-gray-500'>
-                            Hãng: {record.brand}
-                        </span>
-                        <span className='text-sm text-gray-400'>
-                            Đồng hồ {record.genderUser.toLowerCase()}
-                        </span>
-                    </div>
-                </div>
-            ),
-        },
-        {
-            title: 'Kích thước (mm)',
-            key: 'size',
-            width: '15%',
-            align: 'center',
-            render: (_, record) => (
-                <span>
-                    {record.length} x {record.height} x {record.width}
-                </span>
-            ),
-        },
-        {
-            title: 'Trọng lượng (g)',
-            dataIndex: 'weight',
-            key: 'weight',
-            width: '15%',
-            align: 'center',
-            sorter: (a, b) => a.weight - b.weight,
-            render: (weight) => `${weight}g`,
-        },
-        {
-            title: 'Giá bán (VND)',
-            dataIndex: 'price',
-            key: 'price',
-            width: '15%',
-            align: 'center',
-            sorter: (a, b) => a.price - b.price,
-            render: (_, record) => (
-                <Button
-                    type='primary'
-                    onClick={() => showOptionModal(record.option, record.id)}
-                    className='bg-blue-500 hover:bg-blue-600 hover:scale-105 
+                ),
+            },
+            {
+                title: 'Kích thước (mm)',
+                key: 'size',
+                width: '15%',
+                align: 'center',
+                render: (_, record) => (
+                    <span>
+                        {record.length} x {record.height} x {record.width}
+                    </span>
+                ),
+            },
+            {
+                title: 'Trọng lượng (g)',
+                dataIndex: 'weight',
+                key: 'weight',
+                width: '15%',
+                align: 'center',
+                sorter: (a, b) => a.weight - b.weight,
+                render: (weight) => `${weight}g`,
+            },
+            {
+                title: 'Giá bán (VND)',
+                dataIndex: 'price',
+                key: 'price',
+                width: '15%',
+                align: 'center',
+                sorter: (a, b) => a.price - b.price,
+                render: (_, record) => (
+                    <Button
+                        type='primary'
+                        onClick={() => showOptionModal(record.option, record.id)}
+                        className='bg-blue-500 hover:bg-blue-600 hover:scale-105 
                     shadow-md hover:shadow-lg transition-all duration-300'
-                >
-                    Xem giá
-                </Button>
-            ),
-        },
-        {
-            title: 'Trạng thái',
-            dataIndex: 'stateProduct',
-            key: 'stateProduct',
-            width: '15%',
-            align: 'center',
-            render: (state) => (
-                <div className='flex flex-col items-center gap-2'>
-                    <Tag
-                        className={`px-3 py-1 font-medium text-sm rounded-full border-none ${
-                            state === 'selling'
-                                ? 'bg-green-100 text-green-700'
-                                : state === 'pause'
-                                ? 'bg-yellow-100 text-yellow-700'
-                                : 'bg-red-100 text-red-700'
-                        }`}
                     >
-                        <span className='flex items-center gap-1.5'>
-                            <FaCircle className='w-2 h-2' />
-                            {state === 'selling'
-                                ? 'Đang bán'
-                                : state === 'pause'
-                                ? 'Tạm ngừng'
-                                : 'Đã xóa'}
-                        </span>
-                    </Tag>
-                </div>
-            ),
-        },
-        {
-            title: 'Thao tác',
-            key: 'action',
-            width: '10%',
-            align: 'center',
-            render: (_, record) => (
-                <div className='flex flex-col items-center justify-center gap-2'>
-                    <div className='flex items-center justify-center gap-2'>
-                        <Tooltip title='Xem chi tiết'>
-                            <Link to={`/product-detail/${record.id}`}>
-                                <Button type='text' icon={<FaEye className='text-blue-600' />} />
-                            </Link>
-                        </Tooltip>
-                        {record.state !== 'deleted' && (
-                            <>
-                                <Tooltip title='Chỉnh sửa'>
+                        Xem giá
+                    </Button>
+                ),
+            },
+            {
+                title: 'Trạng thái',
+                dataIndex: 'stateProduct',
+                key: 'stateProduct',
+                width: '15%',
+                align: 'center',
+                render: (state) => (
+                    <div className='flex flex-col items-center gap-2'>
+                        <Tag
+                            className={`px-3 py-1 font-medium text-sm rounded-full border-none ${
+                                state === 'selling'
+                                    ? 'bg-green-100 text-green-700'
+                                    : state === 'pause'
+                                    ? 'bg-yellow-100 text-yellow-700'
+                                    : 'bg-red-100 text-red-700'
+                            }`}
+                        >
+                            <span className='flex items-center gap-1.5'>
+                                <FaCircle className='w-2 h-2' />
+                                {state === 'selling'
+                                    ? 'Đang bán'
+                                    : state === 'pause'
+                                    ? 'Ngừng bán'
+                                    : 'Đã xóa'}
+                            </span>
+                        </Tag>
+                    </div>
+                ),
+            },
+            {
+                title: 'Thao tác',
+                key: 'action',
+                width: '10%',
+                align: 'center',
+                render: (_, record) => (
+                    <div className='flex flex-col items-center justify-center gap-2'>
+                        <div className='flex items-center justify-center gap-2'>
+                            <Tooltip title='Xem chi tiết'>
+                                <Link to={`/product-detail/${record.id}`}>
                                     <Button
                                         type='text'
-                                        icon={<FaEdit className='text-gray-600' />}
-                                        onClick={() => handleEdit(record.id)}
+                                        icon={<FaEye className='text-blue-600' />}
                                     />
-                                </Tooltip>
-                                <Tooltip title='Xóa'>
-                                    <Popconfirm
-                                        title='Bạn có chắc muốn xóa sản phẩm này?'
-                                        description='Hành động này không thể hoàn tác!'
-                                        onConfirm={() => handleDeleteProduct(record.id)}
-                                        okText='Xóa'
-                                        cancelText='Hủy'
-                                        okButtonProps={{
-                                            danger: true,
-                                            className: 'bg-red-500 hover:bg-red-600',
-                                        }}
-                                    >
+                                </Link>
+                            </Tooltip>
+                            {record.state !== 'deleted' && (
+                                <>
+                                    <Tooltip title='Chỉnh sửa'>
                                         <Button
                                             type='text'
-                                            icon={<FaTrash className='text-red-600' />}
+                                            icon={<FaEdit className='text-gray-600' />}
+                                            onClick={() => handleEdit(record.id)}
                                         />
-                                    </Popconfirm>
-                                </Tooltip>
-                            </>
+                                    </Tooltip>
+                                    <Tooltip title='Xóa'>
+                                        <Popconfirm
+                                            title='Bạn có chắc muốn xóa sản phẩm này?'
+                                            description='Hành động này không thể hoàn tác!'
+                                            onConfirm={() => handleDeleteProduct(record.id)}
+                                            okText='Xóa'
+                                            cancelText='Hủy'
+                                            okButtonProps={{
+                                                danger: true,
+                                                className: 'bg-red-500 hover:bg-red-600',
+                                            }}
+                                        >
+                                            <Button
+                                                type='text'
+                                                icon={<FaTrash className='text-red-600' />}
+                                            />
+                                        </Popconfirm>
+                                    </Tooltip>
+                                </>
+                            )}
+                        </div>
+                        {record.state !== 'deleted' && (
+                            <Tooltip
+                                title={record.stateProduct === 'selling' ? 'Đang bán' : 'Tạm ngừng'}
+                            >
+                                <Switch
+                                    checked={record.stateProduct === 'selling'}
+                                    onChange={() =>
+                                        handleToggleProductState(record.id, record.stateProduct)
+                                    }
+                                />
+                            </Tooltip>
                         )}
                     </div>
-                    {record.state !== 'deleted' && (
-                        <Tooltip
-                            title={record.stateProduct === 'selling' ? 'Đang bán' : 'Tạm ngừng'}
-                        >
-                            <Switch
-                                checked={record.stateProduct === 'selling'}
-                                onChange={() =>
-                                    handleToggleProductState(record.id, record.stateProduct)
-                                }
-                            />
-                        </Tooltip>
-                    )}
-                </div>
-            ),
-        },
-    ];
+                ),
+            },
+        ],
+        [handleDeleteProduct, handleEdit, handleToggleProductState]
+    );
 
     const handleEditOption = (productId) => {
         navigate(`/product/edit/${productId}`, {
@@ -486,54 +506,37 @@ export default function ListProduct() {
         });
     };
 
-    const handleDeleteOption = async (optionKey, productId) => {
-        console.log(optionKey, productId);
-        // try {
-        //     const res = await axios.delete(
-        //         `${import.meta.env.VITE_API_URL}/api/product/delete-option`,
-        //         {
-        //             params: {
-        //                 optionKey,
-        //                 productId,
-        //             },
-        //             headers: {
-        //                 Authorization: `Bearer ${tokenUser}`,
-        //             },
-        //         }
-        //     );
-        //     if (res.status === 200) {
-        //         toast.success('Đã xóa phiên bản màu thành công');
-        //         await getAllProducts();
-        //     }
-        // } catch (error) {
-        //     console.error('Error deleting option:', error);
-        //     toast.error('Có lỗi xảy ra khi xóa phiên bản màu');
-        // }
-    };
-
-    const handleToggleState = async (optionKey, productId) => {
-        // try {
-        //     const res = await axios.put(
-        //         `${import.meta.env.VITE_API_URL}/api/product/pause-option`,
-        //         {
-        //             optionKey,
-        //             productId,
-        //         },
-        //         {
-        //             headers: {
-        //                 Authorization: `Bearer ${tokenUser}`,
-        //             },
-        //         }
-        //     );
-        //     if (res.status === 200) {
-        //         toast.success('Đã ngừng kinh doanh màu này');
-        //         await getAllProducts();
-        //     }
-        // } catch (error) {
-        //     console.log('Error toggling state:', error);
-        //     toast.error('Có lỗi xảy ra khi ngừng bán sản phẩm');
-        // }
-    };
+    const handleToggleState = useCallback(
+        async (optionKey, productId) => {
+            try {
+                setIsToggling(true);
+                const res = await axios.put(
+                    `${import.meta.env.VITE_API_URL}/api/product/pause-option`,
+                    {},
+                    {
+                        params: {
+                            key: optionKey,
+                            productId,
+                        },
+                        headers: {
+                            Authorization: `Bearer ${tokenUser}`,
+                        },
+                    }
+                );
+                if (res.status === 200) {
+                    await getAllProducts();
+                    toast.success('Thay đổi trạng thái thành công');
+                    setIsModalVisible(false);
+                }
+            } catch (error) {
+                console.log('Error toggling state:', error);
+                toast.error('Lỗi xảy ra khi ngừng bán màu này');
+            } finally {
+                setIsToggling(false);
+            }
+        },
+        [getAllProducts, tokenUser]
+    );
 
     return (
         <div className='p-6'>
@@ -606,7 +609,7 @@ export default function ListProduct() {
                 <FilterModal
                     show={showModalFilter}
                     onClose={() => setShowModalFilter(false)}
-                    filteredOptions={filteredOptions}
+                    options={FILTER_OPTIONS}
                     selectedFilters={selectedFilters}
                     onRemoveFilter={() => setSelectedFilters([])}
                     onSelect={handleSelect}
@@ -734,88 +737,66 @@ export default function ListProduct() {
                                 </div>
 
                                 {/* edit and delete option */}
-                                <div className='flex justify-between items-center gap-2 pt-3 border-t border-gray-100'>
+                                <div className='flex justify-end items-center gap-2 border-gray-100'>
+                                    <Button
+                                        type='primary'
+                                        icon={<FaEdit />}
+                                        onClick={() => handleEditOption(option.productId)}
+                                        className='h-8 px-4 flex items-center gap-1.5 bg-gradient-to-r from-blue-500 
+                                        to-blue-600 hover:from-blue-600 hover:to-blue-700 border-none'
+                                    >
+                                        <span className='text-sm'>Sửa</span>
+                                    </Button>
+
                                     <Popconfirm
-                                        title='Xóa phiên bản màu'
-                                        description='Bạn có chắc chắn muốn xóa phiên bản màu này?'
+                                        title={`${
+                                            option.value.state === 'selling'
+                                                ? 'Tạm ngừng'
+                                                : 'Mở bán'
+                                        } phiên bản màu`}
+                                        description={`Bạn có chắc chắn muốn ${
+                                            option.value.state === 'selling'
+                                                ? 'tạm ngừng'
+                                                : 'mở bán'
+                                        } phiên bản màu này?`}
                                         onConfirm={() =>
-                                            handleDeleteOption(option.key, option.productId)
+                                            handleToggleState(option.key, option.productId)
                                         }
-                                        okText='Xóa'
+                                        okText={
+                                            option.value.state === 'selling'
+                                                ? 'Tạm ngừng'
+                                                : 'Mở bán'
+                                        }
                                         cancelText='Hủy'
                                         okButtonProps={{
-                                            danger: true,
-                                            className: 'bg-red-500 hover:bg-red-600',
+                                            className: `${
+                                                option.value.state === 'selling'
+                                                    ? 'bg-yellow-500 hover:!bg-yellow-600'
+                                                    : 'bg-green-500 hover:!bg-green-600'
+                                            } text-white border-none`,
+                                            loading: isToggling,
                                         }}
                                     >
                                         <Button
-                                            danger
-                                            icon={<FaTrash />}
-                                            className='h-8 px-4 flex items-center gap-1.5'
+                                            type='default'
+                                            icon={
+                                                <FaCircle
+                                                    className={`${
+                                                        option.value.state === 'selling'
+                                                            ? 'text-red-500'
+                                                            : 'text-green-500'
+                                                    }`}
+                                                />
+                                            }
+                                            className='h-8 px-4 flex items-center gap-1.5 border'
                                         >
-                                            <span className='text-sm'>Xóa</span>
+                                            <span className='text-sm'>
+                                                {option.value.state === 'selling'
+                                                    ? 'Ngừng bán'
+                                                    : 'Mở bán'}
+                                            </span>
                                         </Button>
                                     </Popconfirm>
-                                    <div className='flex items-center justify-center gap-2'>
-                                        <Button
-                                            type='primary'
-                                            icon={<FaEdit />}
-                                            onClick={() => handleEditOption(option.productId)}
-                                            className='h-8 px-4 flex items-center gap-1.5 bg-gradient-to-r from-blue-500 
-                                        to-blue-600 hover:from-blue-600 hover:to-blue-700 border-none'
-                                        >
-                                            <span className='text-sm'>Sửa</span>
-                                        </Button>
-
-                                        <Popconfirm
-                                            title={`${
-                                                option.value.state === 'selling'
-                                                    ? 'Tạm ngừng'
-                                                    : 'Mở bán'
-                                            } phiên bản màu`}
-                                            description={`Bạn có chắc chắn muốn ${
-                                                option.value.state === 'selling'
-                                                    ? 'tạm ngừng'
-                                                    : 'mở bán'
-                                            } phiên bản màu này?`}
-                                            onConfirm={() =>
-                                                handleToggleState(option.key, option.productId)
-                                            }
-                                            okText={
-                                                option.value.state === 'selling'
-                                                    ? 'Tạm ngừng'
-                                                    : 'Mở bán'
-                                            }
-                                            cancelText='Hủy'
-                                            okButtonProps={{
-                                                className: `${
-                                                    option.value.state === 'selling'
-                                                        ? 'bg-yellow-500 hover:!bg-yellow-600'
-                                                        : 'bg-green-500 hover:!bg-green-600'
-                                                } text-white border-none`,
-                                            }}
-                                        >
-                                            <Button
-                                                type='default'
-                                                icon={
-                                                    <FaCircle
-                                                        className={`${
-                                                            option.value.state === 'selling'
-                                                                ? 'text-red-500'
-                                                                : 'text-green-500'
-                                                        }`}
-                                                    />
-                                                }
-                                                className='h-8 px-4 flex items-center gap-1.5 border'
-                                            >
-                                                <span className='text-sm'>
-                                                    {option.value.state === 'selling'
-                                                        ? 'Ngừng bán'
-                                                        : 'Mở bán'}
-                                                </span>
-                                            </Button>
-                                        </Popconfirm>
-                                    </div>
                                 </div>
                             </div>
                         ))}

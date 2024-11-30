@@ -29,3 +29,6 @@ export { default as DetailOrder } from './Order/DetailOrder';
 export { default as ListVouchers } from './Voucher/ListVouchers';
 export { default as CreateVoucher } from './Voucher/CreateVoucher';
 export { default as EditVoucher } from './Voucher/EditVoucher';
+
+// review
+export { default as ListReview } from './Review/ListReview';

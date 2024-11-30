@@ -8,7 +8,7 @@ export default function FilterModal({
     onClose,
     selectedFilters,
     onRemoveFilter,
-    filteredOptions,
+    options,
     onSelect,
     onSubmit,
 }) {
@@ -36,7 +36,7 @@ export default function FilterModal({
     );
 
     const body = useMemo(() => {
-        return filteredOptions.map((option, index) => (
+        return options.map((option, index) => (
             <div key={index} className='bg-white rounded-lg p-3'>
                 <h4 className='font-medium text-gray-800 mb-3 pb-2 border-b border-gray-100 flex items-center gap-2'>
                     {option.title}
@@ -70,7 +70,7 @@ export default function FilterModal({
                 </div>
             </div>
         ));
-    }, [filteredOptions, onSelect, selectedFilters]);
+    }, [options, onSelect, selectedFilters]);
 
     const footer = useMemo(
         () => (

@@ -16,7 +16,7 @@ export default function PageNotFound() {
                     className='w-full transition ease-in-out duration-300 hover:scale-110'
                     outline
                 >
-                    Trở lại
+                    Trở lại 
                 </Button>
             </Link>
         </div>

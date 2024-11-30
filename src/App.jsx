@@ -19,6 +19,7 @@ import {
     ResetPassword,
     ProductDetail,
     ProductPreview,
+    ListReview,
 } from './pages/exportPage';
 import { PrivateRoute } from './components/exportComponent';
 import { ToastContainer } from 'react-toastify';
@@ -30,7 +31,7 @@ import { getAllCategory } from './redux/slices/productSlice';
 
 export default function App() {
     const dispatch = useDispatch();
-    const { access_token: token } = useSelector((state) => state.user);
+    const { access_token: token, isAdmin } = useSelector((state) => state.user);
     const [category, setCategory] = useState([]);
 
     useEffect(() => {
@@ -97,6 +98,9 @@ export default function App() {
                             <Route path='/voucher/edit/:id' element={<EditVoucher />} />
                             <Route path='/voucher/create' element={<CreateVoucher />} />
                             <Route path='/product/product-preview' element={<ProductPreview />} />
+
+                            {/* review */}
+                            <Route path='/reviews' element={<ListReview />} />
                         </Route>
                     </Route>
 
