@@ -37,7 +37,6 @@ const formatOrderId = (id, maxLength = 10) => {
 export default function ListOrder() {
     const { access_token: tokenUser } = useSelector((state) => state.user);
     const [orders, setOrders] = useState([]);
-    console.log(orders);
     const [currentTab, setCurrentTab] = useState('all');
     const [loading, setLoading] = useState(false);
     const [tableParams, setTableParams] = useState({
@@ -49,10 +48,6 @@ export default function ListOrder() {
     const [startDate, setStartDate] = useState(null);
     const [endDate, setEndDate] = useState(null);
     const navigate = useNavigate();
-
-    useEffect(() => {
-        getAllOrders();
-    }, []);
 
     const getAllOrders = async () => {
         try {
@@ -72,6 +67,10 @@ export default function ListOrder() {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        getAllOrders();
+    }, []);
 
     const columns = [
         {

@@ -13,6 +13,7 @@ import { toggleTheme } from '../redux/slices/themeSlice';
 import { resetCategory } from '../redux/slices/productSlice';
 import { FaPeopleGroup } from 'react-icons/fa6';
 import { GiWatch } from 'react-icons/gi';
+import { RiCustomerService2Fill } from 'react-icons/ri';
 
 const SidebarItem = ({ to, icon: Icon, active, showSidebar, children }) => {
     return (
@@ -245,12 +246,6 @@ export default function Sidebar_Component() {
 
                     {showSidebar && (
                         <div className='mt-4 space-y-1.5 text-center'>
-                            <h2
-                                className='text-lg font-semibold text-gray-800 dark:text-gray-200 
-                tracking-wide transition-colors duration-300'
-                            >
-                                {currentUser.username}
-                            </h2>
                             <span
                                 className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
                 bg-gradient-to-r from-blue-500 to-blue-600 text-white
@@ -297,6 +292,7 @@ export default function Sidebar_Component() {
                         items={[
                             { path: '/products', label: 'Danh sách' },
                             { path: '/product/create', label: 'Tạo mới' },
+                            { path: '/product/category', label: 'Danh mục' },
                         ]}
                     />
                     <SidebarItem
@@ -325,6 +321,15 @@ export default function Sidebar_Component() {
                         showSidebar={showSidebar}
                     >
                         Đánh giá
+                    </SidebarItem>
+                    <SidebarItem
+                        to='/services'
+                        icon={RiCustomerService2Fill}
+                        active={location.pathname === '/services'}
+                        theme={theme}
+                        showSidebar={showSidebar}
+                    >
+                        Dịch vụ
                     </SidebarItem>
                 </nav>
 

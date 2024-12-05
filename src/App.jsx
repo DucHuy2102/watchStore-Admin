@@ -20,6 +20,8 @@ import {
     ProductDetail,
     ProductPreview,
     ListReview,
+    ListService,
+    CategoryProduct,
 } from './pages/exportPage';
 import { PrivateRoute } from './components/exportComponent';
 import { ToastContainer } from 'react-toastify';
@@ -86,6 +88,7 @@ export default function App() {
                             {/* product */}
                             <Route path='/products' element={<ListProduct />} />
                             <Route path='/product/create' element={<CreateProduct />} />
+                            <Route path='/product/category' element={<CategoryProduct />} />
                             <Route path='/product/edit/:id' element={<EditProduct />} />
                             <Route path='/product-detail/:id' element={<ProductDetail />} />
 
@@ -101,6 +104,9 @@ export default function App() {
 
                             {/* review */}
                             <Route path='/reviews' element={<ListReview />} />
+
+                            {/* service */}
+                            <Route path='/services' element={<ListService />} />
                         </Route>
                     </Route>
 

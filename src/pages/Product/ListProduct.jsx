@@ -542,7 +542,12 @@ export default function ListProduct() {
         <div className='p-6'>
             {/* Header */}
             <div className='mb-4 flex justify-between items-center'>
-                <h1 className='text-2xl font-bold'>Quản lý sản phẩm</h1>
+                <div>
+                    <h1 className='text-2xl font-bold'>Quản lý sản phẩm</h1>
+                    <p className='text-gray-500 mt-1'>
+                        Quản lý tất cả các sản phẩm có trong hệ thống
+                    </p>
+                </div>
                 <Button
                     type='primary'
                     size='large'
@@ -552,7 +557,7 @@ export default function ListProduct() {
                     hover:from-blue-600 hover:to-blue-700 transition-all duration-300 
                     transform hover:scale-[1.02]'
                 >
-                    <span className='font-semibold tracking-wide'>Thêm sản phm mới</span>
+                    <span className='font-semibold tracking-wide'>Thêm sản phẩm mới</span>
                 </Button>
             </div>
 

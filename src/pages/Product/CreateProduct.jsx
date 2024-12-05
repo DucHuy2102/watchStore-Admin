@@ -274,23 +274,23 @@ export default function CreateProduct() {
                                 className='w-full h-[38px] rounded-lg hover:border-blue-400 focus:border-blue-500 transition-colors duration-300'
                                 placeholder='Chọn hình dáng mặt đồng hồ'
                                 options={[
-                                    { label: 'Đồng hồ mặt tròn', value: 'Đồng hồ mặt tròn' },
-                                    { label: 'Đồng hồ mặt vuông', value: 'Đồng hồ mặt vuông' },
+                                    { label: 'Mặt tròn', value: 'Mặt tròn' },
+                                    { label: 'Mặt vuông', value: 'Mặt vuông' },
                                     {
-                                        label: 'Đồng hồ mặt chữ nhật',
-                                        value: 'Đồng hồ mặt chữ nhật',
+                                        label: 'Mặt chữ nhật',
+                                        value: 'Mặt chữ nhật',
                                     },
                                     {
-                                        label: 'Đồng hồ mặt tam giác',
-                                        value: 'Đồng hồ mặt tam giác',
+                                        label: 'Mặt tam giác',
+                                        value: 'Mặt tam giác',
                                     },
-                                    { label: 'Đồng hồ mặt bầu dục', value: 'Đồng hồ mặt bầu dục' },
-                                    { label: 'Đồng hồ mặt Tonneau', value: 'Đồng hồ mặt Tonneau' },
-                                    { label: 'Đồng hồ mặt Carage', value: 'Đồng hồ mặt Carage' },
-                                    { label: 'Đồng hồ mặt Cushion', value: 'Đồng hồ mặt Cushion' },
+                                    { label: 'Mặt bầu dục', value: 'Mặt bầu dục' },
+                                    { label: 'Mặt Tonneau', value: 'Mặt Tonneau' },
+                                    { label: 'Mặt Carage', value: 'Mặt Carage' },
+                                    { label: 'Mặt Cushion', value: 'Mặt Cushion' },
                                     {
-                                        label: 'Đồng hồ mặt bát giác',
-                                        value: 'Đồng hồ mặt bát giác',
+                                        label: 'Mặt bát giác',
+                                        value: 'Mặt bát giác',
                                     },
                                 ]}
                             />

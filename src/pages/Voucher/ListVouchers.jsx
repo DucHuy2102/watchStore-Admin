@@ -2,7 +2,19 @@ import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
-import { Table, Tag, Tooltip, Skeleton, Button, Space, Switch, Modal, Popconfirm } from 'antd';
+import {
+    Table,
+    Tag,
+    Tooltip,
+    Skeleton,
+    Button,
+    Space,
+    Switch,
+    Modal,
+    Popconfirm,
+    Input,
+    Select,
+} from 'antd';
 import {
     FaMapMarkerAlt,
     FaTags,
@@ -26,9 +38,31 @@ export default function ListVouchers() {
     const [confirmModalOpen, setConfirmModalOpen] = useState(false);
     const [selectedVoucher, setSelectedVoucher] = useState(null);
     const [voucherDetailsModalOpen, setVoucherDetailsModalOpen] = useState(false);
+    const [searchValue, setSearchValue] = useState('');
+    const [selectedRating, setSelectedRating] = useState(null);
+    const [provinces, setProvinces] = useState([]);
+    console.log(provinces);
 
     useEffect(() => {
-        getAllVouchers();
+        const getProvince = async () => {
+            try {
+                const res = await axios.get(
+                    'https://online-gateway.ghn.vn/shiip/public-api/master-data/province',
+                    {
+                        headers: {
+                            Token: import.meta.env.VITE_TOKEN_GHN,
+                        },
+                    }
+                );
+                if (res?.status === 200) {
+                    setProvinces(res.data.data);
+                }
+            } catch (error) {
+                console.log('Error get api province', error);
+            }
+        };
+
+        getProvince();
     }, []);
 
     const getAllVouchers = async () => {
@@ -52,6 +86,10 @@ export default function ListVouchers() {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        getAllVouchers();
+    }, []);
 
     const columns = [
         {
@@ -301,6 +339,20 @@ export default function ListVouchers() {
         }
     };
 
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            handleSearch();
+        }
+    };
+
+    const handleSearch = () => {
+        console.log(searchValue);
+    };
+
+    const handleProvinceChange = (value) => {
+        console.log('Selected ProvinceID:', value);
+    };
+
     return (
         <div className='p-6'>
             {/* header */}
@@ -325,6 +377,31 @@ export default function ListVouchers() {
                 >
                     <span className='font-semibold tracking-wide'>Tạo Voucher mới</span>
                 </Button>
+            </div>
+
+            <div className='mb-5 flex items-center justify-between'>
+                <div className='flex items-center gap-1 w-[40vw]'>
+                    <Input
+                        placeholder='Tìm kiếm theo mã voucher, tên voucher'
+                        value={searchValue}
+                        onChange={(e) => setSearchValue(e.target.value)}
+                        onKeyDown={handleKeyPress}
+                        className='w-full rounded-lg border-gray-300'
+                    />
+                    <Button type='primary' className='px-5 py-5' onClick={handleSearch}>
+                        Tìm kiếm
+                    </Button>
+                </div>
+                <Select
+                    placeholder='Chọn thành phố'
+                    allowClear
+                    className='w-[10vw] h-10'
+                    onChange={handleProvinceChange}
+                    options={provinces.map((province) => ({
+                        label: province.NameExtension[1],
+                        value: province.ProvinceID,
+                    }))}
+                />
             </div>
 
             {/* content */}

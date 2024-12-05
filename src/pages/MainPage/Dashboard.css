@@ -1,0 +1,45 @@
+/* Custom Calendar Styles */
+.custom-calendar {
+    @apply font-sans;
+}
+
+.fc-header-toolbar {
+    @apply mb-4;
+}
+
+.fc-toolbar-title {
+    @apply text-lg font-bold text-gray-800;
+}
+
+.fc-button {
+    @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors !important;
+}
+
+.fc-day-today {
+    @apply bg-blue-50 !important;
+}
+
+.fc-event {
+    @apply bg-blue-600 border-blue-700 rounded-md !important;
+}
+
+/* Circular Progress Bar custom styles */
+.CircularProgressbar-text {
+    @apply font-bold;
+}
+
+/* Animation classes */
+.fade-in-up {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

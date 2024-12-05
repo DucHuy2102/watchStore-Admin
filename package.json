@@ -13,10 +13,17 @@
         "@ant-design/colors": "^7.1.0",
         "@cloudinary/react": "^1.13.1",
         "@cloudinary/url-gen": "^1.21.0",
+        "@fullcalendar/core": "^6.1.15",
+        "@fullcalendar/daygrid": "^6.1.15",
+        "@fullcalendar/interaction": "^6.1.15",
+        "@fullcalendar/list": "^6.1.15",
+        "@fullcalendar/react": "^6.1.15",
+        "@fullcalendar/timegrid": "^6.1.15",
         "@react-oauth/google": "^0.12.1",
         "@reduxjs/toolkit": "^2.3.0",
         "antd": "^5.21.6",
         "axios": "^1.7.7",
+        "date-fns": "^4.1.0",
         "dayjs": "^1.11.13",
         "firebase": "^11.0.1",
         "flowbite-react": "^0.10.2",
@@ -33,7 +40,8 @@
         "react-spinners": "^0.14.1",
         "react-toastify": "^10.0.6",
         "recharts": "^2.13.3",
-        "redux-persist": "^6.0.0"
+        "redux-persist": "^6.0.0",
+        "swiper": "^11.1.15"
     },
     "devDependencies": {
         "@eslint/js": "^9.13.0",

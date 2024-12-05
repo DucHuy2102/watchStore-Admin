@@ -17,6 +17,7 @@ export { default as EditProduct } from './Product/EditProduct';
 export { default as ListProduct } from './Product/ListProduct';
 export { default as ProductDetail } from './Product/ProductDetail';
 export { default as ProductPreview } from './Product/ProductPreview';
+export { default as CategoryProduct } from './Product/Category';
 
 // user
 export { default as ListUser } from './User/ListUser';
@@ -32,3 +33,6 @@ export { default as EditVoucher } from './Voucher/EditVoucher';
 
 // review
 export { default as ListReview } from './Review/ListReview';
+
+// service
+export { default as ListService } from './Service_Management/ListService';

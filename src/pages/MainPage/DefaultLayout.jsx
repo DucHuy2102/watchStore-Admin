@@ -5,7 +5,7 @@ export default function DefaultLayout() {
     return (
         <div className='flex min-h-screen'>
             <Sidebar_Component />
-            <main className='flex-1 w-full'>
+            <main className='flex-1 w-full overflow-y-auto h-screen'>
                 <Outlet />
             </main>
         </div>
