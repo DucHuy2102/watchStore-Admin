@@ -33,7 +33,7 @@ import { getAllCategory } from './redux/slices/productSlice';
 
 export default function App() {
     const dispatch = useDispatch();
-    const { access_token: token, isAdmin } = useSelector((state) => state.user);
+    const { access_token: token } = useSelector((state) => state.user);
     const [category, setCategory] = useState([]);
 
     useEffect(() => {

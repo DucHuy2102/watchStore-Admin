@@ -14,13 +14,43 @@ import { resetCategory } from '../redux/slices/productSlice';
 import { FaPeopleGroup } from 'react-icons/fa6';
 import { GiWatch } from 'react-icons/gi';
 import { RiCustomerService2Fill } from 'react-icons/ri';
+import { closeSSE } from '../Utils/setupSSE';
 
-const SidebarItem = ({ to, icon: Icon, active, showSidebar, children }) => {
+// const SidebarItem = ({ to, icon: Icon, active, showSidebar, children }) => {
+//     return (
+//         <Tooltip title={children} placement='right'>
+//             <Link
+//                 to={to}
+//                 className={`group flex items-center w-full p-3 mx-3 rounded-xl transition-all duration-300
+//                 ${
+//                     active
+//                         ? 'bg-gradient-to-r from-blue-600 to-blue-400 text-white shadow-lg shadow-blue-500/30'
+//                         : 'hover:bg-gray-100 text-gray-700 dark:hover:bg-gray-800 dark:text-gray-300'
+//                 } ${!showSidebar ? 'justify-center w-12 mx-auto' : ''}`}
+//             >
+//                 <div className={`flex items-center ${active ? 'animate-pulse' : ''}`}>
+//                     <Icon size={22} className={active ? 'stroke-2' : ''} />
+//                 </div>
+//                 {showSidebar && (
+//                     <span
+//                         className={`ml-3 font-medium transition-all duration-300 ${
+//                             active ? 'translate-x-1' : 'group-hover:translate-x-1'
+//                         }`}
+//                     >
+//                         {children}
+//                     </span>
+//                 )}
+//             </Link>
+//         </Tooltip>
+//     );
+// };
+
+const SidebarItem = ({ to, icon: Icon, active, showSidebar, children, badge }) => {
     return (
         <Tooltip title={children} placement='right'>
             <Link
                 to={to}
-                className={`group flex items-center w-full p-3 mx-3 rounded-xl transition-all duration-300
+                className={`group flex items-center w-full p-3 mx-3 rounded-xl transition-all duration-300 relative
                 ${
                     active
                         ? 'bg-gradient-to-r from-blue-600 to-blue-400 text-white shadow-lg shadow-blue-500/30'
@@ -37,6 +67,15 @@ const SidebarItem = ({ to, icon: Icon, active, showSidebar, children }) => {
                         }`}
                     >
                         {children}
+                    </span>
+                )}
+                {badge > 0 && (
+                    <span
+                        className={`absolute top-3 ${
+                            showSidebar ? '-right-1' : '-right-5'
+                        } bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full`}
+                    >
+                        {badge}
                     </span>
                 )}
             </Link>
@@ -121,10 +160,12 @@ export default function Sidebar_Component() {
     const location = useLocation();
     const { theme } = useSelector((state) => state.theme);
     const { user: currentUser } = useSelector((state) => state.user);
+    const { newOrdersCount } = useSelector((state) => state.product);
     const [showModal, setShowModal] = useState(false);
     const [showSidebar, setShowSidebar] = useState(true);
 
     const handleSignOutAccount = () => {
+        closeSSE();
         dispatch(user_SignOut());
         dispatch(resetCategory());
     };
@@ -301,6 +342,7 @@ export default function Sidebar_Component() {
                         active={location.pathname === '/orders'}
                         theme={theme}
                         showSidebar={showSidebar}
+                        badge={newOrdersCount}
                     >
                         Đơn hàng
                     </SidebarItem>
