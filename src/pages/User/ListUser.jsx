@@ -40,7 +40,12 @@ export default function ListUser() {
     const getAllUsers = async () => {
         try {
             setLoading(true);
+            const params = {};
+            if (searchText) params.q = searchText.trim();
+            if (filterStatus !== 'all') params.status = filterStatus;
+
             const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/user/get-all-user`, {
+                params,
                 headers: {
                     Authorization: `Bearer ${tokenUser}`,
                 },
@@ -57,10 +62,18 @@ export default function ListUser() {
     };
 
     useEffect(() => {
-        if (!users.length) {
+        getAllUsers();
+    }, [filterStatus]);
+
+    const handleSearch = () => {
+        getAllUsers();
+    };
+
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter') {
             getAllUsers();
         }
-    }, []);
+    };
 
     const columns = [
         {
@@ -182,11 +195,11 @@ export default function ListUser() {
                     </Button>
                     <div className='h-5 w-px bg-gray-200' />
                     <Button
-                        type={record.state === 'active' ? 'danger' : 'primary'}
-                        className={`shadow-sm hover:shadow-md transition-all ${
+                        type={record.state === 'active' ? 'default' : 'primary'}
+                        className={`shadow-sm min-w-20 !border-none hover:shadow-md transition-all ${
                             record.state === 'active'
-                                ? 'hover:bg-red-600 hover:text-white'
-                                : 'hover:bg-blue-600'
+                                ? '!bg-red-600 hover:!bg-red-500 !text-white'
+                                : '!bg-blue-600 hover:!bg-blue-500 !text-white'
                         }`}
                         onClick={(e) => {
                             e.stopPropagation();
@@ -237,58 +250,62 @@ export default function ListUser() {
         }
     };
 
-    const filteredUsers = users.filter((user) => {
-        const matchesSearch =
-            user.username?.toLowerCase().includes(searchText.toLowerCase()) ||
-            user.email?.toLowerCase().includes(searchText.toLowerCase()) ||
-            user.phone?.includes(searchText);
-
-        if (filterStatus === 'all') return matchesSearch;
-        return matchesSearch && user.state === filterStatus;
-    });
-
     return (
         <div className='p-6'>
-            <div className='mb-7'>
-                <h1 className='text-2xl font-bold text-gray-900 dark:text-white'>
-                    Quản lý người dùng
-                </h1>
-                <p className='text-gray-500 mt-2'>Theo dõi và quản lý người dùng trong hệ thống</p>
-            </div>
-
-            {!loading && (
-                <div className='mb-1'>
-                    <UserStats users={users} />
-                </div>
-            )}
-
-            <div className='bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden'>
-                <div className='bg-white dark:bg-gray-800 rounded-xl p-4'>
-                    <div className='flex flex-wrap gap-4 items-center justify-between'>
-                        <div className='flex gap-4'>
-                            <Select
-                                defaultValue='all'
-                                className='w-[300px]'
-                                onChange={setFilterStatus}
-                            >
-                                <Select.Option value='all'>Tất cả tài khoản</Select.Option>
-                                <Select.Option value='active'>Đang kích hoạt</Select.Option>
-                                <Select.Option value='inactive'>Đang bị chặn</Select.Option>
-                            </Select>
-                            <Search
-                                placeholder='Tìm kiếm người dùng...'
-                                allowClear
-                                enterButton={<AiOutlineSearch />}
-                                onChange={(e) => setSearchText(e.target.value)}
-                                className='w-full'
-                            />
+            <div className='flex flex-col w-full'>
+                <div className='mb-5 bg-white p-8 rounded-lg shadow-md'>
+                    <div className='flex items-center justify-between mb-4'>
+                        <div>
+                            <h1 className='text-2xl font-bold text-gray-800'>Quản lý người dùng</h1>
+                            <p className='text-gray-500 mt-1'>
+                                Theo dõi và quản lý người dùng trong hệ thống
+                            </p>
                         </div>
                     </div>
+
+                    {!loading && (
+                        <div className='mb-6'>
+                            <UserStats users={users} />
+                        </div>
+                    )}
+
+                    <div className='flex items-center justify-between'>
+                        <div className='flex items-center gap-2'>
+                            <Input
+                                placeholder='Tìm kiếm người dùng...'
+                                value={searchText}
+                                onChange={(e) => setSearchText(e.target.value)}
+                                onKeyDown={handleKeyPress}
+                                allowClear
+                                className='w-[400px]'
+                            />
+                            <Button
+                                type='primary'
+                                onClick={handleSearch}
+                                icon={<AiOutlineSearch />}
+                            >
+                                Tìm kiếm
+                            </Button>
+                        </div>
+
+                        <Select
+                            value={filterStatus}
+                            className='w-[10vw]'
+                            onChange={setFilterStatus}
+                        >
+                            <Select.Option value='all'>Tất cả tài khoản</Select.Option>
+                            <Select.Option value='active'>Đang kích hoạt</Select.Option>
+                            <Select.Option value='inactive'>Đang bị chặn</Select.Option>
+                        </Select>
+                    </div>
                 </div>
+            </div>
+
+            <div className='bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden'>
                 <Table
                     loading={loading}
                     columns={columns}
-                    dataSource={filteredUsers}
+                    dataSource={users}
                     rowKey='id'
                     rowClassName='hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer'
                     onRow={(record) => ({

@@ -35,9 +35,13 @@ export default function ListReview() {
     const getReviews = async () => {
         try {
             setLoading(true);
+            const params = {};
+            if (searchValue) params.search = searchValue;
+            if (selectedRating) params.rating = selectedRating;
             const res = await axios.get(
                 `${import.meta.env.VITE_API_URL}/api/review/get-all-review`,
                 {
+                    params,
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -77,8 +81,8 @@ export default function ListReview() {
     }, [selectedReview]);
 
     useEffect(() => {
-        if (reviews.length === 0) getReviews();
-    }, []);
+        getReviews();
+    }, [selectedRating]);
 
     const columns = [
         {
@@ -115,6 +119,11 @@ export default function ListReview() {
             key: 'reviewText',
             width: '30%',
             ellipsis: true,
+            render: (text) => (
+                <Tooltip title={text} className='cursor-pointer'>
+                    <div className='truncate'>{text}</div>
+                </Tooltip>
+            ),
         },
         {
             title: 'Số Sao',
@@ -193,55 +202,66 @@ export default function ListReview() {
     };
 
     const handleSearch = () => {
-        console.log('Searching for:', searchValue);
+        getReviews();
     };
 
     const handleKeyPress = (e) => {
         if (e.key === 'Enter') {
-            handleSearch();
+            getReviews();
         }
     };
 
     const handleRatingChange = (value) => {
         setSelectedRating(value);
-        console.log('Selected rating:', value);
     };
 
     return (
         <div className='p-10'>
             <div className='flex flex-col w-full'>
-                <div className='mb-5'>
-                    <h1 className='text-2xl font-bold w-1/3'>Quản Lý Đánh Giá</h1>
-                    <p className='text-gray-500'>
-                        Quản lý tất cả các đánh giá sản phẩm có trong hệ thống
-                    </p>
-                </div>
-                <div className='mb-5 flex items-center justify-between'>
-                    <div className='flex items-center gap-1 w-[40vw]'>
-                        <Input
-                            placeholder='Tìm kiếm theo tên khách hàng, số điện thoại'
-                            value={searchValue}
-                            onChange={(e) => setSearchValue(e.target.value)}
-                            onKeyDown={handleKeyPress}
-                            className='w-full rounded-lg border-gray-300'
-                        />
-                        <ButtonAntd type='primary' className='px-5 py-5' onClick={handleSearch}>
-                            Tìm kiếm
-                        </ButtonAntd>
+                <div className='mb-5 bg-white p-8 rounded-lg shadow-md'>
+                    <div className='flex items-center justify-between mb-4'>
+                        <div>
+                            <h1 className='text-2xl font-bold text-gray-800'>Quản Lý Đánh Giá</h1>
+                            <p className='text-gray-500 mt-1'>
+                                Quản lý tất cả các đánh giá sản phẩm có trong hệ thống
+                            </p>
+                        </div>
                     </div>
-                    <Select
-                        placeholder='Chọn số sao'
-                        allowClear
-                        className='w-[10vw] h-10'
-                        onChange={handleRatingChange}
-                        options={[
-                            { value: 1, label: '1 sao' },
-                            { value: 2, label: '2 sao' },
-                            { value: 3, label: '3 sao' },
-                            { value: 4, label: '4 sao' },
-                            { value: 5, label: '5 sao' },
-                        ]}
-                    />
+                    <div className='flex items-center justify-between'>
+                        <div className='flex items-center gap-2 w-[40vw]'>
+                            <Input
+                                placeholder='Tìm kiếm theo tên khách hàng, số điện thoại'
+                                value={searchValue}
+                                onChange={(e) => setSearchValue(e.target.value)}
+                                onKeyDown={handleKeyPress}
+                                allowClear
+                                className='w-[40vw] h-10 rounded-lg border-gray-300 shadow-sm hover:border-blue-500 focus:border-blue-500 transition-all duration-300'
+                                style={{
+                                    borderRadius: 'none',
+                                }}
+                            />
+                            <ButtonAntd
+                                type='primary'
+                                onClick={handleSearch}
+                                className='h-10 px-4 rounded-lg'
+                            >
+                                Tìm kiếm
+                            </ButtonAntd>
+                        </div>
+                        <Select
+                            placeholder='Chọn số sao'
+                            allowClear
+                            className='w-[10vw] h-10'
+                            onChange={handleRatingChange}
+                            options={[
+                                { value: 1, label: '1 sao' },
+                                { value: 2, label: '2 sao' },
+                                { value: 3, label: '3 sao' },
+                                { value: 4, label: '4 sao' },
+                                { value: 5, label: '5 sao' },
+                            ]}
+                        />
+                    </div>
                 </div>
             </div>
             {loading ? (

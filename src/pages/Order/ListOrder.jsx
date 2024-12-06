@@ -46,6 +46,7 @@ export default function ListOrder() {
             pageSize: 10,
         },
     });
+    const [searchValue, setSearchValue] = useState('');
     const [startDate, setStartDate] = useState(null);
     const [endDate, setEndDate] = useState(null);
     const navigate = useNavigate();
@@ -58,7 +59,20 @@ export default function ListOrder() {
     const getAllOrders = async () => {
         try {
             setLoading(true);
+            const params = {};
+            if (searchValue) {
+                params.q = searchValue;
+            }
+            if (currentTab !== 'all') {
+                params.state = currentTab;
+            }
+            if (startDate && endDate) {
+                params.startDate = moment(startDate).format('YYYY-MM-DD');
+                params.endDate = moment(endDate).format('YYYY-MM-DD');
+            }
+
             const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/order/get-all-order`, {
+                params,
                 headers: {
                     Authorization: `Bearer ${tokenUser}`,
                 },
@@ -76,7 +90,7 @@ export default function ListOrder() {
 
     useEffect(() => {
         getAllOrders();
-    }, []);
+    }, [currentTab]);
 
     const columns = [
         {
@@ -99,7 +113,15 @@ export default function ListOrder() {
             dataIndex: 'id',
             key: 'id',
             render: (id) => (
-                <Tooltip title={`#${id}`}>
+                <Tooltip
+                    title={
+                        <Typography.Text
+                            copyable
+                            style={{ color: 'white' }}
+                        >{`${id}`}</Typography.Text>
+                    }
+                    overlayStyle={{ background: '#fff' }}
+                >
                     <span
                         style={{
                             fontWeight: 600,
@@ -146,7 +168,7 @@ export default function ListOrder() {
             align: 'center',
             dataIndex: 'phone',
             key: 'phone',
-            render: (_, record) => <span>{record.user.phone}</span>,
+            render: (_, record) => <Typography.Text copyable>{record.user.phone}</Typography.Text>,
         },
         {
             title: 'Ngày đặt',
@@ -315,9 +337,11 @@ export default function ListOrder() {
         if (dates) {
             setStartDate(dates[0].toDate());
             setEndDate(dates[1].toDate());
+            getAllOrders();
         } else {
             setStartDate(null);
             setEndDate(null);
+            getAllOrders();
         }
     };
 
@@ -341,24 +365,11 @@ export default function ListOrder() {
         return filterOrders(orders, currentTab, startDate, endDate);
     }, [orders, currentTab, startDate, endDate]);
 
-    const handleSearch = useCallback(
-        (e) => {
-            const value = e.target.value;
-            console.log(value, orders[0].user.name);
-            if (value) {
-                const searchOrders = orders.filter(
-                    (order) =>
-                        order.id.toLowerCase().includes(value.toLowerCase()) ||
-                        order.user.name.toLowerCase().includes(value.toLowerCase()) ||
-                        order.user.email.toLowerCase().includes(value.toLowerCase())
-                );
-                setOrders(searchOrders);
-            } else {
-                getAllOrders();
-            }
-        },
-        [orders]
-    );
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            getAllOrders();
+        }
+    };
 
     return (
         <div className='p-6 min-h-screen'>
@@ -372,7 +383,10 @@ export default function ListOrder() {
 
             <Card bordered={false}>
                 <Tabs
-                    onChange={(key) => setCurrentTab(key)}
+                    onChange={(key) => {
+                        setCurrentTab(key);
+                        getAllOrders();
+                    }}
                     defaultActiveKey='all'
                     items={itemTabs}
                     className='custom-tabs'
@@ -392,17 +406,23 @@ export default function ListOrder() {
                                 boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
                             }}
                         />
-                        <Input
-                            onChange={handleSearch}
-                            placeholder='Tìm kiếm khách hàng hoặc mã đơn hàng...'
-                            prefix={<SearchOutlined style={{ color: '#1890ff' }} />}
-                            style={{
-                                width: 400,
-                                height: 40,
-                                borderRadius: '8px',
-                                boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                            }}
-                        />
+                        <div className='flex items-center justify-center gap-1'>
+                            <Input
+                                onChange={(e) => setSearchValue(e.target.value)}
+                                placeholder='Tìm kiếm khách hàng hoặc mã đơn hàng...'
+                                className='h-10 border-gray-300 rounded-lg w-72 text-sm focus:ring-0 focus:border-blue-400 outline-none'
+                                allowClear
+                                onKeyDown={handleKeyPress}
+                            />
+                            <Button
+                                onClick={getAllOrders}
+                                type='primary'
+                                icon={<SearchOutlined />}
+                                className='h-10'
+                            >
+                                Tìm kiếm
+                            </Button>
+                        </div>
                     </Space>
 
                     <Table

@@ -39,7 +39,7 @@ export default function ListVouchers() {
     const [selectedVoucher, setSelectedVoucher] = useState(null);
     const [voucherDetailsModalOpen, setVoucherDetailsModalOpen] = useState(false);
     const [searchValue, setSearchValue] = useState('');
-    const [selectedRating, setSelectedRating] = useState(null);
+    const [province, setProvince] = useState(null);
     const [provinces, setProvinces] = useState([]);
     console.log(provinces);
 
@@ -68,9 +68,17 @@ export default function ListVouchers() {
     const getAllVouchers = async () => {
         try {
             setLoading(true);
+            const params = {};
+            if (searchValue) {
+                params.q = searchValue;
+            }
+            if (province) {
+                params.province = province;
+            }
             const res = await axios.get(
                 `${import.meta.env.VITE_API_URL}/api/coupon/get-all-coupon`,
                 {
+                    params,
                     headers: {
                         Authorization: `Bearer ${tokenUser}`,
                     },
@@ -89,7 +97,7 @@ export default function ListVouchers() {
 
     useEffect(() => {
         getAllVouchers();
-    }, []);
+    }, [province]);
 
     const columns = [
         {
@@ -341,74 +349,80 @@ export default function ListVouchers() {
 
     const handleKeyPress = (e) => {
         if (e.key === 'Enter') {
-            handleSearch();
+            getAllVouchers();
         }
     };
 
     const handleSearch = () => {
-        console.log(searchValue);
+        getAllVouchers();
     };
 
     const handleProvinceChange = (value) => {
-        console.log('Selected ProvinceID:', value);
+        setProvince(value);
     };
 
     return (
-        <div className='p-6'>
+        <div className='p-10'>
             {/* header */}
-            <div className='mb-6 flex justify-between items-center'>
-                <div>
-                    <h1 className='text-2xl font-bold text-gray-800 dark:text-[#fbfcfc]'>
-                        Quản lý Voucher
-                    </h1>
-                    <p className='text-gray-600 dark:text-gray-400 mt-1'>
-                        Quản lý tất cả voucher trong hệ thống
-                    </p>
-                </div>
-
-                <Button
-                    type='primary'
-                    size='large'
-                    icon={<FaPlusCircle className='text-lg' />}
-                    onClick={() => navigate('/voucher/create')}
-                    className='flex items-center gap-2.5 h-12 px-7 bg-gradient-to-r from-blue-500 to-blue-600 
-                    hover:from-blue-600 hover:to-blue-700 transition-all duration-300 
-                    transform hover:scale-[1.02]'
-                >
-                    <span className='font-semibold tracking-wide'>Tạo Voucher mới</span>
-                </Button>
-            </div>
-
-            <div className='mb-5 flex items-center justify-between'>
-                <div className='flex items-center gap-1 w-[40vw]'>
-                    <Input
-                        placeholder='Tìm kiếm theo mã voucher, tên voucher'
-                        value={searchValue}
-                        onChange={(e) => setSearchValue(e.target.value)}
-                        onKeyDown={handleKeyPress}
-                        className='w-full rounded-lg border-gray-300'
-                    />
-                    <Button type='primary' className='px-5 py-5' onClick={handleSearch}>
-                        Tìm kiếm
+            <div className='flex flex-col w-full p-8 rounded-2xl shadow-xl mb-8 bg-white'>
+                <div className='flex items-center justify-between'>
+                    <div className='mb-5'>
+                        <h1 className='text-3xl font-extrabold mb-3 text-gray-900 dark:text-gray-900 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400'>
+                            Quản Lý Voucher
+                        </h1>
+                        <p className='text-gray-600 dark:text-gray-400 mt-1'>
+                            Quản lý tất cả voucher trong hệ thống
+                        </p>
+                    </div>
+                    <Button
+                        type='primary'
+                        icon={<FaPlusCircle className='text-lg' />}
+                        onClick={() => navigate('/voucher/create')}
+                        className='flex items-center gap-2 h-10 px-6 bg-gradient-to-r from-blue-500 to-blue-600 
+                            hover:from-blue-600 hover:to-blue-700 rounded-lg shadow-md hover:shadow-lg 
+                            transition-all duration-300 transform hover:scale-105'
+                    >
+                        <span className='font-medium'>Tạo Voucher</span>
                     </Button>
                 </div>
-                <Select
-                    placeholder='Chọn thành phố'
-                    allowClear
-                    className='w-[10vw] h-10'
-                    onChange={handleProvinceChange}
-                    options={provinces.map((province) => ({
-                        label: province.NameExtension[1],
-                        value: province.ProvinceID,
-                    }))}
-                />
+                <div className='flex items-center justify-between'>
+                    <div className='flex items-center gap-3'>
+                        <Input
+                            placeholder='Tìm kiếm theo mã voucher, tên voucher'
+                            value={searchValue}
+                            onChange={(e) => setSearchValue(e.target.value)}
+                            onKeyDown={handleKeyPress}
+                            allowClear
+                            className='w-[40vw] h-10 rounded-lg border-gray-300 shadow-sm hover:border-blue-500 focus:border-blue-500 transition-all duration-300'
+                        />
+                        <Button
+                            type='primary'
+                            className='px-8 py-3 h-10 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105'
+                            onClick={handleSearch}
+                        >
+                            Tìm kiếm
+                        </Button>
+                    </div>
+                    <Select
+                        placeholder='Chọn thành phố'
+                        allowClear
+                        className='w-[15vw] h-10'
+                        onChange={handleProvinceChange}
+                        options={provinces.map((province) => ({
+                            label: province.NameExtension[1],
+                            value: province.ProvinceID,
+                        }))}
+                    />
+                </div>
             </div>
 
-            {/* content */}
+            {/* Rest of the content */}
             {loading ? (
-                <Skeleton active />
+                <div className='bg-white rounded-2xl shadow-xl p-6'>
+                    <Skeleton active />
+                </div>
             ) : (
-                <div className='bg-white rounded-lg shadow'>
+                <div className='bg-white rounded-2xl shadow-xl overflow-hidden'>
                     <Table
                         columns={columns}
                         dataSource={vouchers}
@@ -417,7 +431,6 @@ export default function ListVouchers() {
                             pageSize: 10,
                             showTotal: (total) => `Tổng ${total} voucher`,
                         }}
-                        className='custom-table'
                     />
                 </div>
             )}
