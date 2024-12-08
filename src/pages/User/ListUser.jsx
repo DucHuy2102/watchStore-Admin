@@ -42,7 +42,7 @@ export default function ListUser() {
             setLoading(true);
             const params = {};
             if (searchText) params.q = searchText.trim();
-            if (filterStatus !== 'all') params.status = filterStatus;
+            if (filterStatus !== 'all') params.state = filterStatus;
 
             const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/user/get-all-user`, {
                 params,

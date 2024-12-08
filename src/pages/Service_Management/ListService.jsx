@@ -16,6 +16,8 @@ export default function ListService() {
     const [searchValue, setSearchValue] = useState('');
     const [currentState, setCurrentState] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
+    const [currentType, setCurrentType] = useState('all');
+    const [emailContent, setEmailContent] = useState('');
     const [pageSize, _] = useState(10);
     const { confirm } = Modal;
 
@@ -24,10 +26,13 @@ export default function ListService() {
             setLoading(true);
             const params = {};
             if (searchValue) {
-                params.q = searchValue;
+                params.q = searchValue.trim();
             }
             if (currentState && currentState !== 'all') {
                 params.state = currentState;
+            }
+            if (currentType && currentType !== 'all') {
+                params.type = currentType;
             }
             const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/service/get-all`, {
                 params,
@@ -48,18 +53,31 @@ export default function ListService() {
 
     useEffect(() => {
         getServices();
-    }, [currentState]);
+    }, [currentState, currentType]);
 
     const handleCheckDone = async (id) => {
         confirm({
             title: 'Xác nhận hoàn thành',
             icon: <ExclamationCircleOutlined />,
-            content: 'Xác nhận đã phản hồi với khách hàng?',
+            content: (
+                <div>
+                    <p className='mb-1'>Xác nhận đã phản hồi với khách hàng?</p>
+                    <Input.TextArea
+                        placeholder='Nhập ghi chú xử lý...'
+                        rows={4}
+                        onChange={(e) => setEmailContent(e.target.value)}
+                        className='mt-2'
+                    />
+                </div>
+            ),
             async onOk() {
                 try {
                     const res = await axios.post(
                         `${import.meta.env.VITE_API_URL}/api/service/process-service`,
-                        null,
+                        {
+                            note: emailContent,
+                            type: selectedService.type,
+                        },
                         {
                             params: {
                                 serviceId: id,
@@ -124,7 +142,7 @@ export default function ListService() {
                     color={type === 'feedback' ? 'blue' : 'gold'}
                     className='w-36 py-1.5 rounded-full text-center font-medium shadow-sm transition-all hover:scale-105'
                 >
-                    {type === 'feedback' ? 'Phản Ánh' : 'Yêu Cầu Đổi Trả'}
+                    {type === 'feedback' ? 'Phản Ánh & Góp Ý' : 'Yêu Cầu Tư Vấn'}
                 </Tag>
             ),
         },
@@ -152,18 +170,22 @@ export default function ListService() {
                     <Button
                         type='primary'
                         className='rounded-full shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105'
-                        onClick={() => {
+                        onClick={(e) => {
+                            e.stopPropagation();
                             setSelectedService(record);
                             setIsModalOpen(true);
                         }}
                     >
                         Chi tiết
                     </Button>
-                    {record.state !== 'proceed' && (
+                    {record.state === 'proceed' && (
                         <Button
                             type='primary'
                             className='!bg-green-600 hover:!bg-green-500 rounded-full shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105'
-                            onClick={() => handleCheckDone(record.id)}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleCheckDone(record.id);
+                            }}
                         >
                             Đã xử lý
                         </Button>
@@ -174,13 +196,24 @@ export default function ListService() {
     ];
 
     const stateOptions = [
-        { value: 'all', label: 'Tất cả' },
+        { value: 'all', label: 'Tất cả trạng thái' },
         { value: 'pending', label: 'Chờ xử lý' },
         { value: 'proceed', label: 'Đã xử lý' },
     ];
 
+    const typeOptions = [
+        { value: 'all', label: 'Tất cả loại dịch vụ' },
+        { value: 'feedback', label: 'Phản Ánh & Góp Ý' },
+        { value: 'return', label: 'Yêu Cầu Tư Vấn' },
+    ];
+
     const handleStateChange = (value) => {
         setCurrentState(value);
+        setCurrentPage(1);
+    };
+
+    const handleTypeChange = (value) => {
+        setCurrentType(value);
         setCurrentPage(1);
     };
 
@@ -213,13 +246,20 @@ export default function ListService() {
                             Tìm kiếm
                         </Button>
                     </div>
-                    <Select
-                        placeholder='Chọn trạng thái'
-                        value={currentState}
-                        onChange={handleStateChange}
-                        options={stateOptions}
-                        className='w-40 h-10'
-                    />
+                    <div className='flex items-center gap-3'>
+                        <Select
+                            value={currentState}
+                            onChange={handleStateChange}
+                            options={stateOptions}
+                            className='w-40 h-10'
+                        />{' '}
+                        <Select
+                            value={currentType}
+                            onChange={handleTypeChange}
+                            options={typeOptions}
+                            className='w-40 h-10'
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -310,8 +350,8 @@ export default function ListService() {
                                             className='ml-2 px-3 py-1 rounded-lg'
                                         >
                                             {selectedService.type === 'feedback'
-                                                ? 'Phản Ánh'
-                                                : 'Yêu Cầu Đổi Trả'}
+                                                ? 'Phản Ánh & Góp Ý'
+                                                : 'Yêu Cầu Tư Vấn'}
                                         </Tag>
                                     </div>
                                     <div>

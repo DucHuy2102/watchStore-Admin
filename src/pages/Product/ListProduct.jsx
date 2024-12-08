@@ -27,6 +27,7 @@ const STATE_OPTIONS = [
     { value: 'all', label: 'Tất cả trạng thái' },
     { value: 'selling', label: 'Đang bán' },
     { value: 'pause', label: 'Ngừng bán' },
+    { value: 'outOfStock', label: 'Hết hàng' },
     { value: 'deleted', label: 'Đã xóa' },
 ];
 
@@ -418,16 +419,30 @@ export default function ListProduct() {
                                     ? 'bg-green-100 text-green-700'
                                     : state === 'pause'
                                     ? 'bg-yellow-100 text-yellow-700'
+                                    : state === 'deleted'
+                                    ? 'bg-gray-100 text-gray-700'
                                     : 'bg-red-100 text-red-700'
                             }`}
                         >
                             <span className='flex items-center gap-1.5'>
-                                <FaCircle className='w-2 h-2' />
+                                <FaCircle
+                                    className={`w-2 h-2 ${
+                                        state === 'selling'
+                                            ? 'text-green-500'
+                                            : state === 'pause'
+                                            ? 'text-yellow-500'
+                                            : state === 'deleted'
+                                            ? 'text-gray-500'
+                                            : 'text-red-500'
+                                    }`}
+                                />
                                 {state === 'selling'
                                     ? 'Đang bán'
                                     : state === 'pause'
                                     ? 'Ngừng bán'
-                                    : 'Đã xóa'}
+                                    : state === 'deleted'
+                                    ? 'Đã xóa'
+                                    : 'Hết hàng'}
                             </span>
                         </Tag>
                     </div>
@@ -455,7 +470,10 @@ export default function ListProduct() {
                                         <Button
                                             type='text'
                                             icon={<FaEdit className='text-gray-600' />}
-                                            onClick={() => handleEdit(record.id)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleEdit(record.id);
+                                            }}
                                         />
                                     </Tooltip>
                                     <Tooltip title='Xóa'>
@@ -661,7 +679,6 @@ export default function ListProduct() {
                 onCancel={handleModalClose}
                 footer={null}
                 width={700}
-                className='option-modal'
                 centered
             >
                 {selectedOptions && (
@@ -669,10 +686,11 @@ export default function ListProduct() {
                         {selectedOptions.map((option, index) => (
                             <div
                                 key={index}
-                                className='p-5 bg-white rounded-xl shadow-md border border-gray-100 
-                                hover:shadow-lg transition-all duration-300 relative overflow-hidden'
+                                className={`${
+                                    option.value.quantity === 0 && 'bg-red-500'
+                                } p-5 rounded-xl shadow-md border border-gray-100 
+                                hover:shadow-lg transition-all duration-300 relative overflow-hidden`}
                             >
-                                {/* decorative element */}
                                 <div
                                     className='absolute top-0 right-0 w-24 h-24 opacity-5 rounded-full'
                                     style={{
@@ -688,27 +706,43 @@ export default function ListProduct() {
                                             className='w-8 h-8 rounded-lg border-2 border-white shadow-md transform hover:scale-110 transition-transform duration-300'
                                             style={{ backgroundColor: option.key }}
                                         />
-                                        <span className='text-lg font-bold text-gray-800'>
+                                        <span
+                                            className={`text-lg font-bold ${
+                                                option.value.quantity === 0
+                                                    ? 'text-white'
+                                                    : 'text-gray-800'
+                                            }`}
+                                        >
                                             {option.value.color}
                                         </span>
                                     </div>
-                                    <Tag
-                                        className={`px-3 py-1 font-medium text-sm rounded-full border-none ${
-                                            option.value.state === 'selling'
-                                                ? 'bg-green-100 text-green-700'
-                                                : 'bg-red-100 text-red-700'
-                                        }`}
-                                    >
-                                        <span className='flex items-center gap-1.5'>
-                                            <FaCircle className='w-2 h-2' />
-                                            {option.value.state === 'selling'
-                                                ? 'Đang bán'
-                                                : 'Ngừng bán'}
-                                        </span>
-                                    </Tag>
+                                    <div className='flex items-center justify-center gap-2'>
+                                        {option.value.quantity === 0 && (
+                                            <Tag className='px-3 py-1 font-medium text-sm rounded-full border-none bg-red-100 text-red-700 '>
+                                                <span className='flex items-center gap-1.5 text-red-500'>
+                                                    <FaCircle className='w-2 h-2' />
+                                                    Hết hàng
+                                                </span>
+                                            </Tag>
+                                        )}
+                                        <Tag
+                                            className={`px-3 py-1 font-medium text-sm rounded-full border-none ${
+                                                option.value.state === 'selling'
+                                                    ? 'bg-green-100 text-green-700'
+                                                    : 'bg-red-100 text-red-700'
+                                            }`}
+                                        >
+                                            <span className='flex items-center gap-1.5'>
+                                                <FaCircle className='w-2 h-2' />
+                                                {option.value.state === 'selling'
+                                                    ? 'Đang bán'
+                                                    : 'Ngừng bán'}
+                                            </span>
+                                        </Tag>
+                                    </div>
                                 </div>
 
-                                {/* price and discount */}
+                                {/* original price, discount price, quantity and sell price */}
                                 <div className='grid grid-cols-2 gap-4 mb-4'>
                                     <div className='bg-gradient-to-br from-gray-50 to-gray-100 p-3 rounded-lg'>
                                         <div className='text-gray-500 text-xs mb-0.5'>Giá gốc</div>

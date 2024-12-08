@@ -36,8 +36,8 @@ export default function ListReview() {
         try {
             setLoading(true);
             const params = {};
-            if (searchValue) params.search = searchValue;
-            if (selectedRating) params.rating = selectedRating;
+            if (searchValue) params.q = searchValue;
+            if (selectedRating) params.star = selectedRating;
             const res = await axios.get(
                 `${import.meta.env.VITE_API_URL}/api/review/get-all-review`,
                 {
@@ -149,7 +149,10 @@ export default function ListReview() {
                         size='sm'
                         className='px-1 !ring-0'
                         color='blue'
-                        onClick={() => handleDetail(record)}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleDetail(record);
+                        }}
                     >
                         <HiOutlineEye className='w-4 h-4' />
                     </Button>
@@ -157,7 +160,10 @@ export default function ListReview() {
                         size='sm'
                         className='px-1 !ring-0'
                         color='failure'
-                        onClick={() => handleDelete(record)}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(record);
+                        }}
                     >
                         <HiOutlineTrash className='w-4 h-4' />
                     </Button>

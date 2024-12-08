@@ -2,6 +2,7 @@ import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
     theme: 'light',
+    sidebar: true,
 };
 
 export const themeSlice = createSlice({
@@ -11,9 +12,12 @@ export const themeSlice = createSlice({
         toggleTheme: (state) => {
             state.theme = state.theme === 'light' ? 'dark' : 'light';
         },
+        toggleSidebar: (state) => {
+            state.sidebar = !state.sidebar;
+        },
     },
 });
 
-export const { toggleTheme } = themeSlice.actions;
+export const { toggleTheme, toggleSidebar } = themeSlice.actions;
 
 export default themeSlice.reducer;

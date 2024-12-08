@@ -15,35 +15,7 @@ import { FaPeopleGroup } from 'react-icons/fa6';
 import { GiWatch } from 'react-icons/gi';
 import { RiCustomerService2Fill } from 'react-icons/ri';
 import { closeSSE } from '../Utils/setupSSE';
-
-// const SidebarItem = ({ to, icon: Icon, active, showSidebar, children }) => {
-//     return (
-//         <Tooltip title={children} placement='right'>
-//             <Link
-//                 to={to}
-//                 className={`group flex items-center w-full p-3 mx-3 rounded-xl transition-all duration-300
-//                 ${
-//                     active
-//                         ? 'bg-gradient-to-r from-blue-600 to-blue-400 text-white shadow-lg shadow-blue-500/30'
-//                         : 'hover:bg-gray-100 text-gray-700 dark:hover:bg-gray-800 dark:text-gray-300'
-//                 } ${!showSidebar ? 'justify-center w-12 mx-auto' : ''}`}
-//             >
-//                 <div className={`flex items-center ${active ? 'animate-pulse' : ''}`}>
-//                     <Icon size={22} className={active ? 'stroke-2' : ''} />
-//                 </div>
-//                 {showSidebar && (
-//                     <span
-//                         className={`ml-3 font-medium transition-all duration-300 ${
-//                             active ? 'translate-x-1' : 'group-hover:translate-x-1'
-//                         }`}
-//                     >
-//                         {children}
-//                     </span>
-//                 )}
-//             </Link>
-//         </Tooltip>
-//     );
-// };
+import { toggleSidebar as toggleSidebarAction } from '../redux/slices/themeSlice';
 
 const SidebarItem = ({ to, icon: Icon, active, showSidebar, children, badge }) => {
     return (
@@ -172,6 +144,7 @@ export default function Sidebar_Component() {
 
     const toggleSidebar = useCallback(() => {
         setShowSidebar((prev) => !prev);
+        dispatch(toggleSidebarAction());
     }, []);
 
     return (

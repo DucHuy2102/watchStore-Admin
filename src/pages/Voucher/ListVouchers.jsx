@@ -241,7 +241,10 @@ export default function ListVouchers() {
                             <Button
                                 type='text'
                                 icon={<FaEdit className='text-gray-600' />}
-                                onClick={() => navigate(`/voucher/edit/${record.id}`)}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(`/voucher/edit/${record.id}`);
+                                }}
                             />
                         </Tooltip>
 

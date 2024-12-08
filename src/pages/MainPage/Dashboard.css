@@ -1,45 +1,120 @@
-/* Custom Calendar Styles */
-.custom-calendar {
-    @apply font-sans;
+.custom-calendar .ant-picker-calendar-date-today {
+    border-color: #1890ff;
+    background: rgba(24, 144, 255, 0.1);
 }
 
-.fc-header-toolbar {
-    @apply mb-4;
+.custom-calendar .ant-picker-calendar-date:hover {
+    background: rgba(24, 144, 255, 0.05);
 }
 
-.fc-toolbar-title {
-    @apply text-lg font-bold text-gray-800;
+.custom-table .ant-table-thead > tr > th {
+    background: #f8fafc;
+    font-weight: 600;
 }
 
-.fc-button {
-    @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors !important;
+.ant-card {
+    border-radius: 16px;
+    border: none;
 }
 
-.fc-day-today {
-    @apply bg-blue-50 !important;
+.ant-table {
+    border-radius: 12px;
 }
 
-.fc-event {
-    @apply bg-blue-600 border-blue-700 rounded-md !important;
+/* Add these styles to your existing Dashboard.css */
+
+.custom-table .ant-table {
+    background: transparent;
 }
 
-/* Circular Progress Bar custom styles */
-.CircularProgressbar-text {
-    @apply font-bold;
+.custom-table .ant-table-thead > tr > th {
+    background: #f8fafc;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.875rem;
+    letter-spacing: 0.05em;
 }
 
-/* Animation classes */
-.fade-in-up {
-    animation: fadeInUp 0.5s ease-out;
+.custom-table .ant-table-tbody > tr > td {
+    padding: 1rem;
 }
 
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
+.ant-card {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.ant-card:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.ant-typography.ant-typography-secondary {
+    color: #6b7280;
+}
+
+/* Gradient backgrounds for stats cards */
+.stats-card-gradient-1 {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.stats-card-gradient-2 {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.stats-card-gradient-3 {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.stats-card-gradient-4 {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c5c5c5;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Add these gradients for the gold effect */
+.from-gold-100 {
+    --tw-gradient-from: #fff7ed;
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgb(255 247 237 / 0));
+}
+
+.to-gold-50 {
+    --tw-gradient-to: #fffbeb;
+}
+
+/* Optional: Add some animations */
+@keyframes shimmer {
+    0% {
+        background-position: -1000px 0;
     }
-    to {
-        opacity: 1;
-        transform: translateY(0);
+    100% {
+        background-position: 1000px 0;
     }
+}
+
+.animate-shimmer {
+    animation: shimmer 2s infinite linear;
+    background: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.3) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    background-size: 1000px 100%;
 }

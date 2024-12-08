@@ -256,7 +256,10 @@ export default function ListOrder() {
             key: 'action',
             render: (_, record) => (
                 <Button
-                    onClick={() => navigate(`/order/detail/${record.id}`)}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/order/detail/${record.id}`);
+                    }}
                     type='primary'
                     size='middle'
                     icon={<FaEye />}
