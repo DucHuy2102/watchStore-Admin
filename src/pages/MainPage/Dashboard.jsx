@@ -112,6 +112,7 @@ export default function Dashboard() {
                 );
                 if (res.status === 200) {
                     const { data } = res;
+                    console.log(data);
                     setTopHighestAccessProducts(data.top5Selling);
                     setAnalysisProductGender(data.genders);
                 }

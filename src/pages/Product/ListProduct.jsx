@@ -325,7 +325,14 @@ export default function ListProduct() {
                 render: (_, record) => <span>{record.index}</span>,
             },
             {
-                title: 'Sản phẩm',
+                title: (
+                    <div className='flex flex-col items-center gap-1'>
+                        <span className='text-black font-semibold'>Thông tin sản phẩm</span>
+                        <div className='text-xs text-gray-400 font-normal'>
+                            Tên sản phẩm - Hãng - Đối tượng
+                        </div>
+                    </div>
+                ),
                 dataIndex: 'product',
                 key: 'product',
                 width: '25%',
@@ -368,27 +375,85 @@ export default function ListProduct() {
                 ),
             },
             {
-                title: 'Kích thước (mm)',
-                key: 'size',
+                title: (
+                    <div className='flex flex-col items-center gap-1'>
+                        <span className='text-black font-semibold'>Thông số kỹ thuật</span>
+                        <div className='text-xs text-gray-400 font-normal'>
+                            Kích thước - Trọng lượng
+                        </div>
+                    </div>
+                ),
+                key: 'specifications',
                 width: '15%',
                 align: 'center',
                 render: (_, record) => (
-                    <span>
-                        {record.length} x {record.height} x {record.width}
-                    </span>
+                    <div className='flex flex-col gap-2'>
+                        <div className='bg-gray-50 p-2 rounded-lg'>
+                            <div className='text-xs text-gray-500 mb-1'>Kích thước (mm)</div>
+                            <div className='font-medium text-gray-700 flex justify-center items-center gap-x-1'>
+                                <span>{record.length}</span>
+                                <span>x</span>
+                                <span>{record.width}</span>
+                                <span>x</span>
+                                <span>{record.height}</span>
+                            </div>
+                        </div>
+                        <div className='bg-gray-50 p-2 rounded-lg'>
+                            <div className='text-xs text-gray-500 mb-1'>Trọng lượng (g)</div>
+                            <div className='font-medium text-gray-700 flex justify-center items-center'>
+                                {record.weight}
+                            </div>
+                        </div>
+                    </div>
                 ),
             },
             {
-                title: 'Trọng lượng (g)',
-                dataIndex: 'weight',
-                key: 'weight',
+                title: (
+                    <div className='flex flex-col items-center gap-1'>
+                        <span className='text-black font-semibold'>Màu sắc</span>
+                        <div className='text-xs text-gray-400 font-normal'>
+                            Nhấn vào từng màu để xem chi tiết
+                        </div>
+                    </div>
+                ),
+                key: 'colors',
                 width: '15%',
                 align: 'center',
-                sorter: (a, b) => a.weight - b.weight,
-                render: (weight) => `${weight}g`,
+                render: (_, record) => (
+                    <div className='flex flex-col gap-2'>
+                        {record.option.map((opt, index) => (
+                            <div
+                                key={index}
+                                onClick={() => showOptionModal(record.option, record.id)}
+                                className='flex items-center gap-2 cursor-pointer'
+                            >
+                                <div
+                                    className='w-6 h-6 rounded-lg border shadow-sm'
+                                    style={{ backgroundColor: opt.key }}
+                                />
+                                <Tag
+                                    className={`px-2 py-0.5 text-xs rounded-full border-none ${
+                                        opt.value.state === 'selling'
+                                            ? 'bg-green-100 text-green-700'
+                                            : 'bg-yellow-100 text-yellow-700'
+                                    }`}
+                                >
+                                    {opt.value.state === 'selling' ? 'Đang bán' : 'Ngừng bán'}
+                                </Tag>
+                            </div>
+                        ))}
+                    </div>
+                ),
             },
             {
-                title: 'Giá bán (VND)',
+                title: (
+                    <div className='flex flex-col items-center gap-1'>
+                        <span className='text-black font-semibold'>Giá bán (VND)</span>
+                        <div className='text-xs text-gray-400 font-normal'>
+                            Nhấn nút xem giá để xem chi tiết
+                        </div>
+                    </div>
+                ),
                 dataIndex: 'price',
                 key: 'price',
                 width: '15%',
@@ -406,7 +471,14 @@ export default function ListProduct() {
                 ),
             },
             {
-                title: 'Trạng thái',
+                title: (
+                    <div className='flex flex-col items-center gap-1'>
+                        <span className='text-black font-semibold'>Trạng thái</span>
+                        <div className='text-xs text-gray-400 font-normal'>
+                            Trạng thái bán của dòng sản phẩm
+                        </div>
+                    </div>
+                ),
                 dataIndex: 'stateProduct',
                 key: 'stateProduct',
                 width: '15%',
@@ -420,7 +492,7 @@ export default function ListProduct() {
                                     : state === 'pause'
                                     ? 'bg-yellow-100 text-yellow-700'
                                     : state === 'deleted'
-                                    ? 'bg-gray-100 text-gray-700'
+                                    ? 'bg-gray-600 text-white'
                                     : 'bg-red-100 text-red-700'
                             }`}
                         >
@@ -449,7 +521,14 @@ export default function ListProduct() {
                 ),
             },
             {
-                title: 'Thao tác',
+                title: (
+                    <div className='flex flex-col items-center gap-1'>
+                        <span className='text-black font-semibold'>Thao tác</span>
+                        <div className='text-xs text-gray-400 font-normal'>
+                            Thêm - Sửa - Xóa - Ngừng bán
+                        </div>
+                    </div>
+                ),
                 key: 'action',
                 width: '10%',
                 align: 'center',
