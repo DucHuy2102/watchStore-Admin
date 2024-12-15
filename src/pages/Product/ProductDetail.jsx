@@ -19,6 +19,7 @@ export default function ProductDetail() {
     const { id } = useParams();
     const { access_token: tokenUser } = useSelector((state) => state.user);
     const [product, setProduct] = useState(null);
+    console.log('product', product);
     const [loading, setLoading] = useState(true);
     const [selectedOption, setSelectedOption] = useState(null);
     const [isExpandDescription, setIsExpandDescription] = useState(false);
@@ -222,15 +223,19 @@ export default function ProductDetail() {
                                             </h3>
                                             <Tag
                                                 color={
-                                                    selectedOption.value.state === 'saling'
+                                                    selectedOption.value.state === 'selling'
                                                         ? 'green'
+                                                        : selectedOption.value.state === 'pause'
+                                                        ? 'gray'
                                                         : 'red'
                                                 }
                                                 className='text-base px-4 py-1.5 rounded-full'
                                             >
-                                                {selectedOption.value.state === 'saling'
+                                                {selectedOption.value.state === 'selling'
                                                     ? 'Đang bán'
-                                                    : 'Ngừng bán'}
+                                                    : selectedOption.value.state === 'pause'
+                                                    ? 'Ngừng bán'
+                                                    : 'Hết hàng'}
                                             </Tag>
                                         </div>
                                         <div className='grid grid-cols-2 gap-6'>

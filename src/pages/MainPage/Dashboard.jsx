@@ -1,3 +1,4 @@
+import { IoIosCart } from 'react-icons/io';
 import axios from 'axios';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -54,8 +55,7 @@ export default function Dashboard() {
     // state products
     const [products, setProducts] = useState([]);
     const [totalProducts, setTotalProducts] = useState(0);
-    const [productInStock, setProductInStock] = useState(0);
-    const [productOutOfStock, setProductOutOfStock] = useState(0);
+    const [productOutOfStock, setProductOutOfStock] = useState([]);
     const [topHighestAccessProducts, setTopHighestAccessProducts] = useState([]);
     const [analysisProductGender, setAnalysisProductGender] = useState([]);
 
@@ -86,8 +86,6 @@ export default function Dashboard() {
                     const { data } = res;
                     setProducts(data.productResponses);
                     setTotalProducts(data.totalProducts);
-                    setProductInStock(data.productInStock);
-                    setProductOutOfStock(data.productOutOfStock);
                 }
             } catch (error) {
                 console.log(error);
@@ -112,9 +110,9 @@ export default function Dashboard() {
                 );
                 if (res.status === 200) {
                     const { data } = res;
-                    console.log(data);
                     setTopHighestAccessProducts(data.top5Selling);
                     setAnalysisProductGender(data.genders);
+                    setProductOutOfStock(data.outOfStock);
                 }
             } catch (error) {
                 console.log(error);
@@ -272,6 +270,7 @@ export default function Dashboard() {
         <div className='p-6'>
             {/* header */}
             <div className='mb-6 bg-white p-8 rounded-lg shadow-md'>
+                {/* title */}
                 <div className='flex items-center justify-between mb-8'>
                     <div className='relative'>
                         <h1 className='text-3xl font-bold text-blue-500'>Tổng quan hệ thống</h1>
@@ -282,6 +281,7 @@ export default function Dashboard() {
                     </div>
                 </div>
 
+                {/* filter month */}
                 <div className='mb-4 flex justify-end'>
                     <Select
                         value={selectedMonth}
@@ -291,6 +291,7 @@ export default function Dashboard() {
                     />
                 </div>
 
+                {/* stats */}
                 <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6'>
                     {[
                         {
@@ -357,11 +358,11 @@ export default function Dashboard() {
                             stats: [
                                 {
                                     label: 'Còn hàng',
-                                    value: productInStock,
+                                    value: totalProducts - productOutOfStock.length,
                                 },
                                 {
                                     label: 'Hết hàng',
-                                    value: productOutOfStock,
+                                    value: productOutOfStock.length,
                                 },
                             ],
                             percent: 10,
@@ -893,8 +894,8 @@ export default function Dashboard() {
                                                     : 'bg-blue-500 text-white'
                                             }`}
                                         >
-                                            <FaEye className='text-sm' />
-                                            <span className='font-semibold'>{product.access}</span>
+                                            <IoIosCart className='text-sm' />
+                                            <span className='font-semibold'>{product.selling}</span>
                                         </div>
                                     </div>
                                 </div>

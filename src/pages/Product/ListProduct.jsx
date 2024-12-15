@@ -432,13 +432,19 @@ export default function ListProduct() {
                                     style={{ backgroundColor: opt.key }}
                                 />
                                 <Tag
-                                    className={`px-2 py-0.5 text-xs rounded-full border-none ${
+                                    className={`px-2 w-20 text-center py-1 text-xs font-semibold rounded-full border-none ${
                                         opt.value.state === 'selling'
                                             ? 'bg-green-100 text-green-700'
-                                            : 'bg-yellow-100 text-yellow-700'
+                                            : opt.value.state === 'pause'
+                                            ? 'bg-yellow-100 text-yellow-700'
+                                            : 'bg-red-100 text-red-700'
                                     }`}
                                 >
-                                    {opt.value.state === 'selling' ? 'Đang bán' : 'Ngừng bán'}
+                                    {opt.value.state === 'selling'
+                                        ? 'Đang bán'
+                                        : opt.value.state === 'pause'
+                                        ? 'Ngừng bán'
+                                        : 'Hết hàng'}
                                 </Tag>
                             </div>
                         ))}
@@ -748,10 +754,29 @@ export default function ListProduct() {
             {/* Option Modal */}
             <Modal
                 title={
-                    <div className='text-xl font-semibold text-gray-800 pb-3 border-b border-gray-100'>
-                        <span className='bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent'>
-                            Chi tiết giá sản phẩm
-                        </span>
+                    <div className='flex flex-col gap-2'>
+                        <div className='flex items-center gap-3'>
+                            <div className='flex-1'>
+                                <h3
+                                    className='text-xl font-bold bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 
+                                    bg-clip-text text-transparent animate-gradient'
+                                >
+                                    Chi tiết giá và số lượng sản phẩm
+                                </h3>
+                                <div className='mt-1.5 flex items-center gap-2'>
+                                    <span className='text-sm text-gray-500'>Có</span>
+                                    <div className='px-2.5 py-0.5 bg-blue-50 rounded-full'>
+                                        <span className='text-sm font-semibold text-blue-600'>
+                                            {selectedOptions?.length}
+                                        </span>
+                                    </div>
+                                    <span className='text-sm text-gray-500'>
+                                        phiên bản màu sắc khác nhau
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className='h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent'></div>
                     </div>
                 }
                 open={isModalVisible}
@@ -796,18 +821,12 @@ export default function ListProduct() {
                                         </span>
                                     </div>
                                     <div className='flex items-center justify-center gap-2'>
-                                        {option.value.quantity === 0 && (
-                                            <Tag className='px-3 py-1 font-medium text-sm rounded-full border-none bg-red-100 text-red-700 '>
-                                                <span className='flex items-center gap-1.5 text-red-500'>
-                                                    <FaCircle className='w-2 h-2' />
-                                                    Hết hàng
-                                                </span>
-                                            </Tag>
-                                        )}
                                         <Tag
                                             className={`px-3 py-1 font-medium text-sm rounded-full border-none ${
                                                 option.value.state === 'selling'
                                                     ? 'bg-green-100 text-green-700'
+                                                    : option.value.state === 'pause'
+                                                    ? 'bg-yellow-100 text-yellow-700'
                                                     : 'bg-red-100 text-red-700'
                                             }`}
                                         >
@@ -815,7 +834,9 @@ export default function ListProduct() {
                                                 <FaCircle className='w-2 h-2' />
                                                 {option.value.state === 'selling'
                                                     ? 'Đang bán'
-                                                    : 'Ngừng bán'}
+                                                    : option.value.state === 'pause'
+                                                    ? 'Ngừng bán'
+                                                    : 'Hết hàng'}
                                             </span>
                                         </Tag>
                                     </div>
@@ -823,29 +844,63 @@ export default function ListProduct() {
 
                                 {/* original price, discount price, quantity and sell price */}
                                 <div className='grid grid-cols-2 gap-4 mb-4'>
-                                    <div className='bg-gradient-to-br from-gray-50 to-gray-100 p-3 rounded-lg'>
-                                        <div className='text-gray-500 text-xs mb-0.5'>Giá gốc</div>
-                                        <div className='text-base font-bold text-gray-800'>
+                                    <div
+                                        className='bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-3 rounded-lg 
+                    shadow-sm hover:shadow-md transition-all duration-300 border border-indigo-100'
+                                    >
+                                        <div className='text-indigo-600 text-xs mb-1 font-medium'>
+                                            Giá gốc
+                                        </div>
+                                        <div
+                                            className='text-base font-bold bg-gradient-to-r from-indigo-600 to-purple-600 
+                        bg-clip-text text-transparent'
+                                        >
                                             {option.value.price.toLocaleString('vi-VN')}đ
                                         </div>
                                     </div>
-                                    <div className='bg-gradient-to-br from-green-50 to-green-100 p-3 rounded-lg'>
-                                        <div className='text-green-600 text-xs mb-0.5'>
+
+                                    <div
+                                        className='bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 p-3 rounded-lg 
+                    shadow-sm hover:shadow-md transition-all duration-300 border border-emerald-100'
+                                    >
+                                        <div className='text-emerald-600 text-xs mb-1 font-medium'>
                                             Giảm giá
                                         </div>
-                                        <div className='text-base font-bold text-green-700'>
+                                        <div
+                                            className='text-base font-bold bg-gradient-to-r from-emerald-600 to-green-600 
+                        bg-clip-text text-transparent'
+                                        >
                                             {option.value.discount.toLocaleString('vi-VN')}đ
                                         </div>
                                     </div>
-                                    <div className='bg-gradient-to-br from-blue-50 to-blue-100 p-3 rounded-lg'>
-                                        <div className='text-blue-600 text-xs mb-0.5'>Số lượng</div>
-                                        <div className='text-base font-bold text-blue-700'>
-                                            {option.value.quantity} cái
+
+                                    <div
+                                        className='bg-gradient-to-br from-sky-50 via-blue-50 to-cyan-50 p-3 rounded-lg 
+                    shadow-sm hover:shadow-md transition-all duration-300 border border-sky-100'
+                                    >
+                                        <div className='text-sky-600 text-xs mb-1 font-medium'>
+                                            Số lượng
+                                        </div>
+                                        <div
+                                            className='text-base font-bold bg-gradient-to-r from-sky-600 to-blue-600 
+                        bg-clip-text text-transparent flex items-baseline'
+                                        >
+                                            {option.value.quantity}
+                                            <span className='text-sm ml-1 opacity-75'>cái</span>
                                         </div>
                                     </div>
-                                    <div className='bg-gradient-to-br from-red-50 to-red-100 p-3 rounded-lg'>
-                                        <div className='text-red-600 text-xs mb-0.5'>Giá bán</div>
-                                        <div className='text-base font-bold text-red-700'>
+
+                                    <div
+                                        className='bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 p-3 rounded-lg 
+                    shadow-sm hover:shadow-md transition-all duration-300 border border-amber-200'
+                                    >
+                                        <div className='text-amber-700 text-xs mb-1 font-medium'>
+                                            Giá bán
+                                        </div>
+                                        <div
+                                            className='text-base font-bold bg-gradient-to-r from-amber-600 via-yellow-600 to-orange-500 
+                        bg-clip-text text-transparent'
+                                        >
                                             {(
                                                 option.value.price - option.value.discount
                                             ).toLocaleString('vi-VN')}
@@ -854,7 +909,7 @@ export default function ListProduct() {
                                     </div>
                                 </div>
 
-                                {/* edit and delete option */}
+                                {/* edit and change state option */}
                                 <div className='flex justify-end items-center gap-2 border-gray-100'>
                                     <Button
                                         type='primary'
@@ -863,7 +918,11 @@ export default function ListProduct() {
                                         className='h-8 px-4 flex items-center gap-1.5 bg-gradient-to-r from-blue-500 
                                         to-blue-600 hover:from-blue-600 hover:to-blue-700 border-none'
                                     >
-                                        <span className='text-sm'>Sửa</span>
+                                        <span className='text-sm'>
+                                            {option.value.state === 'outOfStock'
+                                                ? 'Cập nhật số lượng'
+                                                : 'Sửa'}
+                                        </span>
                                     </Button>
 
                                     <Popconfirm
@@ -894,26 +953,29 @@ export default function ListProduct() {
                                             } text-white border-none`,
                                             loading: isToggling,
                                         }}
+                                        disabled={option.value.state === 'outOfStock'}
                                     >
-                                        <Button
-                                            type='default'
-                                            icon={
-                                                <FaCircle
-                                                    className={`${
-                                                        option.value.state === 'selling'
-                                                            ? 'text-red-500'
-                                                            : 'text-green-500'
-                                                    }`}
-                                                />
-                                            }
-                                            className='h-8 px-4 flex items-center gap-1.5 border'
-                                        >
-                                            <span className='text-sm'>
-                                                {option.value.state === 'selling'
-                                                    ? 'Ngừng bán'
-                                                    : 'Mở bán'}
-                                            </span>
-                                        </Button>
+                                        {option.value.state !== 'outOfStock' && (
+                                            <Button
+                                                type='default'
+                                                icon={
+                                                    <FaCircle
+                                                        className={`${
+                                                            option.value.state === 'selling'
+                                                                ? 'text-red-500'
+                                                                : 'text-green-500'
+                                                        }`}
+                                                    />
+                                                }
+                                                className='h-8 px-4 flex items-center gap-1.5 border'
+                                            >
+                                                <span className='text-sm'>
+                                                    {option.value.state === 'selling'
+                                                        ? 'Ngừng bán'
+                                                        : 'Mở bán'}
+                                                </span>
+                                            </Button>
+                                        )}
                                     </Popconfirm>
                                 </div>
                             </div>
