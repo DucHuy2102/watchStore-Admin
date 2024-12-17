@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Card, Form, Input, InputNumber, Select, Upload, Spin, Modal } from 'antd';
 import {
     InboxOutlined,
@@ -33,6 +33,7 @@ export default function EditProduct() {
     const { access_token: token } = useSelector((state) => state.user);
     const [productOptions, setProductOptions] = useState([]);
     const [isColorModalVisible, setColorModalVisible] = useState(false);
+    const colorSectionRef = useRef(null);
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -66,7 +67,8 @@ export default function EditProduct() {
                     });
 
                     const categoryObj = category?.find((item) => item.id === data.category);
-                    form.setFieldValue('category', categoryObj?.categoryName);
+                    console.log(categoryObj);
+                    form.setFieldValue('category', categoryObj?.id);
 
                     if (data.img && Array.isArray(data.img)) {
                         const formattedFileList = data.img.map((url, index) => ({
@@ -110,9 +112,9 @@ export default function EditProduct() {
                     colorSection.classList.add('animate-highlight');
                     setTimeout(() => {
                         colorSection.classList.remove('animate-highlight');
-                    }, 1000);
+                    }, 2000);
                 }
-            }, 1000);
+            }, 2000);
         }
     }, [location.state]);
 
@@ -156,7 +158,6 @@ export default function EditProduct() {
     };
 
     const onFinish = async (values) => {
-        console.log('run');
         if (!fileList.length) {
             toast.error('Vui lòng upload ảnh sản phẩm!');
             return;
@@ -167,49 +168,72 @@ export default function EditProduct() {
             return;
         }
 
-        try {
-            setLoading(true);
-            const uploadedFiles = await handleUploadToCloudinary();
-            const formattedOptions = productOptions.map((opt) => ({
-                key: opt.key,
-                value: {
-                    price: opt.price,
-                    discount: opt.discount,
-                    quantity: opt.amount,
-                    color: opt.color,
-                    state: 'active',
-                },
-            }));
+        const uploadedFiles = await handleUploadToCloudinary();
+        const formattedOptions = productOptions.map((opt) => ({
+            key: opt.key,
+            value: {
+                price: opt.price,
+                discount: opt.discount,
+                quantity: opt.amount,
+                color: opt.color,
+                state: 'active',
+            },
+        }));
 
-            const productData = {
-                ...values,
-                img: uploadedFiles?.map((file) => file.url || file),
-                option: formattedOptions,
-                state: 'waiting',
-            };
+        const productData = {
+            ...values,
+            id: id,
+            img: uploadedFiles?.map((file) => file.url || file),
+            option: formattedOptions,
+            state: 'waiting',
+        };
 
-            const res = await axios.put(
-                `${import.meta.env.VITE_API_URL}/api/product/update`,
-                productData,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            );
+        console.log(productData);
 
-            if (res.status === 200) {
-                toast.success('Cập nhật sản phẩm thành công!');
-                setTimeout(() => {
-                    navigate('/products');
-                }, 2000);
-            }
-        } catch (error) {
-            console.error(error);
-            toast.error('Có lỗi xảy ra khi cập nhật sản phẩm');
-        } finally {
-            setLoading(false);
-        }
+        // try {
+        //     setLoading(true);
+        //     const uploadedFiles = await handleUploadToCloudinary();
+        //     const formattedOptions = productOptions.map((opt) => ({
+        //         key: opt.key,
+        //         value: {
+        //             price: opt.price,
+        //             discount: opt.discount,
+        //             quantity: opt.amount,
+        //             color: opt.color,
+        //             state: 'active',
+        //         },
+        //     }));
+
+        //     const productData = {
+        //         ...values,
+        //         id: id,
+        //         img: uploadedFiles?.map((file) => file.url || file),
+        //         option: formattedOptions,
+        //         state: 'waiting',
+        //     };
+
+        //     const res = await axios.put(
+        //         `${import.meta.env.VITE_API_URL}/api/product/update`,
+        //         productData,
+        //         {
+        //             headers: {
+        //                 Authorization: `Bearer ${token}`,
+        //             },
+        //         }
+        //     );
+
+        //     if (res.status === 200) {
+        //         toast.success('Cập nhật sản phẩm thành công!');
+        //         setTimeout(() => {
+        //             navigate('/products');
+        //         }, 2000);
+        //     }
+        // } catch (error) {
+        //     console.error(error);
+        //     toast.error('Có lỗi xảy ra khi cập nhật sản phẩm');
+        // } finally {
+        //     setLoading(false);
+        // }
     };
 
     const handleChange = ({ fileList: newFileList }) => {
@@ -318,7 +342,7 @@ export default function EditProduct() {
                                 placeholder='Chọn hãng đồng hồ'
                                 options={category?.map((item) => ({
                                     label: item.categoryName,
-                                    value: item.categoryName,
+                                    value: item.id,
                                 }))}
                                 notFoundContent='Không tìm thấy hãng nào'
                                 className='w-full h-[38px] rounded-lg hover:border-blue-400 focus:border-blue-500 transition-colors duration-300'
@@ -560,6 +584,11 @@ export default function EditProduct() {
                             addonAfter='đ'
                             controls={false}
                         />
+                        {localValues.price <= 0 && (
+                            <span className='text-red-500 block !mt-4 font-semibold'>
+                                Giá bán sản phẩm phải lớn hơn 0!
+                            </span>
+                        )}
                     </div>
 
                     <div className='space-y-3'>
@@ -573,9 +602,14 @@ export default function EditProduct() {
                             }}
                             min={0}
                             size='large'
-                            addonAfter='cái'
+                            addonAfter='sản phẩm'
                             controls={false}
                         />
+                        {localValues.amount <= 0 && (
+                            <span className='text-red-500 block !mt-4 font-semibold'>
+                                Số lượng sản phẩm bán ra phải lớn hơn 0!
+                            </span>
+                        )}
                     </div>
 
                     <div className='space-y-3'>
@@ -598,7 +632,7 @@ export default function EditProduct() {
                             <div className='flex items-center gap-2 mt-4'>
                                 {localValues.price <= localValues.discount ? (
                                     <span className='text-red-500 font-semibold'>
-                                        Giá tiền bán không thể nhỏ hơn giá tiền giảm!
+                                        Giá tiền giảm không thể lớn hơn hoặc bằng giá bán!
                                     </span>
                                 ) : (
                                     <>
@@ -606,8 +640,8 @@ export default function EditProduct() {
                                         <span className='text-base font-bold text-green-600'>
                                             {new Intl.NumberFormat('vi-VN').format(
                                                 localValues.price - localValues.discount
-                                            )}
-                                            đ
+                                            )}{' '}
+                                            {''}đ
                                         </span>
                                     </>
                                 )}
@@ -617,11 +651,13 @@ export default function EditProduct() {
                 </div>
 
                 <div className='mt-4 flex justify-end'>
-                    {isEditing && localValues.price > localValues.discount && (
-                        <Button type='primary' onClick={handleSave}>
-                            Lưu thông tin
-                        </Button>
-                    )}
+                    {isEditing &&
+                        localValues.amount > 0 &&
+                        localValues.price > localValues.discount && (
+                            <Button type='primary' onClick={handleSave}>
+                                Lưu thông tin
+                            </Button>
+                        )}
                 </div>
             </Card>
         );
@@ -687,6 +723,7 @@ export default function EditProduct() {
         const values = form.getFieldsValue();
         const previewData = {
             ...values,
+            id: id,
             img: fileList.map((file) => file.url || URL.createObjectURL(file.originFileObj)),
             option: productOptions,
             state: 'preview',
@@ -695,7 +732,7 @@ export default function EditProduct() {
     };
 
     return (
-        <Card loading={loading} className='rounded-xl border-none '>
+        <Card loading={loading} className='!rounded-none border-none '>
             {/* header */}
             <div className='flex items-center justify-between mb-5'>
                 <div>
@@ -819,6 +856,7 @@ export default function EditProduct() {
                     {/* color */}
                     <Card
                         id='colorSection'
+                        ref={colorSectionRef}
                         className='mt-8 scroll-mt-6'
                         title={
                             <div className='flex justify-between items-center'>

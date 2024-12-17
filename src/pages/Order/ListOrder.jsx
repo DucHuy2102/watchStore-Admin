@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import moment from 'moment';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
@@ -26,7 +26,6 @@ import {
 } from '@ant-design/icons';
 import { FaEye } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
-import { resetNewOrdersCount } from '../../redux/slices/productSlice';
 
 const { RangePicker } = DatePicker;
 const { Title } = Typography;
@@ -51,10 +50,6 @@ export default function ListOrder() {
     const [endDate, setEndDate] = useState(null);
     const navigate = useNavigate();
     const dispatch = useDispatch();
-
-    useEffect(() => {
-        dispatch(resetNewOrdersCount());
-    }, [dispatch]);
 
     const getAllOrders = async () => {
         try {

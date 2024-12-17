@@ -2,7 +2,7 @@ import { IoIosCart } from 'react-icons/io';
 import axios from 'axios';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { Badge, Card, Typography, Tag, Select } from 'antd';
 import {
@@ -47,6 +47,7 @@ const monthOptions = [
 ];
 
 export default function Dashboard() {
+    const { pathname } = useLocation();
     const { access_token: token } = useSelector((state) => state.user);
     const { sidebar } = useSelector((state) => state.theme);
     const navigate = useNavigate();
@@ -334,14 +335,14 @@ export default function Dashboard() {
                             icon: <CommentOutlined />,
                             gradient: 'from-orange-500 to-amber-500',
                             lightGradient: 'from-orange-50 to-amber-50',
-                            additionalInfo: 'Tất cả dịch vụ đang cung cấp',
+                            additionalInfo: 'Tất cả yêu cầu hỗ trợ',
                             stats: [
                                 {
-                                    label: 'Chờ duyệt',
+                                    label: 'Đang chờ',
                                     value: services.filter((s) => s.state === 'pending').length,
                                 },
                                 {
-                                    label: 'Đã duyệt',
+                                    label: 'Đã phản hồi',
                                     value: services.filter((s) => s.state === 'proceed').length,
                                 },
                             ],
@@ -848,7 +849,11 @@ export default function Dashboard() {
 
                                 <div className='p-4'>
                                     <h3
-                                        onClick={() => navigate(`/product-detail/${product.id}`)}
+                                        onClick={() =>
+                                            navigate(`/product-detail/${product.id}`, {
+                                                state: { from: pathname },
+                                            })
+                                        }
                                         className='font-medium text-gray-900 truncate mb-1 cursor-pointer'
                                     >
                                         {product.productName}

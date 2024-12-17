@@ -10,8 +10,6 @@ import { useGoogleLogin } from '@react-oauth/google';
 import { FaMoon } from 'react-icons/fa';
 import { toggleTheme } from '../../redux/slices/themeSlice';
 import { IoIosSunny } from 'react-icons/io';
-import { setupSSE } from '../../Utils/setupSSE';
-import { updateOrder } from '../../redux/slices/productSlice';
 
 export default function Login() {
     const navigate = useNavigate();
@@ -29,23 +27,6 @@ export default function Login() {
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.id]: e.target.value });
-    };
-
-    const getAllOrders = async (token) => {
-        try {
-            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/order/get-all-order`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-            if (res.status === 200) {
-                setOrders(res.data);
-                setupSSE(token, dispatch, updateOrder);
-            }
-        } catch (error) {
-            console.log(error);
-            toast.error('Lỗi lấy danh sách đơn hàng');
-        }
     };
 
     const handleLoginForm = async (e) => {
@@ -70,7 +51,6 @@ export default function Login() {
             const { data } = res;
             if (data?.admin) {
                 dispatch(user_SignIn({ access_token: data.access_token, user: data }));
-                await getAllOrders(data.access_token);
                 navigate(state?.from || '/dashboard');
                 toast.success('Tài khoản đăng nhập thành công!');
             } else {
@@ -110,7 +90,6 @@ export default function Login() {
             if (data?.admin) {
                 dispatch(user_SignIn({ access_token: data.access_token, user: data }));
                 toast.success('Đăng nhập thành công!');
-                await getAllOrders(data.access_token);
                 navigate(state?.from || '/dashboard');
             } else {
                 setErrorMessage('Tài khoản không được truy cập!');

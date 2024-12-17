@@ -15,13 +15,14 @@ import {
     Modal,
     Switch,
     Tag,
+    Input,
 } from 'antd';
 import { FaEdit, FaTrash, FaCircle, FaImage, FaFilter, FaEye, FaPlusCircle } from 'react-icons/fa';
 import { useSelector } from 'react-redux';
 import { FilterModal } from '../../components/exportComponent';
 import { toast } from 'react-toastify';
-import SearchInput from './components/SearchInput';
 import { Empty } from 'antd';
+import { IoIosSearch } from 'react-icons/io';
 
 const STATE_OPTIONS = [
     { value: 'all', label: 'Tất cả trạng thái' },
@@ -49,6 +50,7 @@ export default function ListProduct() {
     const [selectedOptions, setSelectedOptions] = useState(null);
     const [waterProof, setWaterProof] = useState([]);
     const [wireMaterial, setWireMaterial] = useState([]);
+    const [searchText, setSearchText] = useState('');
 
     const getAllProducts = useCallback(async () => {
         try {
@@ -198,6 +200,23 @@ export default function ListProduct() {
         },
         [selectedFilters]
     );
+
+    const handleSeach = () => {
+        const search = new URLSearchParams(searchParams);
+        search.set('pageNum', '1');
+        if (searchText.trim() !== '') {
+            search.set('q', searchText.trim());
+        } else {
+            search.delete('q');
+        }
+        setSearchParams(search);
+    };
+
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            handleSeach();
+        }
+    };
 
     const updateSearchParams = useCallback(
         (filters) => {
@@ -667,50 +686,57 @@ export default function ListProduct() {
             {/* Content */}
             <Card bordered={false}>
                 {/* Search */}
-                <div className='mb-6 space-y-4 sm:space-y-0 sm:flex sm:gap-x-3 sm:items-center justify-between items-center'>
-                    <div className='flex items-center gap-3 flex-1'>
-                        <SearchInput
-                            onSearch={(text) => {
-                                const search = new URLSearchParams(searchParams);
-                                search.set('pageNum', '1');
-                                if (text.trim() !== '') {
-                                    search.set('q', text.trim());
-                                } else {
-                                    search.delete('q');
-                                }
-                                setSearchParams(search);
-                            }}
-                            placeholder='Tìm kiếm sản phẩm theo tên, mã...'
+                <div className='mb-6 space-y-4 sm:space-y-0 sm:flex sm:gap-x-3 sm:items-center w-full justify-between items-center'>
+                    <div className='w-[60%] flex items-center'>
+                        <Input
+                            placeholder={'Tìm kiếm sản phẩm theo tên, mã...'}
+                            value={searchText}
+                            onChange={(e) => setSearchText(e.target.value)}
+                            onKeyDown={handleKeyPress}
+                            allowClear
+                            className='rounded-l-lg rounded-r-none border-r-0 border-gray-300 h-11 w-full'
                         />
+                        <Button
+                            onClick={handleSeach}
+                            className='h-[44px] border-blue-500 px-5 bg-blue-500 hover:!bg-blue-600 hover:scale-105 transition-all duration-300 rounded-l-none rounded-r-lg'
+                        >
+                            <IoIosSearch className='text-lg text-gray-200 font-semibold' />
+                        </Button>
+                    </div>
+                    <div className='flex items-center gap-3'>
                         <Select
                             value={selectedState}
                             onChange={handleStateChange}
                             options={STATE_OPTIONS}
                             className='min-w-[180px] h-11'
                         />
-                    </div>
-                    <Space size='middle' className='flex-shrink-0'>
-                        <Tooltip
-                            title={
-                                selectedFilters.length ? `${selectedFilters.length} bộ lọc` : 'Lọc'
-                            }
-                        >
-                            <Button
-                                onClick={() => setShowModalFilter(true)}
-                                className={`h-11 px-5 flex items-center gap-2 border-2 ${
-                                    selectedFilters.length ? 'border-blue-500 text-blue-500' : ''
-                                }`}
+                        <Space size='middle' className='flex-shrink-0'>
+                            <Tooltip
+                                title={
+                                    selectedFilters.length
+                                        ? `${selectedFilters.length} bộ lọc`
+                                        : 'Lọc nâng cao'
+                                }
                             >
-                                <FaFilter />
-                                <span className='hidden sm:inline'>Bộ lọc</span>
-                                {selectedFilters.length > 0 && (
-                                    <span className='flex items-center justify-center w-5 h-5 text-xs font-medium bg-blue-500 text-white rounded-full'>
-                                        {selectedFilters.length}
-                                    </span>
-                                )}
-                            </Button>
-                        </Tooltip>
-                    </Space>
+                                <Button
+                                    onClick={() => setShowModalFilter(true)}
+                                    className={`h-11 px-5 flex items-center gap-2 border-2 ${
+                                        selectedFilters.length
+                                            ? 'border-blue-500 text-blue-500'
+                                            : ''
+                                    }`}
+                                >
+                                    <FaFilter />
+                                    <span className='hidden sm:inline'>Bộ lọc</span>
+                                    {selectedFilters.length > 0 && (
+                                        <span className='flex items-center justify-center w-5 h-5 text-xs font-medium bg-blue-500 text-white rounded-full'>
+                                            {selectedFilters.length}
+                                        </span>
+                                    )}
+                                </Button>
+                            </Tooltip>
+                        </Space>
+                    </div>
                 </div>
 
                 {/* Filter Modal */}
@@ -733,6 +759,7 @@ export default function ListProduct() {
                             <Table
                                 columns={columns}
                                 dataSource={products}
+                                rowKey='id'
                                 pagination={{
                                     current: currentPage,
                                     total: totalProducts,

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSelector } from 'react-redux';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Card, Tabs, Breadcrumb, Descriptions, Tag } from 'antd';
 import {
     BoxPlotOutlined,
@@ -17,9 +17,11 @@ import { FaArrowLeftLong } from 'react-icons/fa6';
 
 export default function ProductDetail() {
     const { id } = useParams();
+    const { state } = useLocation();
+    console.log(state?.from);
+    const navigate = useNavigate();
     const { access_token: tokenUser } = useSelector((state) => state.user);
     const [product, setProduct] = useState(null);
-    console.log('product', product);
     const [loading, setLoading] = useState(true);
     const [selectedOption, setSelectedOption] = useState(null);
     const [isExpandDescription, setIsExpandDescription] = useState(false);
@@ -105,6 +107,14 @@ export default function ProductDetail() {
 
     if (!product) return null;
 
+    const handleNavigateBack = () => {
+        if (state?.from) {
+            navigate(state.from);
+        } else {
+            navigate('/product/category');
+        }
+    };
+
     return (
         <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-gray-50 rounded-lg'>
             {/* Breadcrumb */}
@@ -113,7 +123,10 @@ export default function ProductDetail() {
                     <Breadcrumb
                         items={[
                             { href: '/dashboard', title: 'Trang chủ' },
-                            { href: '/products', title: 'Danh sách sản phẩm' },
+                            {
+                                href: state?.from === '/dashboard' ? null : '/product/category',
+                                title: state?.from === '/dashboard' ? null : 'Danh mục sản phẩm',
+                            },
                             { title: product.productName },
                         ]}
                     />
@@ -121,19 +134,19 @@ export default function ProductDetail() {
                         Thời gian: {new Date().toLocaleString('vi-VN')}
                     </Tag>
                 </div>
-                <Link
-                    to='/products'
+                <div
+                    onClick={handleNavigateBack}
                     className='inline-flex items-center gap-2 px-6 py-2.5 rounded-full
                         bg-white border border-gray-200 shadow-sm hover:shadow-md
                         text-gray-700 hover:text-primary hover:border-primary/20
                         transition-all duration-300 ease-in-out transform hover:-translate-x-1
-                        font-medium group mb-1'
+                        font-medium group mb-1 cursor-pointer'
                 >
                     <FaArrowLeftLong className='w-4 h-4 transition-transform duration-300 group-hover:animate-pulse' />
                     <span className='bg-gradient-to-r from-gray-800 to-gray-600 hover:from-primary hover:to-primary/80 bg-clip-text text-transparent'>
-                        Quay lại danh sách
+                        Quay lại {state?.from === '/dashboard' ? 'trang chủ' : 'danh mục sản phẩm'}
                     </span>
-                </Link>
+                </div>
             </div>
 
             {/* Product detail */}

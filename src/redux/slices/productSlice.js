@@ -1,9 +1,8 @@
+import { edit } from '@cloudinary/url-gen/actions/animated';
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
     category: [],
-    orders: [],
-    newOrdersCount: 0,
 };
 
 export const productSlice = createSlice({
@@ -16,26 +15,24 @@ export const productSlice = createSlice({
         resetCategory: (state) => {
             state.category = [];
         },
-        setOrders: (state, action) => {
-            state.orders = action.payload;
+        addNewCategory: (state, action) => {
+            state.category.push(action.payload);
         },
-        updateOrder: (state, action) => {
-            const newOrder = action.payload;
-            const index = state.orders.findIndex((order) => order.id === newOrder.id);
-            if (index !== -1) {
-                state.orders[index] = newOrder;
-            } else {
-                state.orders.push(newOrder);
-                state.newOrdersCount += 1;
+        updateCategoryName: (state, action) => {
+            const { id, name } = action.payload;
+            const existingCategory = state.category.find((category) => category.id === id);
+            if (existingCategory) {
+                existingCategory.categoryName = name;
             }
         },
-        resetNewOrdersCount: (state) => {
-            state.newOrdersCount = 0;
+        deleteCategory: (state, action) => {
+            const categoryId = action.payload;
+            state.category = state.category.filter((category) => category.id !== categoryId);
         },
     },
 });
 
-export const { getAllCategory, resetCategory, setOrders, updateOrder, resetNewOrdersCount } =
+export const { getAllCategory, resetCategory, addNewCategory, deleteCategory, updateCategoryName } =
     productSlice.actions;
 
 export default productSlice.reducer;

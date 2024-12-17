@@ -14,7 +14,6 @@ import { resetCategory } from '../redux/slices/productSlice';
 import { FaPeopleGroup } from 'react-icons/fa6';
 import { GiWatch } from 'react-icons/gi';
 import { RiCustomerService2Fill } from 'react-icons/ri';
-import { closeSSE } from '../Utils/setupSSE';
 import { toggleSidebar as toggleSidebarAction } from '../redux/slices/themeSlice';
 
 const SidebarItem = ({ to, icon: Icon, active, showSidebar, children, badge }) => {
@@ -107,6 +106,7 @@ const DropdownMenuItem = ({ icon: Icon, label, items, isActive, showSidebar }) =
                         <Link
                             key={item.path}
                             to={item.path}
+                            onClick={() => setIsOpen(false)}
                             className={`relative block py-2 px-3 rounded-lg text-sm transition-all duration-300
                     ${
                         location.pathname === item.path
@@ -137,7 +137,6 @@ export default function Sidebar_Component() {
     const [showSidebar, setShowSidebar] = useState(true);
 
     const handleSignOutAccount = () => {
-        closeSSE();
         dispatch(user_SignOut());
         dispatch(resetCategory());
     };

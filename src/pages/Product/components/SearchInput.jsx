@@ -23,14 +23,17 @@ const SearchInput = ({ onSearch, placeholder }) => {
     };
 
     return (
-        <Input
-            placeholder={placeholder}
-            value={searchText}
-            onChange={handleChange}
-            allowClear
-            className='rounded-lg border-gray-300 h-11 w-full'
-            suffix={<IoIosSearch className='text-gray-400' />}
-        />
+        <div className='w-40 flex items-center gap-2'>
+            <Input
+                placeholder={placeholder}
+                value={searchText}
+                onChange={handleChange}
+                allowClear
+                className='rounded-lg border-gray-300 h-11 w-full'
+                suffix={<IoIosSearch className='text-gray-400' />}
+            />
+            <IoIosSearch className='text-gray-400 w-10 h-10 p-2' />
+        </div>
     );
 };
 

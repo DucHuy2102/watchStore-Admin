@@ -1,19 +1,24 @@
 import axios from 'axios';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
 import { FaChevronDown, FaChevronUp, FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Button, Modal, TextInput } from 'flowbite-react';
 import { toast } from 'react-toastify';
 import { Modal as AntModal } from 'antd';
-import { getAllCategory } from '../../redux/slices/productSlice';
+import {
+    addNewCategory,
+    deleteCategory,
+    updateCategoryName,
+} from '../../redux/slices/productSlice';
 
 export default function Category() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { access_token: token } = useSelector((state) => state.user);
-    const [category, setCategory] = useState([]);
+    const { category } = useSelector((state) => state.product);
+    const { pathname } = useLocation();
     const [loading, setLoading] = useState(false);
     const [expandedCategory, setExpandedCategory] = useState(null);
     const [modalCreateCategory, setModalCreateCategory] = useState(false);
@@ -22,38 +27,6 @@ export default function Category() {
     const [modalEditCategory, setModalEditCategory] = useState(false);
     const [editCategoryId, setEditCategoryId] = useState(null);
     const [editCategoryName, setEditCategoryName] = useState('');
-
-    // get all category
-    const getCategory = async () => {
-        try {
-            setLoading(true);
-            const res = await axios.get(
-                `${import.meta.env.VITE_API_URL}/api/category/get-all-category`,
-                {
-                    headers: { Authorization: `Bearer ${token}` },
-                }
-            );
-            if (res.status === 200) {
-                setCategory(res.data);
-            }
-        } catch (error) {
-            console.log(error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        if (category.length === 0) {
-            getCategory();
-        }
-
-        return () => {
-            if (category.length > 0) {
-                dispatch(getAllCategory(category));
-            }
-        };
-    }, []);
 
     const toggleCategory = (categoryId) => {
         setExpandedCategory(expandedCategory === categoryId ? null : categoryId);
@@ -77,6 +50,7 @@ export default function Category() {
 
         try {
             setIsSubmitting(true);
+            setLoading(true);
             const res = await axios.post(
                 `${import.meta.env.VITE_API_URL}/api/category/create`,
                 {
@@ -92,27 +66,31 @@ export default function Category() {
                 toast.success('Tạo danh mục thành công');
                 setModalCreateCategory(false);
                 setNewCategoryName('');
-                setCategory([...category, res.data]);
+                dispatch(addNewCategory(res.data));
             }
         } catch (error) {
             console.error(error);
             toast.error('Có lỗi xảy ra khi tạo danh mục');
         } finally {
             setIsSubmitting(false);
+            setLoading(false);
         }
     };
 
     // delete category
     const handleDeleteCategory = async (categoryId) => {
         AntModal.confirm({
-            title: 'Xác nhận xóa',
+            title: `Xác nhận xóa danh mục "${
+                category.find((cat) => cat.id === categoryId).categoryName
+            }"`,
             content:
-                'Bạn có chắc chắn muốn xóa danh mục này? Tất cả sản phẩm trong danh mục sẽ bị xóa.',
+                'Bạn có chắc chắn muốn xóa danh mục này? Tất cả sản phẩm trong danh mục sẽ bị xếp vào danh mục "Hãng chưa xác định"',
             okText: 'Xóa',
             okType: 'danger',
             cancelText: 'Hủy',
             async onOk() {
                 try {
+                    setLoading(true);
                     const res = await axios.delete(
                         `${import.meta.env.VITE_API_URL}/api/category/delete`,
                         {
@@ -126,11 +104,13 @@ export default function Category() {
                     );
                     if (res.status === 200) {
                         toast.success('Xóa danh mục thành công');
-                        setCategory(category.filter((cat) => cat.id !== categoryId));
+                        dispatch(deleteCategory(categoryId));
                     }
                 } catch (error) {
                     console.error(error);
                     toast.error('Có lỗi xảy ra khi xóa danh mục');
+                } finally {
+                    setLoading(false);
                 }
             },
         });
@@ -156,13 +136,14 @@ export default function Category() {
 
         try {
             setIsSubmitting(true);
+            setLoading(true);
+            const uppercaseName =
+                editCategoryName.trim().charAt(0).toUpperCase() + editCategoryName.trim().slice(1);
             const res = await axios.put(
                 `${import.meta.env.VITE_API_URL}/api/category/update`,
                 {
                     categoryId: editCategoryId,
-                    categoryName:
-                        editCategoryName.trim().charAt(0).toUpperCase() +
-                        editCategoryName.trim().slice(1),
+                    categoryName: uppercaseName,
                 },
                 {
                     headers: { Authorization: `Bearer ${token}` },
@@ -171,21 +152,16 @@ export default function Category() {
             if (res?.status === 200) {
                 toast.success('Cập nhật danh mục thành công');
                 setModalEditCategory(false);
+                dispatch(updateCategoryName({ id: editCategoryId, name: uppercaseName }));
                 setEditCategoryName('');
                 setEditCategoryId(null);
-                setCategory(
-                    category.map((cat) =>
-                        cat.id === editCategoryId
-                            ? { ...cat, categoryName: res.data.categoryName }
-                            : cat
-                    )
-                );
             }
         } catch (error) {
             console.error(error);
             toast.error('Có lỗi xảy ra khi cập nhật danh mục');
         } finally {
             setIsSubmitting(false);
+            setLoading(false);
         }
     };
 
@@ -274,21 +250,19 @@ export default function Category() {
                                                 whileHover={{ scale: 1.02 }}
                                                 className='rounded-lg border border-gray-300 shadow-md'
                                             >
-                                                <div className='relative aspect-square'>
+                                                <div
+                                                    className='relative aspect-square'
+                                                    onClick={(e) => {
+                                                        navigate(`/product-detail/${product.id}`);
+                                                    }}
+                                                >
                                                     <img
                                                         src={product.img[0]}
                                                         alt={product.productName}
                                                         className='object-cover w-full h-full rounded-t-lg'
                                                     />
                                                     <div className='absolute top-2 right-2 flex gap-2'>
-                                                        <button
-                                                            className='p-2 bg-gray-500/50 hover:bg-gray-700/70 rounded-full transition-colors'
-                                                            onClick={(e) => {
-                                                                navigate(
-                                                                    `/product-detail/${product.id}`
-                                                                );
-                                                            }}
-                                                        >
+                                                        <button className='p-2 bg-gray-500/50 hover:bg-gray-700/70 rounded-full transition-colors'>
                                                             <FaEdit className='text-blue-500 hover:text-white' />
                                                         </button>
                                                     </div>
