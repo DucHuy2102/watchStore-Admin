@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { Badge, Card, Typography, Tag, Select } from 'antd';
+import { Badge, Card, Typography, Tag, Select, Radio } from 'antd';
 import {
     ShoppingCartOutlined,
     UserOutlined,
@@ -52,6 +52,7 @@ export default function Dashboard() {
     const { sidebar } = useSelector((state) => state.theme);
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
+    const [timePeriod, setTimePeriod] = useState('month');
 
     // state products
     const [products, setProducts] = useState([]);
@@ -62,12 +63,10 @@ export default function Dashboard() {
 
     // state services
     const [services, setServices] = useState([]);
-    // console.log(services);
 
     // state orders
     const [orders, setOrders] = useState([]);
     const [customers, setCustomers] = useState([]);
-    console.log(customers);
 
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
 
@@ -237,24 +236,148 @@ export default function Dashboard() {
         [memoizedGetCustomersByMonth, selectedMonth]
     );
 
+    const memoizedGetServicesByMonth = useCallback(
+        (month) => {
+            const filteredServices = services.filter((service) => {
+                const serviceDate = new Date(service.createAt);
+                return serviceDate.getMonth() === month;
+            });
+            return {
+                total: filteredServices.length,
+                pending: filteredServices.filter((s) => s.state === 'pending').length,
+                proceed: filteredServices.filter((s) => s.state === 'proceed').length,
+            };
+        },
+        [services]
+    );
+
     const activeCustomersThisMonth = customersByMonth.filter((c) => c.state === 'active').length;
     const blockedCustomersThisMonth = customersByMonth.filter((c) => c.state === 'blocked').length;
 
+    const serviceStats = useMemo(
+        () => memoizedGetServicesByMonth(selectedMonth),
+        [memoizedGetServicesByMonth, selectedMonth]
+    );
+
+    const calculatePercentChange = useCallback((currentMonth, getData) => {
+        const currentMonthData = getData(currentMonth);
+        const previousMonthData = getData(currentMonth === 0 ? 11 : currentMonth - 1);
+
+        if (typeof currentMonthData === 'number') {
+            if (previousMonthData === 0) return 0;
+            return Math.round(((currentMonthData - previousMonthData) / previousMonthData) * 100);
+        }
+
+        const current = currentMonthData.total;
+        const previous = previousMonthData.total;
+
+        if (previous === 0) return 0;
+        return Math.round(((current - previous) / previous) * 100);
+    }, []);
+
+    const orderPercent = useMemo(
+        () => calculatePercentChange(selectedMonth, memoizedGetMonthlyStats),
+        [selectedMonth, memoizedGetMonthlyStats, calculatePercentChange]
+    );
+
+    const customerPercent = useMemo(
+        () => calculatePercentChange(selectedMonth, memoizedGetCustomersByMonth),
+        [selectedMonth, memoizedGetCustomersByMonth, calculatePercentChange]
+    );
+
+    const servicePercent = useMemo(
+        () => calculatePercentChange(selectedMonth, memoizedGetServicesByMonth),
+        [selectedMonth, memoizedGetServicesByMonth, calculatePercentChange]
+    );
+
+    const productPercent = useMemo(() => {
+        const currentMonthProducts = products.filter((product) => {
+            const productDate = new Date(product.createdAt);
+            return productDate.getMonth() === selectedMonth;
+        }).length;
+
+        const previousMonthProducts = products.filter((product) => {
+            const productDate = new Date(product.createdAt);
+            return productDate.getMonth() === (selectedMonth === 0 ? 11 : selectedMonth - 1);
+        }).length;
+
+        if (previousMonthProducts === 0) return 0;
+        return Math.round(
+            ((currentMonthProducts - previousMonthProducts) / previousMonthProducts) * 100
+        );
+    }, [products, selectedMonth]);
+
     const getRevenueData = (orders) => {
-        const monthlyRevenue = Array(12)
-            .fill(0)
-            .map((_, index) => ({
-                name: `T ${index + 1}`,
-                revenue: 0,
-            }));
+        switch (timePeriod) {
+            case 'day': {
+                const dailyRevenue = Array(30)
+                    .fill(0)
+                    .map((_, index) => {
+                        const date = new Date();
+                        date.setDate(date.getDate() - (29 - index));
+                        return {
+                            name: `${date.getDate()}/${date.getMonth() + 1}`,
+                            revenue: 0,
+                            date: date,
+                        };
+                    });
 
-        orders.forEach((order) => {
-            const date = new Date(order.createdAt);
-            const month = date.getMonth();
-            monthlyRevenue[month].revenue += order.totalPrice || 0;
-        });
+                orders.forEach((order) => {
+                    const orderDate = new Date(order.createdAt);
+                    const dayIndex = dailyRevenue.findIndex(
+                        (day) =>
+                            day.date.getDate() === orderDate.getDate() &&
+                            day.date.getMonth() === orderDate.getMonth()
+                    );
+                    if (dayIndex !== -1) {
+                        dailyRevenue[dayIndex].revenue += order.totalPrice || 0;
+                    }
+                });
 
-        return monthlyRevenue;
+                return dailyRevenue;
+            }
+
+            case 'month': {
+                const monthlyRevenue = Array(12)
+                    .fill(0)
+                    .map((_, index) => ({
+                        name: `T ${index + 1}`,
+                        revenue: 0,
+                    }));
+
+                orders.forEach((order) => {
+                    const date = new Date(order.createdAt);
+                    const month = date.getMonth();
+                    monthlyRevenue[month].revenue += order.totalPrice || 0;
+                });
+
+                return monthlyRevenue;
+            }
+
+            case 'year': {
+                const currentYear = new Date().getFullYear();
+                const yearlyRevenue = Array(5)
+                    .fill(0)
+                    .map((_, index) => ({
+                        name: `${currentYear - (4 - index)}`,
+                        revenue: 0,
+                    }));
+
+                orders.forEach((order) => {
+                    const date = new Date(order.createdAt);
+                    const year = date.getFullYear();
+                    const yearIndex = yearlyRevenue.findIndex((y) => y.name === year.toString());
+                    if (yearIndex !== -1) {
+                        yearlyRevenue[yearIndex].revenue += order.totalPrice || 0;
+                    }
+                });
+
+                return yearlyRevenue;
+            }
+
+            default:
+                return [];
+        }
     };
 
     const productSalesData = useMemo(() => {
@@ -326,12 +449,12 @@ export default function Dashboard() {
                                 { label: 'Hoàn thành', value: orderStats?.completed },
                                 { label: 'Đã hủy', value: orderStats?.cancelled },
                             ],
-                            percent: 15,
+                            percent: orderPercent,
                             link: '/orders',
                         },
                         {
                             title: 'Tổng Khách Hàng',
-                            value: customers.length,
+                            value: customersByMonth?.length,
                             icon: <UserOutlined />,
                             gradient: 'from-emerald-500 to-teal-500',
                             lightGradient: 'from-emerald-50 to-teal-50',
@@ -346,12 +469,12 @@ export default function Dashboard() {
                                     value: blockedCustomersThisMonth,
                                 },
                             ],
-                            percent: 8,
+                            percent: customerPercent,
                             link: '/users',
                         },
                         {
                             title: 'Tổng Yêu Cầu Hỗ Trợ',
-                            value: services.length,
+                            value: serviceStats?.total,
                             icon: <CommentOutlined />,
                             gradient: 'from-orange-500 to-amber-500',
                             lightGradient: 'from-orange-50 to-amber-50',
@@ -359,14 +482,14 @@ export default function Dashboard() {
                             stats: [
                                 {
                                     label: 'Đang chờ',
-                                    value: services.filter((s) => s.state === 'pending').length,
+                                    value: serviceStats?.pending,
                                 },
                                 {
                                     label: 'Đã phản hồi',
-                                    value: services.filter((s) => s.state === 'proceed').length,
+                                    value: serviceStats?.proceed,
                                 },
                             ],
-                            percent: 12,
+                            percent: servicePercent,
                             link: '/services',
                         },
                         {
@@ -386,7 +509,7 @@ export default function Dashboard() {
                                     value: productOutOfStock.length,
                                 },
                             ],
-                            percent: 10,
+                            percent: productPercent,
                             link: '/products',
                         },
                     ].map((stat, index) => (
@@ -416,9 +539,6 @@ export default function Dashboard() {
                                             className={`text-3xl font-bold bg-gradient-to-r ${stat.gradient} bg-clip-text text-transparent`}
                                         >
                                             {stat.value?.toLocaleString()}
-                                        </span>
-                                        <span className='ml-2 text-sm font-medium text-gray-500'>
-                                            (+{stat.percent}%)
                                         </span>
                                     </div>
 
@@ -463,11 +583,24 @@ export default function Dashboard() {
 
             {/* charts */}
             <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6'>
+                {/* area chart */}
                 <Card className='shadow-lg hover:shadow-xl transition-all duration-300'>
-                    <Title level={4} className='!mb-6 flex items-center gap-2'>
-                        <DollarOutlined className='text-blue-500' />
-                        Doanh thu trong năm
-                    </Title>
+                    <div className='flex justify-between items-center mb-6'>
+                        <Title level={4} className='!mb-0 flex items-center gap-2'>
+                            <DollarOutlined className='text-blue-500' />
+                            Doanh thu trong năm
+                        </Title>
+
+                        <Radio.Group
+                            value={timePeriod}
+                            onChange={(e) => setTimePeriod(e.target.value)}
+                            buttonStyle='solid'
+                        >
+                            <Radio.Button value='day'>Ngày</Radio.Button>
+                            <Radio.Button value='month'>Tháng</Radio.Button>
+                            <Radio.Button value='year'>Năm</Radio.Button>
+                        </Radio.Group>
+                    </div>
                     <ResponsiveContainer width='100%' height={400}>
                         <AreaChart
                             data={getRevenueData(orders)}
@@ -531,17 +664,19 @@ export default function Dashboard() {
                             />
                         </AreaChart>
                     </ResponsiveContainer>
+
                     <div className='mt-8 border-t border-gray-100 pt-6'>
                         <div className={`flex ${!sidebar ? 'gap-2' : 'gap-5'}`}>
                             <motion.div
                                 whileHover={{ scale: 1.02 }}
                                 className='flex-1 relative cursor-pointer overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300'
                             >
-                                <div className='absolute top-0 right-0 w-20 h-20 transform translate-x-6 -translate-y-6'>
-                                    <div className='w-full h-full bg-blue-200 opacity-20 rounded-full'></div>
-                                </div>
                                 <Text className='text-gray-600 font-medium text-sm uppercase tracking-wider mb-2'>
-                                    Tổng doanh thu
+                                    {timePeriod === 'day'
+                                        ? 'Tổng doanh thu 30 ngày'
+                                        : timePeriod === 'month'
+                                        ? 'Tổng doanh thu năm'
+                                        : 'Tổng doanh thu 5 năm'}
                                 </Text>
                                 <div className='flex items-baseline gap-1'>
                                     <Title
@@ -614,6 +749,7 @@ export default function Dashboard() {
                     </div>
                 </Card>
 
+                {/* barchart */}
                 <Card className='shadow-lg hover:shadow-xl transition-all duration-300'>
                     <Title level={4} className='!mb-6 flex items-center gap-2'>
                         <ShoppingCartOutlined className='text-blue-500' />
