@@ -14,7 +14,7 @@ import {
     SaveOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { ColorPicker } from 'antd';
 import { toast } from 'react-toastify';
@@ -24,6 +24,7 @@ const { TextArea } = Input;
 
 export default function CreateProduct() {
     const [form] = Form.useForm();
+    const location = useLocation();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [fileList, setFileList] = useState([]);
@@ -31,6 +32,13 @@ export default function CreateProduct() {
     const { access_token: token } = useSelector((state) => state.user);
     const [productOptions, setProductOptions] = useState([]);
     const [isColorModalVisible, setColorModalVisible] = useState(false);
+
+    useEffect(() => {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth',
+        });
+    }, []);
 
     const handleUploadToCloudinary = async () => {
         try {
@@ -102,7 +110,6 @@ export default function CreateProduct() {
                 option: formattedOptions,
                 state: 'waiting',
             };
-            console.log('Create product -->:', productData);
 
             const res = await axios.post(
                 `${import.meta.env.VITE_API_URL}/api/product/create`,
@@ -192,8 +199,6 @@ export default function CreateProduct() {
                                 options={[
                                     { label: 'Nam', value: 'Nam' },
                                     { label: 'Nữ', value: 'Nữ' },
-                                    { label: 'Thiếu nhi', value: 'Thiếu nhi' },
-                                    { label: 'Tất cả', value: 'Tất cả' },
                                 ]}
                             />
                         ),
@@ -218,7 +223,7 @@ export default function CreateProduct() {
                                 placeholder='Chọn hãng đồng hồ'
                                 options={category?.map((item) => ({
                                     label: item.categoryName,
-                                    value: item.categoryName,
+                                    value: item.id,
                                 }))}
                                 notFoundContent='Không tìm thấy hãng nào'
                                 className='w-full h-[38px] rounded-lg hover:border-blue-400 focus:border-blue-500 transition-colors duration-300'
@@ -591,7 +596,9 @@ export default function CreateProduct() {
             option: productOptions,
             state: 'preview',
         };
-        navigate('/product/product-preview', { state: { product: previewData } });
+        navigate('/product/product-preview', {
+            state: { product: previewData, from: location.pathname },
+        });
     };
 
     return (

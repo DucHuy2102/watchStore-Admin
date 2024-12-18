@@ -116,9 +116,8 @@ export default function App() {
             </Router>
 
             <ToastContainer
-                className={'w-fit'}
                 position='bottom-right'
-                autoClose={2000}
+                autoClose={1500}
                 hideProgressBar={false}
                 newestOnTop={false}
                 closeOnClick

@@ -62,10 +62,12 @@ export default function Dashboard() {
 
     // state services
     const [services, setServices] = useState([]);
+    // console.log(services);
 
     // state orders
     const [orders, setOrders] = useState([]);
     const [customers, setCustomers] = useState([]);
+    console.log(customers);
 
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
 
@@ -207,7 +209,6 @@ export default function Dashboard() {
             });
             return {
                 total: filteredOrders.length,
-                pending: filteredOrders.filter((order) => !order.delivered).length,
                 completed: filteredOrders.filter((order) => order.state === 'complete').length,
                 cancelled: filteredOrders.filter((order) => order.state === 'cancel').length,
             };
@@ -219,6 +220,25 @@ export default function Dashboard() {
         () => memoizedGetMonthlyStats(selectedMonth),
         [memoizedGetMonthlyStats, selectedMonth]
     );
+
+    const memoizedGetCustomersByMonth = useCallback(
+        (month) => {
+            const filteredCustomers = customers.filter((customer) => {
+                const customerCreatedAt = new Date(customer.createdAt);
+                return customerCreatedAt.getMonth() === month;
+            });
+            return filteredCustomers;
+        },
+        [customers]
+    );
+
+    const customersByMonth = useMemo(
+        () => memoizedGetCustomersByMonth(selectedMonth),
+        [memoizedGetCustomersByMonth, selectedMonth]
+    );
+
+    const activeCustomersThisMonth = customersByMonth.filter((c) => c.state === 'active').length;
+    const blockedCustomersThisMonth = customersByMonth.filter((c) => c.state === 'blocked').length;
 
     const getRevenueData = (orders) => {
         const monthlyRevenue = Array(12)
@@ -315,27 +335,27 @@ export default function Dashboard() {
                             icon: <UserOutlined />,
                             gradient: 'from-emerald-500 to-teal-500',
                             lightGradient: 'from-emerald-50 to-teal-50',
-                            additionalInfo: 'Tất cả khách hàng đã đăng ký',
+                            additionalInfo: 'Tất cả khách hàng đã đăng ký tài khoản',
                             stats: [
                                 {
                                     label: 'Hoạt động',
-                                    value: customers.filter((c) => c.state === 'active').length,
+                                    value: activeCustomersThisMonth,
                                 },
                                 {
                                     label: 'Bị chặn',
-                                    value: customers.filter((c) => c.state === 'blocked').length,
+                                    value: blockedCustomersThisMonth,
                                 },
                             ],
                             percent: 8,
                             link: '/users',
                         },
                         {
-                            title: 'Tổng Dịch Vụ',
+                            title: 'Tổng Yêu Cầu Hỗ Trợ',
                             value: services.length,
                             icon: <CommentOutlined />,
                             gradient: 'from-orange-500 to-amber-500',
                             lightGradient: 'from-orange-50 to-amber-50',
-                            additionalInfo: 'Tất cả yêu cầu hỗ trợ',
+                            additionalInfo: 'Tất cả các yêu cầu cần được hỗ trợ',
                             stats: [
                                 {
                                     label: 'Đang chờ',
@@ -355,7 +375,7 @@ export default function Dashboard() {
                             icon: <GiWatch />,
                             gradient: 'from-purple-500 to-pink-500',
                             lightGradient: 'from-purple-50 to-pink-50',
-                            additionalInfo: 'Tất cả sản phẩm trong kho',
+                            additionalInfo: 'Tất cả sản phẩm trong cửa hàng',
                             stats: [
                                 {
                                     label: 'Còn hàng',

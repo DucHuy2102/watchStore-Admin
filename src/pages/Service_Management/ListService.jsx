@@ -178,7 +178,7 @@ export default function ListService() {
                     >
                         Chi tiết
                     </Button>
-                    {record.state === 'proceed' && (
+                    {record.state !== 'proceed' && (
                         <Button
                             type='primary'
                             className='!bg-green-600 hover:!bg-green-500 rounded-full shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105'

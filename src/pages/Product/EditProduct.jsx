@@ -157,6 +157,10 @@ export default function EditProduct() {
         }
     };
 
+    const checkQuantityProduct = (productOptions) => {
+        return productOptions.every((opt) => opt?.amount > 0);
+    };
+
     const onFinish = async (values) => {
         if (!fileList.length) {
             toast.error('Vui lòng upload ảnh sản phẩm!');
@@ -164,76 +168,63 @@ export default function EditProduct() {
         }
 
         if (!productOptions.length) {
-            toast.error('Vui lòng thêm ít nhất một màu sản phẩm!');
+            toast.error('Vui lòng thêm ít nhất một màu sản phẩm!', {
+                className: 'w-[24vw] absolute right-14',
+            });
             return;
         }
 
-        const uploadedFiles = await handleUploadToCloudinary();
-        const formattedOptions = productOptions.map((opt) => ({
-            key: opt.key,
-            value: {
-                price: opt.price,
-                discount: opt.discount,
-                quantity: opt.amount,
-                color: opt.color,
-                state: 'active',
-            },
-        }));
+        if (!checkQuantityProduct(productOptions)) {
+            toast.error('Vui lòng cập nhật số lượng sản phẩm!', {
+                className: 'w-[24vw] absolute right-14',
+            });
+            return;
+        }
 
-        const productData = {
-            ...values,
-            id: id,
-            img: uploadedFiles?.map((file) => file.url || file),
-            option: formattedOptions,
-            state: 'waiting',
-        };
+        try {
+            setLoading(true);
+            const uploadedFiles = await handleUploadToCloudinary();
+            const formattedOptions = productOptions.map((opt) => ({
+                key: opt.key,
+                value: {
+                    price: opt.price,
+                    discount: opt.discount,
+                    quantity: opt.amount,
+                    color: opt.color,
+                    state: 'active',
+                },
+            }));
 
-        console.log(productData);
+            const productData = {
+                ...values,
+                id: id,
+                img: uploadedFiles?.map((file) => file.url || file),
+                option: formattedOptions,
+                state: 'waiting',
+            };
 
-        // try {
-        //     setLoading(true);
-        //     const uploadedFiles = await handleUploadToCloudinary();
-        //     const formattedOptions = productOptions.map((opt) => ({
-        //         key: opt.key,
-        //         value: {
-        //             price: opt.price,
-        //             discount: opt.discount,
-        //             quantity: opt.amount,
-        //             color: opt.color,
-        //             state: 'active',
-        //         },
-        //     }));
+            const res = await axios.put(
+                `${import.meta.env.VITE_API_URL}/api/product/update`,
+                productData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
 
-        //     const productData = {
-        //         ...values,
-        //         id: id,
-        //         img: uploadedFiles?.map((file) => file.url || file),
-        //         option: formattedOptions,
-        //         state: 'waiting',
-        //     };
-
-        //     const res = await axios.put(
-        //         `${import.meta.env.VITE_API_URL}/api/product/update`,
-        //         productData,
-        //         {
-        //             headers: {
-        //                 Authorization: `Bearer ${token}`,
-        //             },
-        //         }
-        //     );
-
-        //     if (res.status === 200) {
-        //         toast.success('Cập nhật sản phẩm thành công!');
-        //         setTimeout(() => {
-        //             navigate('/products');
-        //         }, 2000);
-        //     }
-        // } catch (error) {
-        //     console.error(error);
-        //     toast.error('Có lỗi xảy ra khi cập nhật sản phẩm');
-        // } finally {
-        //     setLoading(false);
-        // }
+            if (res.status === 200) {
+                toast.success('Cập nhật sản phẩm thành công!');
+                setTimeout(() => {
+                    navigate('/products');
+                }, 2000);
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error('Có lỗi xảy ra khi cập nhật sản phẩm');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleChange = ({ fileList: newFileList }) => {
@@ -316,8 +307,6 @@ export default function EditProduct() {
                                 options={[
                                     { label: 'Nam', value: 'Nam' },
                                     { label: 'Nữ', value: 'Nữ' },
-                                    { label: 'Thiếu nhi', value: 'Thiếu nhi' },
-                                    { label: 'Tất cả', value: 'Tất cả' },
                                 ]}
                             />
                         ),
@@ -523,6 +512,7 @@ export default function EditProduct() {
 
     const ColorVariantCard = ({ color, onDelete, onSave }) => {
         const [isEditing, setIsEditing] = useState(false);
+        const [isSaved, setIsSaved] = useState(false);
         const [localValues, setLocalValues] = useState({
             price: color.price,
             amount: color.amount,
@@ -534,11 +524,16 @@ export default function EditProduct() {
                 ...prev,
                 [field]: value,
             }));
+            setIsEditing(true);
+            setIsSaved(false);
         };
 
         const handleSave = () => {
-            onSave(localValues);
-            setIsEditing(false);
+            if (localValues.amount > 0 && localValues.price > localValues.discount) {
+                onSave(localValues);
+                setIsEditing(false);
+                setIsSaved(true);
+            }
         };
 
         return (
@@ -651,13 +646,11 @@ export default function EditProduct() {
                 </div>
 
                 <div className='mt-4 flex justify-end'>
-                    {isEditing &&
-                        localValues.amount > 0 &&
-                        localValues.price > localValues.discount && (
-                            <Button type='primary' onClick={handleSave}>
-                                Lưu thông tin
-                            </Button>
-                        )}
+                    {isEditing && !isSaved && (
+                        <Button type='primary' onClick={handleSave}>
+                            Lưu thông tin
+                        </Button>
+                    )}
                 </div>
             </Card>
         );
@@ -728,7 +721,9 @@ export default function EditProduct() {
             option: productOptions,
             state: 'preview',
         };
-        navigate('/product/product-preview', { state: { product: previewData } });
+        navigate('/product/product-preview', {
+            state: { product: previewData, from: location.pathname },
+        });
     };
 
     return (
