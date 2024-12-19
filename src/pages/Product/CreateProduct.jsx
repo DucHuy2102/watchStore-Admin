@@ -79,6 +79,10 @@ export default function CreateProduct() {
         }
     };
 
+    const checkQuantityProduct = (productOptions) => {
+        return productOptions.every((opt) => opt?.amount > 0);
+    };
+
     const onFinish = async (values) => {
         if (!fileList.length) {
             toast.error('Vui lòng upload ảnh sản phẩm!');
@@ -86,7 +90,16 @@ export default function CreateProduct() {
         }
 
         if (!productOptions.length) {
-            toast.error('Vui lòng thêm ít nhất một màu sản phẩm!');
+            toast.error('Vui lòng thêm ít nhất một màu sản phẩm!', {
+                className: 'w-[24vw] absolute right-14',
+            });
+            return;
+        }
+
+        if (!checkQuantityProduct(productOptions)) {
+            toast.error('Vui lòng cập nhật số lượng sản phẩm!', {
+                className: 'w-[24vw] absolute right-14',
+            });
             return;
         }
 
@@ -404,6 +417,7 @@ export default function CreateProduct() {
 
     const ColorVariantCard = ({ color, onDelete, onSave }) => {
         const [isEditing, setIsEditing] = useState(false);
+        const [isSaved, setIsSaved] = useState(false);
         const [localValues, setLocalValues] = useState({
             price: color.price,
             amount: color.amount,
@@ -415,11 +429,15 @@ export default function CreateProduct() {
                 ...prev,
                 [field]: value,
             }));
+            setIsSaved(false);
         };
 
         const handleSave = () => {
-            onSave(localValues);
-            setIsEditing(false);
+            if (localValues.price > localValues.discount) {
+                onSave(localValues);
+                setIsEditing(false);
+                setIsSaved(true);
+            }
         };
 
         return (
@@ -476,11 +494,16 @@ export default function CreateProduct() {
                                 handleLocalChange('amount', val);
                                 setIsEditing(true);
                             }}
-                            min={0}
+                            min={1}
                             size='large'
                             addonAfter='cái'
                             controls={false}
                         />
+                        {localValues.amount <= 0 && (
+                            <span className='text-red-500 block !mt-4 font-semibold'>
+                                Số lượng sản phẩm bán ra phải lớn hơn 0!
+                            </span>
+                        )}
                     </div>
 
                     <div className='space-y-3'>
@@ -503,7 +526,7 @@ export default function CreateProduct() {
                             <div className='flex items-center gap-2 mt-4'>
                                 {localValues.price <= localValues.discount ? (
                                     <span className='text-red-500 font-semibold'>
-                                        Giá tiền bán không thể nhỏ hơn giá tiền giảm!
+                                        Giá tiền giảm không thể lớn hơn hoặc bằng giá bán!
                                     </span>
                                 ) : (
                                     <>
@@ -511,8 +534,8 @@ export default function CreateProduct() {
                                         <span className='text-base font-bold text-green-600'>
                                             {new Intl.NumberFormat('vi-VN').format(
                                                 localValues.price - localValues.discount
-                                            )}
-                                            đ
+                                            )}{' '}
+                                            {''}đ
                                         </span>
                                     </>
                                 )}
@@ -522,7 +545,7 @@ export default function CreateProduct() {
                 </div>
 
                 <div className='mt-4 flex justify-end'>
-                    {isEditing && localValues.price > localValues.discount && (
+                    {isEditing && !isSaved && (
                         <Button type='primary' onClick={handleSave}>
                             Lưu thông tin
                         </Button>
