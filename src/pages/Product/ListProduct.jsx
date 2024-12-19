@@ -465,6 +465,17 @@ export default function ListProduct() {
                                         ? 'Ngừng bán'
                                         : 'Hết hàng'}
                                 </Tag>
+                                <span
+                                    className={`${
+                                        opt.value.quantity === 0
+                                            ? 'text-red-500'
+                                            : opt.value.quantity < 10
+                                            ? 'text-yellow-400'
+                                            : 'text-blue-500'
+                                    } font-semibold`}
+                                >
+                                    {opt.value.quantity}
+                                </span>
                             </div>
                         ))}
                     </div>
